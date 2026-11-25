@@ -6,6 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
+# gli snapshot dei siti generati includono un .env.example di esempio (senza segreti)
+!tests/__snapshots__/**/.env.example.snap
 
 # Documenti di lavoro locali (non pubblicare)
 context.md
