@@ -25,7 +25,7 @@ import {
   downloadRepositoryZip,
   generateRepositoryFiles,
   getExportScriptFilename,
-} from '../utils/codeGenerator';
+} from '../generator';
 
 interface ExportStepProps {
   locale: Locale;

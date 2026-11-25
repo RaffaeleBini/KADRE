@@ -19,7 +19,7 @@ import {
 } from '../src/data/presets';
 import { Locale } from '../src/i18n/translations';
 import { DeployPlatform, GeneratedFile, ProjectType } from '../src/types/builder';
-import { CodeGenerationInput, generateRepositoryFiles } from '../src/utils/codeGenerator';
+import { CodeGenerationInput, generateRepositoryFiles } from '../src/generator';
 
 export const LOCALES: Locale[] = ['es', 'it'];
 export const PLATFORMS: DeployPlatform[] = ['github-pages', 'vercel', 'netlify', 'cloudflare'];
