@@ -1,0 +1,6 @@
+{
+  "name": "KADRE",
+  "description": "Plataforma interactiva en estilo HUD para diseñar páginas web paso a paso, definir el stack técnico, personalizar plantillas y exportar el código listo para GitHub.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

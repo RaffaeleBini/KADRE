@@ -1,0 +1,416 @@
+import { useEffect, useMemo, useState } from 'react';
+import { ContentStep } from './components/ContentStep';
+import { DiscoveryStep } from './components/DiscoveryStep';
+import { ExportStep } from './components/ExportStep';
+import { StyleStep } from './components/StyleStep';
+import { TemplateStep } from './components/TemplateStep';
+import { TopBar } from './components/TopBar';
+import { WelcomeView } from './components/WelcomeView';
+import {
+  ALL_STACKS,
+  buildSectionsForTemplate,
+  COLOR_PATTERNS,
+  computeStackRecommendation,
+  DEFAULT_DISCOVERY_ANSWERS,
+  getStarterContentForProject,
+  GRAPHIC_STYLES,
+  TEMPLATES,
+} from './data/presets';
+import {
+  ColorPatternPreset,
+  DiscoveryAnswers,
+  GithubExportConfig,
+  GraphicStylePreset,
+  SectionConfig,
+  SiteContent,
+  StepId,
+  TemplateDefinition,
+} from './types/builder';
+
+const DRAFT_STORAGE_KEY = 'kadre_web_builder_draft_v1';
+const THEME_STORAGE_KEY = 'kadre_theme_v1';
+
+const STEP_INDEX: Record<StepId, number> = {
+  welcome: 0,
+  discovery: 1,
+  template: 2,
+  style: 3,
+  content: 4,
+  export: 5,
+};
+
+interface SavedDraft {
+  answers: DiscoveryAnswers;
+  manualStackId: string | null;
+  templateId: string;
+  sections: SectionConfig[];
+  graphicStyleId: string;
+  colorPatternId: string;
+  customAccent: string | null;
+  content: SiteContent;
+  contentTouched: boolean;
+  githubConfig: GithubExportConfig;
+  maxVisitedIndex: number;
+}
+
+function loadDraft(): SavedDraft | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as SavedDraft;
+  } catch {
+    return null;
+  }
+}
+
+function isLightHex(hex: string): boolean {
+  const clean = hex.replace('#', '');
+  if (clean.length !== 6) return true;
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.58;
+}
+
+export default function App() {
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    try {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
+      return saved === 'light' ? 'light' : 'dark';
+    } catch {
+      return 'dark';
+    }
+  });
+
+  const [initialDraft] = useState<SavedDraft | null>(() => loadDraft());
+  const [currentStep, setCurrentStep] = useState<StepId>('welcome');
+  const [maxVisitedIndex, setMaxVisitedIndex] = useState<number>(
+    initialDraft?.maxVisitedIndex ?? 1
+  );
+
+  const [answers, setAnswers] = useState<DiscoveryAnswers>(
+    initialDraft?.answers ?? DEFAULT_DISCOVERY_ANSWERS
+  );
+  const [manualStackId, setManualStackId] = useState<string | null>(
+    initialDraft?.manualStackId ?? null
+  );
+  const [templateId, setTemplateId] = useState<string>(
+    initialDraft?.templateId ?? TEMPLATES[0].id
+  );
+  const [sections, setSections] = useState<SectionConfig[]>(
+    initialDraft?.sections ?? buildSectionsForTemplate(TEMPLATES[0])
+  );
+  const [graphicStyleId, setGraphicStyleId] = useState<string>(
+    initialDraft?.graphicStyleId ?? GRAPHIC_STYLES[0].id
+  );
+  const [colorPatternId, setColorPatternId] = useState<string>(
+    initialDraft?.colorPatternId ?? COLOR_PATTERNS[0].id
+  );
+  const [customAccent, setCustomAccent] = useState<string | null>(
+    initialDraft?.customAccent ?? null
+  );
+  const [content, setContent] = useState<SiteContent>(
+    initialDraft?.content ?? getStarterContentForProject(DEFAULT_DISCOVERY_ANSWERS.projectType)
+  );
+  const [contentTouched, setContentTouched] = useState<boolean>(
+    initialDraft?.contentTouched ?? false
+  );
+  const [githubConfig, setGithubConfig] = useState<GithubExportConfig>(
+    initialDraft?.githubConfig ?? {
+      username: 'tu-usuario',
+      repoName: 'vektor-audio-web',
+      visibility: 'public',
+      branch: 'main',
+      deployPlatform: 'github-pages',
+    }
+  );
+
+  // Sync dark/light class on root <html>
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // ignore storage quota errors
+    }
+  }, [theme]);
+
+  // Persist draft when working in steps
+  useEffect(() => {
+    if (currentStep === 'welcome') return;
+    try {
+      const payload: SavedDraft = {
+        answers,
+        manualStackId,
+        templateId,
+        sections,
+        graphicStyleId,
+        colorPatternId,
+        customAccent,
+        content,
+        contentTouched,
+        githubConfig,
+        maxVisitedIndex,
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(payload));
+    } catch {
+      // ignore if user uploaded a large image exceeding localStorage quota
+    }
+  }, [
+    currentStep,
+    answers,
+    manualStackId,
+    templateId,
+    sections,
+    graphicStyleId,
+    colorPatternId,
+    customAccent,
+    content,
+    contentTouched,
+    githubConfig,
+    maxVisitedIndex,
+  ]);
+
+  const recommendedStack = useMemo(() => computeStackRecommendation(answers), [answers]);
+  const selectedStack = useMemo(() => {
+    if (!manualStackId) return recommendedStack;
+    return ALL_STACKS.find((s) => s.id === manualStackId) ?? recommendedStack;
+  }, [manualStackId, recommendedStack]);
+
+  const selectedTemplate = useMemo(
+    () => TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0],
+    [templateId]
+  );
+
+  const selectedGraphicStyle = useMemo(
+    () => GRAPHIC_STYLES.find((g) => g.id === graphicStyleId) ?? GRAPHIC_STYLES[0],
+    [graphicStyleId]
+  );
+
+  const selectedColorPattern = useMemo(() => {
+    const base = COLOR_PATTERNS.find((c) => c.id === colorPatternId) ?? COLOR_PATTERNS[0];
+    if (!customAccent) return base;
+    return {
+      ...base,
+      accent: customAccent,
+      accentText: isLightHex(customAccent) ? '#0A0B0D' : '#FFFFFF',
+    };
+  }, [colorPatternId, customAccent]);
+
+  function navigateTo(step: StepId) {
+    setCurrentStep(step);
+    setMaxVisitedIndex((prev) => Math.max(prev, STEP_INDEX[step]));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function handleUpdateAnswers(next: DiscoveryAnswers) {
+    const projectTypeChanged = next.projectType !== answers.projectType;
+    setAnswers(next);
+
+    if (projectTypeChanged) {
+      const matchingTemplate =
+        TEMPLATES.find((t) => t.bestFor.includes(next.projectType)) ?? TEMPLATES[0];
+      setTemplateId(matchingTemplate.id);
+      setSections(buildSectionsForTemplate(matchingTemplate));
+
+      if (!contentTouched) {
+        const starter = getStarterContentForProject(next.projectType);
+        setContent(starter);
+        setGithubConfig((prev) => ({
+          ...prev,
+          repoName: starter.brandName
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-|-$/g, ''),
+        }));
+      }
+    }
+  }
+
+  function handleSelectTemplate(tpl: TemplateDefinition) {
+    setTemplateId(tpl.id);
+    setSections(buildSectionsForTemplate(tpl));
+  }
+
+  function handleToggleSection(sectionId: string) {
+    setSections((prev) =>
+      prev.map((sec) =>
+        sec.id === sectionId && !sec.required ? { ...sec, enabled: !sec.enabled } : sec
+      )
+    );
+  }
+
+  function handleMoveSection(sectionId: string, direction: 'up' | 'down') {
+    setSections((prev) => {
+      const idx = prev.findIndex((s) => s.id === sectionId);
+      if (idx === -1) return prev;
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= prev.length) return prev;
+      if (prev[targetIdx].required) return prev;
+      const copy = [...prev];
+      const [moved] = copy.splice(idx, 1);
+      copy.splice(targetIdx, 0, moved);
+      return copy;
+    });
+  }
+
+  function handleUpdateContent(next: SiteContent) {
+    setContentTouched(true);
+    setContent(next);
+  }
+
+  function handleResetProject() {
+    const freshContent = getStarterContentForProject(DEFAULT_DISCOVERY_ANSWERS.projectType);
+    setAnswers(DEFAULT_DISCOVERY_ANSWERS);
+    setManualStackId(null);
+    setTemplateId(TEMPLATES[0].id);
+    setSections(buildSectionsForTemplate(TEMPLATES[0]));
+    setGraphicStyleId(GRAPHIC_STYLES[0].id);
+    setColorPatternId(COLOR_PATTERNS[0].id);
+    setCustomAccent(null);
+    setContent(freshContent);
+    setContentTouched(false);
+    setGithubConfig({
+      username: 'tu-usuario',
+      repoName: 'vektor-audio-web',
+      visibility: 'public',
+      branch: 'main',
+      deployPlatform: 'github-pages',
+    });
+    setMaxVisitedIndex(1);
+    try {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    navigateTo('discovery');
+  }
+
+  function handleStartFresh() {
+    navigateTo('discovery');
+  }
+
+  function handleResumeDraft() {
+    const stepByIndex: StepId[] = [
+      'welcome',
+      'discovery',
+      'template',
+      'style',
+      'content',
+      'export',
+    ];
+    const target = stepByIndex[Math.min(Math.max(maxVisitedIndex, 1), 5)] ?? 'discovery';
+    navigateTo(target);
+  }
+
+  return (
+    <div className="min-h-screen hud-grid-bg bg-[#F3F4F6] text-[#111318] dark:bg-[#0A0B0D] dark:text-[#F4F6F9] flex flex-col">
+      <TopBar
+        currentStep={currentStep}
+        maxVisitedIndex={maxVisitedIndex}
+        theme={theme}
+        onToggleTheme={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
+        onNavigateStep={navigateTo}
+        onResetProject={handleResetProject}
+      />
+
+      <main className="flex-1">
+        {currentStep === 'welcome' ? (
+          <WelcomeView
+            hasSavedDraft={Boolean(initialDraft)}
+            savedBrandName={initialDraft?.content?.brandName}
+            onStartNew={handleStartFresh}
+            onResumeDraft={handleResumeDraft}
+          />
+        ) : null}
+
+        {currentStep === 'discovery' ? (
+          <DiscoveryStep
+            answers={answers}
+            recommendedStack={recommendedStack}
+            selectedStack={selectedStack}
+            onUpdateAnswers={handleUpdateAnswers}
+            onSelectManualStack={setManualStackId}
+            onNext={() => navigateTo('template')}
+          />
+        ) : null}
+
+        {currentStep === 'template' ? (
+          <TemplateStep
+            answers={answers}
+            stack={selectedStack}
+            selectedTemplate={selectedTemplate}
+            sections={sections}
+            onSelectTemplate={handleSelectTemplate}
+            onToggleSection={handleToggleSection}
+            onMoveSection={handleMoveSection}
+            onBack={() => navigateTo('discovery')}
+            onNext={() => navigateTo('style')}
+          />
+        ) : null}
+
+        {currentStep === 'style' ? (
+          <StyleStep
+            template={selectedTemplate}
+            sections={sections}
+            graphicStyle={selectedGraphicStyle}
+            colorPattern={
+              COLOR_PATTERNS.find((c) => c.id === colorPatternId) ?? COLOR_PATTERNS[0]
+            }
+            customAccent={customAccent}
+            content={content}
+            onSelectGraphicStyle={(style: GraphicStylePreset) => setGraphicStyleId(style.id)}
+            onSelectColorPattern={(pattern: ColorPatternPreset) => setColorPatternId(pattern.id)}
+            onSetCustomAccent={setCustomAccent}
+            onBack={() => navigateTo('template')}
+            onNext={() => navigateTo('content')}
+          />
+        ) : null}
+
+        {currentStep === 'content' ? (
+          <ContentStep
+            template={selectedTemplate}
+            sections={sections}
+            graphicStyle={selectedGraphicStyle}
+            colorPattern={selectedColorPattern}
+            content={content}
+            onUpdateContent={handleUpdateContent}
+            onBack={() => navigateTo('style')}
+            onNext={() => navigateTo('export')}
+          />
+        ) : null}
+
+        {currentStep === 'export' ? (
+          <ExportStep
+            answers={answers}
+            stack={selectedStack}
+            template={selectedTemplate}
+            sections={sections}
+            graphicStyle={selectedGraphicStyle}
+            colorPattern={selectedColorPattern}
+            content={content}
+            githubConfig={githubConfig}
+            onUpdateGithubConfig={setGithubConfig}
+            onBack={() => navigateTo('content')}
+          />
+        ) : null}
+      </main>
+
+      <footer className="border-t border-[#D0D5DF] bg-[#F3F4F6]/90 py-5 dark:border-[#262B36] dark:bg-[#0A0B0D]/90">
+        <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4 px-6 text-xs text-[#4B5565] dark:text-[#9BA4B5]">
+          <span>KADRE · Generador guiado de arquitectura web y exportación a GitHub</span>
+          <span className="font-mono tabular-nums">
+            {currentStep === 'welcome'
+              ? 'Modo oscuro por defecto · Alternable a modo claro'
+              : `Proyecto activo: ${content.brandName}`}
+          </span>
+        </div>
+      </footer>
+    </div>
+  );
+}
