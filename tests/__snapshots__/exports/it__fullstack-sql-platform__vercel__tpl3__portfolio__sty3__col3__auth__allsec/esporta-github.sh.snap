@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -e
+
+REPO_URL="https://github.com/kadre-test/studio-bini-associati.git"
+BRANCH="main"
+
+echo "Inizializzazione repository locale per studio-bini-associati..."
+git init
+git add .
+git commit -m "Versione iniziale generata per Studio Bini & Associati"
+git branch -M "$BRANCH"
+
+if git remote get-url origin >/dev/null 2>&1; then
+  git remote set-url origin "$REPO_URL"
+else
+  git remote add origin "$REPO_URL"
+fi
+
+echo "Caricamento codice su $REPO_URL (main)..."
+git push -u origin "$BRANCH"
+echo "Esportazione completata correttamente."

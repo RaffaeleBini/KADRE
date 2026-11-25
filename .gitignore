@@ -10,3 +10,6 @@ coverage/
 # Documenti di lavoro locali (non pubblicare)
 context.md
 PIANO-generatore-deterministico.md
+
+# Cache della verifica dei siti esportati
+.cache/

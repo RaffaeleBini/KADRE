@@ -1,0 +1,35 @@
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import 'dotenv/config';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const app = express();
+const PORT = Number(process.env.PORT || 3000);
+
+app.use(express.json());
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, timestamp: new Date().toISOString() });
+});
+
+app.post('/api/contact', async (req, res) => {
+  const { name, email, message } = req.body ?? {};
+  if (!name || !email) {
+    return res.status(400).json({ error: 'Nombre y correo son obligatorios.' });
+  }
+  console.info('[Contacto recibido]', { name, email, length: String(message || '').length });
+  return res.status(201).json({ received: true });
+});
+
+if (process.env.NODE_ENV === 'production') {
+  const distDir = path.resolve(__dirname, '../dist');
+  app.use(express.static(distDir));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(distDir, 'index.html'));
+  });
+}
+
+app.listen(PORT, () => {
+  console.log(`Servidor activo en http://localhost:${PORT}`);
+});

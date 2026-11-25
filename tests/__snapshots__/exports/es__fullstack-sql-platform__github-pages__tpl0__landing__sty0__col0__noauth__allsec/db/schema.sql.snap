@@ -1,0 +1,22 @@
+-- Esquema relacional generado para Vektor Audio
+-- Compatible con PostgreSQL 15+
+
+CREATE TABLE IF NOT EXISTS contact_submissions (
+  id SERIAL PRIMARY KEY,
+  full_name VARCHAR(160) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS catalog_items (
+  id SERIAL PRIMARY KEY,
+  slug VARCHAR(120) UNIQUE NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  category VARCHAR(120) NOT NULL,
+  price_label VARCHAR(80),
+  description TEXT,
+  image_path TEXT,
+  published BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

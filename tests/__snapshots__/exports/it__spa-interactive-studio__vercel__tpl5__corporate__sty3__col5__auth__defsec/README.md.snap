@@ -1,0 +1,46 @@
+# Italia Precisione Industriale
+
+Automazione e manifattura avanzata
+
+## Architettura tecnica selezionata
+
+- **Stack**: React SPA + Livello Dati Modulare
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Integrazione esterna via API / Webhook
+- **Database**: Catalogo JSON strutturato / Headless CMS
+- **Modello**: Editoriale e Documentazione
+- **Stile grafico**: Architettonico Solido · Bianco Puro e Blu Ingegneria
+
+## Avvio in locale
+
+```bash
+npm install
+npm run dev
+```
+
+## Esportazione su GitHub passo dopo passo
+
+1. Crea un repository vuoto chiamato `italia-precisione-industriale` su https://github.com/new (senza README né .gitignore).
+2. Esegui questi comandi dentro la cartella del progetto:
+
+```bash
+git init
+git add .
+git commit -m "Versione iniziale di Italia Precisione Industriale"
+git branch -M main
+git remote add origin https://github.com/kadre-test/italia-precisione-industriale.git
+git push -u origin main
+```
+
+In alternativa puoi avviare lo script automatizzato incluso:
+
+```bash
+chmod +x esporta-github.sh
+./esporta-github.sh
+```
+
+## Pubblicazione (vercel)
+
+1. Accedi al tuo account **VERCEL** e scegli **Import Git Repository**.
+2. Seleziona `kadre-test/italia-precisione-industriale`.
+3. Comando di build: `npm run build` · Cartella di output: `dist`.

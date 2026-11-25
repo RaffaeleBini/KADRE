@@ -1,0 +1,46 @@
+# Taller Nord
+
+Instrumentos y mobiliario técnico
+
+## Arquitectura técnica seleccionada
+
+- **Stack**: React SPA + Capa de Datos Modular
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Integración externa vía API / Webhooks
+- **Base de datos**: Catálogo estructurado JSON / Headless CMS
+- **Plantilla**: Estudio y Arquitectura
+- **Estilo gráfico**: Industrial Técnico · Pizarra Profunda y Azul Precisión
+
+## Ejecución local
+
+```bash
+npm install
+npm run dev
+```
+
+## Exportar a GitHub paso a paso
+
+1. Crea un repositorio vacío llamado `taller-nord` en https://github.com/new (sin README ni .gitignore).
+2. Ejecuta los siguientes comandos dentro de esta carpeta:
+
+```bash
+git init
+git add .
+git commit -m "Versión inicial de Taller Nord"
+git branch -M main
+git remote add origin https://github.com/kadre-test/taller-nord.git
+git push -u origin main
+```
+
+También puedes ejecutar el script automatizado incluido:
+
+```bash
+chmod +x exportar-github.sh
+./exportar-github.sh
+```
+
+## Despliegue (github-pages)
+
+1. Abre tu repositorio en GitHub → **Settings** → **Pages**.
+2. En **Build and deployment / Source**, selecciona **GitHub Actions**.
+3. El flujo `.github/workflows/deploy.yml` publicará automáticamente tu web en `https://kadre-test.github.io/taller-nord/`.

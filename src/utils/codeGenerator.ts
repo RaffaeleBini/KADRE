@@ -131,8 +131,11 @@ function generateSiteAppTsx(
   return `import React, { useState } from 'react';
 import content from './data/siteContent.json';
 
-const SECTION_ORDER = ${sectionOrderLiteral} as const;
-const HERO_LAYOUT = '${template.heroLayout}' as const;
+type SectionType = 'hero' | 'metrics' | 'features' | 'catalog' | 'pricing' | 'testimonials' | 'faq' | 'contact';
+type HeroLayout = 'split' | 'centered' | 'editorial';
+
+const SECTION_ORDER: SectionType[] = ${sectionOrderLiteral};
+const HERO_LAYOUT = '${template.heroLayout}' as HeroLayout;
 const HAS_BACKEND_API = ${stack.includesBackend};
 
 export default function App() {
