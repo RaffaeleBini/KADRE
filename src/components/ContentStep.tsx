@@ -9,7 +9,8 @@ import {
   Trash2,
   Upload,
 } from 'lucide-react';
-import { CURATED_GALLERY, getStarterContentForProject } from '../data/presets';
+import { getCuratedGallery, getStarterContentForProject } from '../data/presets';
+import { Locale, TRANSLATIONS } from '../i18n/translations';
 import {
   ColorPatternPreset,
   GraphicStylePreset,
@@ -21,6 +22,7 @@ import {
 import { LiveSitePreview } from './LiveSitePreview';
 
 interface ContentStepProps {
+  locale: Locale;
   template: TemplateDefinition;
   sections: SectionConfig[];
   graphicStyle: GraphicStylePreset;
@@ -34,6 +36,7 @@ interface ContentStepProps {
 type EditorTab = 'identity' | 'sections' | 'media' | 'import';
 
 export function ContentStep({
+  locale,
   template,
   sections,
   graphicStyle,
@@ -43,6 +46,9 @@ export function ContentStep({
   onBack,
   onNext,
 }: ContentStepProps) {
+  const t = TRANSLATIONS[locale].content;
+  const gallery = getCuratedGallery(locale);
+
   const [activeTab, setActiveTab] = useState<EditorTab>('identity');
   const [importFeedback, setImportFeedback] = useState<{
     type: 'ok' | 'error';
@@ -87,7 +93,7 @@ export function ContentStep({
       try {
         const parsed = JSON.parse(String(reader.result || '{}'));
         if (!parsed || typeof parsed !== 'object' || !parsed.brandName) {
-          throw new Error('Estructura inválida');
+          throw new Error('Invalid');
         }
         onUpdateContent({
           ...content,
@@ -95,13 +101,12 @@ export function ContentStep({
         });
         setImportFeedback({
           type: 'ok',
-          message: `Contenidos cargados correctamente desde ${file.name}.`,
+          message: t.jsonLoadedOk(file.name),
         });
       } catch {
         setImportFeedback({
           type: 'error',
-          message:
-            'El archivo JSON no tiene la estructura esperada. Descarga primero la plantilla de ejemplo.',
+          message: t.jsonLoadedError,
         });
       }
     };
@@ -123,10 +128,10 @@ export function ContentStep({
   }
 
   function loadSectorPreset(type: ProjectType) {
-    onUpdateContent(getStarterContentForProject(type));
+    onUpdateContent(getStarterContentForProject(type, locale));
     setImportFeedback({
       type: 'ok',
-      message: 'Textos e imágenes de ejemplo actualizados al sector elegido.',
+      message: t.presetsUpdatedOk,
     });
   }
 
@@ -136,33 +141,27 @@ export function ContentStep({
 
   return (
     <div className="mx-auto max-w-[1440px] px-6 py-8 lg:py-10 space-y-8">
-      {/* Step Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#D0D5DF] pb-5 dark:border-[#262B36]">
         <div className="space-y-1.5">
           <p className="font-mono text-xs font-medium text-[#9A7400] dark:text-[#F5C400]">
-            Paso 4 de 5 · Gestor de contenidos
+            {t.stepTag}
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#111318] dark:text-[#F4F6F9]">
-            Carga textos, imágenes y datos de tu sitio
+            {t.title}
           </h1>
         </div>
-        <div className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">
-          Todos los cambios se sincronizan al instante con la vista previa y el archivo JSON exportado.
-        </div>
+        <div className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">{t.syncNote}</div>
       </div>
 
-      {/* Main Split Editor */}
       <div className="grid gap-8 lg:grid-cols-12 items-start">
-        {/* Left: Structured Content Loader */}
         <div className="lg:col-span-5 space-y-5">
-          {/* Tabs */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 border border-[#D0D5DF] bg-[#E9ECF1] p-1 dark:border-[#262B36] dark:bg-[#111318]">
             {(
               [
-                { id: 'identity', label: 'Portada' },
-                { id: 'sections', label: 'Bloques' },
-                { id: 'media', label: 'Imágenes' },
-                { id: 'import', label: 'JSON / Presets' },
+                { id: 'identity', label: t.tabs.identity },
+                { id: 'sections', label: t.tabs.sections },
+                { id: 'media', label: t.tabs.media },
+                { id: 'import', label: t.tabs.import },
               ] as const
             ).map((tab) => (
               <button
@@ -181,13 +180,12 @@ export function ContentStep({
           </div>
 
           <div className="hud-frame border border-[#D0D5DF] bg-white p-5 dark:border-[#262B36] dark:bg-[#111318] space-y-5 max-h-[700px] overflow-y-auto">
-            {/* Tab 1: Identity & Hero */}
             {activeTab === 'identity' ? (
               <div className="space-y-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="brand-name" className={labelClass}>
-                      Nombre de la marca o proyecto
+                      {t.brandName}
                     </label>
                     <input
                       id="brand-name"
@@ -201,7 +199,7 @@ export function ContentStep({
                   </div>
                   <div>
                     <label htmlFor="brand-tagline" className={labelClass}>
-                      Lema o descriptor breve
+                      {t.tagline}
                     </label>
                     <input
                       id="brand-tagline"
@@ -217,7 +215,7 @@ export function ContentStep({
 
                 <div>
                   <label htmlFor="hero-eyebrow" className={labelClass}>
-                    Antetítulo de portada
+                    {t.heroEyebrow}
                   </label>
                   <input
                     id="hero-eyebrow"
@@ -232,7 +230,7 @@ export function ContentStep({
 
                 <div>
                   <label htmlFor="hero-headline" className={labelClass}>
-                    Titular principal (H1)
+                    {t.heroHeadline}
                   </label>
                   <textarea
                     id="hero-headline"
@@ -247,7 +245,7 @@ export function ContentStep({
 
                 <div>
                   <label htmlFor="hero-sub" className={labelClass}>
-                    Descripción de portada
+                    {t.heroSubheadline}
                   </label>
                   <textarea
                     id="hero-sub"
@@ -263,7 +261,7 @@ export function ContentStep({
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="cta-primary" className={labelClass}>
-                      Botón principal
+                      {t.ctaPrimary}
                     </label>
                     <input
                       id="cta-primary"
@@ -277,7 +275,7 @@ export function ContentStep({
                   </div>
                   <div>
                     <label htmlFor="cta-secondary" className={labelClass}>
-                      Botón secundario
+                      {t.ctaSecondary}
                     </label>
                     <input
                       id="cta-secondary"
@@ -294,7 +292,7 @@ export function ContentStep({
                 <div className="grid gap-4 sm:grid-cols-2 pt-3 border-t border-[#D0D5DF] dark:border-[#262B36]">
                   <div>
                     <label htmlFor="contact-email" className={labelClass}>
-                      Correo de contacto
+                      {t.contactEmail}
                     </label>
                     <input
                       id="contact-email"
@@ -308,7 +306,7 @@ export function ContentStep({
                   </div>
                   <div>
                     <label htmlFor="contact-loc" className={labelClass}>
-                      Ubicación / Zona horaria
+                      {t.contactLocation}
                     </label>
                     <input
                       id="contact-loc"
@@ -324,14 +322,12 @@ export function ContentStep({
               </div>
             ) : null}
 
-            {/* Tab 2: Editable Section Blocks */}
             {activeTab === 'sections' ? (
               <div className="space-y-6">
-                {/* Features list */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-bold text-[#111318] dark:text-[#F4F6F9]">
-                      Capacidades / Pilares ({content.features.length})
+                      {t.featuresTitle(content.features.length)}
                     </h3>
                     <button
                       type="button"
@@ -342,9 +338,9 @@ export function ContentStep({
                             ...content.features,
                             {
                               id: `f-${Date.now()}`,
-                              title: 'Nueva capacidad',
-                              description: 'Describe el beneficio concreto para el usuario.',
-                              metric: 'Estándar',
+                              title: t.newFeatureTitle,
+                              description: t.newFeatureDesc,
+                              metric: t.newFeatureMetric,
                             },
                           ],
                         })
@@ -352,7 +348,7 @@ export function ContentStep({
                       className="inline-flex items-center gap-1 text-xs font-medium text-[#9A7400] hover:underline dark:text-[#F5C400] cursor-pointer"
                     >
                       <Plus className="h-3.5 w-3.5" />
-                      <span>Añadir</span>
+                      <span>{t.addBtn}</span>
                     </button>
                   </div>
 
@@ -363,7 +359,7 @@ export function ContentStep({
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-mono text-[11px] text-[#4B5565] dark:text-[#9BA4B5]">
-                          Pilar 0{idx + 1}
+                          {t.pillarLabel(idx + 1)}
                         </span>
                         {content.features.length > 1 ? (
                           <button
@@ -374,7 +370,7 @@ export function ContentStep({
                                 features: content.features.filter((f) => f.id !== feat.id),
                               })
                             }
-                            aria-label="Eliminar pilar"
+                            aria-label={t.deletePillarAria}
                             className="text-[#4B5565] hover:text-red-500 cursor-pointer"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -391,7 +387,7 @@ export function ContentStep({
                           onUpdateContent({ ...content, features: next });
                         }}
                         className={inputClass}
-                        placeholder="Título"
+                        placeholder={t.titlePlaceholder}
                       />
                       <textarea
                         rows={2}
@@ -403,17 +399,16 @@ export function ContentStep({
                           onUpdateContent({ ...content, features: next });
                         }}
                         className={inputClass}
-                        placeholder="Descripción"
+                        placeholder={t.descPlaceholder}
                       />
                     </div>
                   ))}
                 </div>
 
-                {/* Catalog items */}
                 <div className="space-y-3 pt-4 border-t border-[#D0D5DF] dark:border-[#262B36]">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-bold text-[#111318] dark:text-[#F4F6F9]">
-                      Catálogo / Casos destacados ({content.catalogItems.length})
+                      {t.catalogTitle(content.catalogItems.length)}
                     </h3>
                     <button
                       type="button"
@@ -424,11 +419,11 @@ export function ContentStep({
                             ...content.catalogItems,
                             {
                               id: `c-${Date.now()}`,
-                              title: 'Nueva referencia',
-                              category: 'Categoría',
-                              priceOrTag: 'Nuevo',
-                              description: 'Resumen técnico o comercial del elemento.',
-                              imageUrl: CURATED_GALLERY[0].url,
+                              title: t.newItemTitle,
+                              category: t.newItemCategory,
+                              priceOrTag: t.newItemTag,
+                              description: t.newItemDesc,
+                              imageUrl: gallery[0].url,
                             },
                           ],
                         })
@@ -436,7 +431,7 @@ export function ContentStep({
                       className="inline-flex items-center gap-1 text-xs font-medium text-[#9A7400] hover:underline dark:text-[#F5C400] cursor-pointer"
                     >
                       <Plus className="h-3.5 w-3.5" />
-                      <span>Añadir elemento</span>
+                      <span>{t.addItemBtn}</span>
                     </button>
                   </div>
 
@@ -458,7 +453,7 @@ export function ContentStep({
                             })
                           }
                           className={inputClass}
-                          placeholder="Nombre"
+                          placeholder={t.namePlaceholder}
                         />
                         <div className="flex gap-2">
                           <input
@@ -473,7 +468,7 @@ export function ContentStep({
                               })
                             }
                             className={inputClass}
-                            placeholder="Precio o año"
+                            placeholder={t.pricePlaceholder}
                           />
                           {content.catalogItems.length > 1 ? (
                             <button
@@ -486,7 +481,7 @@ export function ContentStep({
                                   ),
                                 })
                               }
-                              aria-label="Eliminar elemento"
+                              aria-label={t.deleteItemAria}
                               className="px-2 border border-[#D0D5DF] text-[#4B5565] hover:text-red-500 dark:border-[#262B36] cursor-pointer"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
@@ -506,17 +501,16 @@ export function ContentStep({
                           })
                         }
                         className={inputClass}
-                        placeholder="Descripción"
+                        placeholder={t.descPlaceholder}
                       />
                     </div>
                   ))}
                 </div>
 
-                {/* FAQs */}
                 <div className="space-y-3 pt-4 border-t border-[#D0D5DF] dark:border-[#262B36]">
                   <div className="flex items-center justify-between">
                     <h3 className="text-xs font-bold text-[#111318] dark:text-[#F4F6F9]">
-                      Preguntas frecuentes ({content.faqs.length})
+                      {t.faqsTitle(content.faqs.length)}
                     </h3>
                     <button
                       type="button"
@@ -527,8 +521,8 @@ export function ContentStep({
                             ...content.faqs,
                             {
                               id: `q-${Date.now()}`,
-                              question: '¿Nueva pregunta frecuente?',
-                              answer: 'Respuesta clara y directa para tus visitantes.',
+                              question: t.newFaqQuestion,
+                              answer: t.newFaqAnswer,
                             },
                           ],
                         })
@@ -536,7 +530,7 @@ export function ContentStep({
                       className="inline-flex items-center gap-1 text-xs font-medium text-[#9A7400] hover:underline dark:text-[#F5C400] cursor-pointer"
                     >
                       <Plus className="h-3.5 w-3.5" />
-                      <span>Añadir pregunta</span>
+                      <span>{t.addFaqBtn}</span>
                     </button>
                   </div>
 
@@ -568,7 +562,7 @@ export function ContentStep({
                                 faqs: content.faqs.filter((q) => q.id !== faq.id),
                               })
                             }
-                            aria-label="Eliminar pregunta"
+                            aria-label={t.deleteFaqAria}
                             className="p-2 border border-[#D0D5DF] text-[#4B5565] hover:text-red-500 dark:border-[#262B36] cursor-pointer"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -594,13 +588,11 @@ export function ContentStep({
               </div>
             ) : null}
 
-            {/* Tab 3: Media & Images */}
             {activeTab === 'media' ? (
               <div className="space-y-6">
-                {/* Logo upload */}
                 <div className="space-y-3">
                   <h3 className="text-xs font-bold text-[#111318] dark:text-[#F4F6F9]">
-                    Logotipo de la marca (opcional)
+                    {t.logoHeading}
                   </h3>
                   <div className="flex items-center gap-3">
                     <input
@@ -616,7 +608,7 @@ export function ContentStep({
                       className="inline-flex h-10 items-center gap-2 border border-[#D0D5DF] bg-[#F8F9FB] px-4 text-xs font-medium text-[#111318] hover:border-[#9A7400] dark:border-[#262B36] dark:bg-[#151820] dark:text-[#F4F6F9] dark:hover:border-[#F5C400] cursor-pointer"
                     >
                       <Upload className="h-3.5 w-3.5" />
-                      <span>Subir logotipo</span>
+                      <span>{t.uploadLogoBtn}</span>
                     </button>
                     {content.logoDataUrl ? (
                       <button
@@ -624,24 +616,21 @@ export function ContentStep({
                         onClick={() => onUpdateContent({ ...content, logoDataUrl: null })}
                         className="text-xs text-red-500 hover:underline cursor-pointer"
                       >
-                        Quitar logotipo
+                        {t.removeLogoBtn}
                       </button>
                     ) : (
                       <span className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">
-                        PNG, SVG o WebP
+                        {t.logoHint}
                       </span>
                     )}
                   </div>
                 </div>
 
-                {/* Hero Image Upload */}
                 <div className="space-y-3 pt-4 border-t border-[#D0D5DF] dark:border-[#262B36]">
                   <h3 className="text-xs font-bold text-[#111318] dark:text-[#F4F6F9]">
-                    Imagen principal de portada
+                    {t.heroImageHeading}
                   </h3>
-                  <p className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">
-                    Sube tu propia fotografía (se incluirá automáticamente en public/assets/ al exportar) o elige una imagen del estudio.
-                  </p>
+                  <p className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">{t.heroImageDesc}</p>
                   <input
                     ref={heroFileRef}
                     type="file"
@@ -655,11 +644,11 @@ export function ContentStep({
                     className="inline-flex h-10 w-full items-center justify-center gap-2 border border-dashed border-[#9A7400] bg-[#FEFCE8]/60 px-4 text-xs font-semibold text-[#111318] hover:bg-[#FEFCE8] dark:border-[#F5C400] dark:bg-[#F5C400]/10 dark:text-[#F4F6F9] cursor-pointer"
                   >
                     <ImageIcon className="h-4 w-4 text-[#9A7400] dark:text-[#F5C400]" />
-                    <span>Cargar imagen desde tu equipo</span>
+                    <span>{t.uploadHeroBtn}</span>
                   </button>
 
                   <div className="grid grid-cols-2 gap-2.5 pt-2">
-                    {CURATED_GALLERY.map((asset) => {
+                    {gallery.map((asset) => {
                       const active = content.heroImageUrl === asset.url;
                       return (
                         <button
@@ -697,19 +686,17 @@ export function ContentStep({
               </div>
             ) : null}
 
-            {/* Tab 4: Bulk JSON Import & Sector Presets */}
             {activeTab === 'import' ? (
               <div className="space-y-6">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <FileJson className="h-4 w-4 text-[#9A7400] dark:text-[#F5C400]" />
                     <h3 className="text-xs font-bold text-[#111318] dark:text-[#F4F6F9]">
-                      Carga masiva mediante JSON
+                      {t.jsonHeading}
                     </h3>
                   </div>
                   <p className="text-xs leading-relaxed text-[#4B5565] dark:text-[#9BA4B5]">
-                    Descarga la estructura actual de contenidos, edítala en cualquier editor o
-                    pásala a tu equipo de redacción, y vuelve a subir el archivo JSON aquí.
+                    {t.jsonDesc}
                   </p>
 
                   <div className="flex flex-wrap gap-2.5">
@@ -719,7 +706,7 @@ export function ContentStep({
                       className="inline-flex h-10 items-center gap-2 border border-[#D0D5DF] bg-[#F8F9FB] px-4 text-xs font-medium text-[#111318] hover:border-[#111318] dark:border-[#262B36] dark:bg-[#151820] dark:text-[#F4F6F9] cursor-pointer"
                     >
                       <Download className="h-3.5 w-3.5" />
-                      <span>Descargar siteContent.json</span>
+                      <span>{t.downloadJsonBtn}</span>
                     </button>
 
                     <input
@@ -735,7 +722,7 @@ export function ContentStep({
                       className="inline-flex h-10 items-center gap-2 bg-[#F5C400] px-4 text-xs font-semibold text-[#0A0B0D] hover:bg-[#FFD000] cursor-pointer"
                     >
                       <Upload className="h-3.5 w-3.5" />
-                      <span>Importar JSON</span>
+                      <span>{t.importJsonBtn}</span>
                     </button>
                   </div>
 
@@ -754,17 +741,17 @@ export function ContentStep({
 
                 <div className="space-y-3 pt-4 border-t border-[#D0D5DF] dark:border-[#262B36]">
                   <h3 className="text-xs font-bold text-[#111318] dark:text-[#F4F6F9]">
-                    Cargar textos de ejemplo por sector
+                    {t.sectorPresetsHeading}
                   </h3>
                   <div className="grid grid-cols-2 gap-2">
                     {(
                       [
-                        { id: 'landing', label: 'Hardware / Producto' },
-                        { id: 'saas', label: 'Plataforma SaaS' },
-                        { id: 'ecommerce', label: 'Catálogo / Taller' },
-                        { id: 'portfolio', label: 'Estudio Arquitectura' },
-                        { id: 'corporate', label: 'Industrial B2B' },
-                        { id: 'editorial', label: 'Editorial Técnico' },
+                        { id: 'landing', label: t.sectorLabels.landing },
+                        { id: 'saas', label: t.sectorLabels.saas },
+                        { id: 'ecommerce', label: t.sectorLabels.ecommerce },
+                        { id: 'portfolio', label: t.sectorLabels.portfolio },
+                        { id: 'corporate', label: t.sectorLabels.corporate },
+                        { id: 'editorial', label: t.sectorLabels.editorial },
                       ] as const
                     ).map((sector) => (
                       <button
@@ -783,9 +770,9 @@ export function ContentStep({
           </div>
         </div>
 
-        {/* Right: Live Interactive Preview */}
         <div className="lg:col-span-7 lg:sticky lg:top-20">
           <LiveSitePreview
+            locale={locale}
             template={template}
             sections={sections}
             graphicStyle={graphicStyle}
@@ -795,7 +782,6 @@ export function ContentStep({
         </div>
       </div>
 
-      {/* Bottom Step Navigation */}
       <div className="flex items-center justify-between pt-2">
         <button
           type="button"
@@ -803,7 +789,7 @@ export function ContentStep({
           className="inline-flex h-11 items-center gap-2 border border-[#D0D5DF] bg-white px-5 text-sm font-medium text-[#111318] transition-colors hover:border-[#111318] dark:border-[#262B36] dark:bg-[#111318] dark:text-[#F4F6F9] dark:hover:border-[#F4F6F9] cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Volver a estilo</span>
+          <span>{t.backBtn}</span>
         </button>
 
         <button
@@ -811,7 +797,7 @@ export function ContentStep({
           onClick={onNext}
           className="inline-flex h-11 items-center gap-2 bg-[#F5C400] px-6 text-sm font-semibold text-[#0A0B0D] transition-colors hover:bg-[#FFD000] cursor-pointer"
         >
-          <span>Generar código y exportar a GitHub</span>
+          <span>{t.nextBtn}</span>
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>

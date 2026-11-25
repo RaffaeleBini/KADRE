@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Monitor, Smartphone, Tablet, Image as ImageIcon } from 'lucide-react';
+import { Locale, TRANSLATIONS } from '../i18n/translations';
 import {
   ColorPatternPreset,
   GraphicStylePreset,
@@ -9,6 +10,7 @@ import {
 } from '../types/builder';
 
 interface LiveSitePreviewProps {
+  locale: Locale;
   template: TemplateDefinition;
   sections: SectionConfig[];
   graphicStyle: GraphicStylePreset;
@@ -58,6 +60,7 @@ function ResilientImage({
 }
 
 export function LiveSitePreview({
+  locale,
   template,
   sections,
   graphicStyle,
@@ -65,6 +68,7 @@ export function LiveSitePreview({
   content,
   previewSlug,
 }: LiveSitePreviewProps) {
+  const t = TRANSLATIONS[locale].preview;
   const [viewport, setViewport] = useState<ViewportMode>('desktop');
   const [openFaqId, setOpenFaqId] = useState<string | null>(content.faqs[0]?.id ?? null);
   const [contactSent, setContactSent] = useState(false);
@@ -81,11 +85,11 @@ export function LiveSitePreview({
         : 'py-12';
 
   const navItems = [
-    enabledSections.some((s) => s.type === 'features') ? 'Capacidades' : null,
-    enabledSections.some((s) => s.type === 'catalog') ? 'Selección' : null,
-    enabledSections.some((s) => s.type === 'pricing') ? 'Planes' : null,
-    enabledSections.some((s) => s.type === 'faq') ? 'Preguntas' : null,
-    enabledSections.some((s) => s.type === 'contact') ? 'Contacto' : null,
+    enabledSections.some((s) => s.type === 'features') ? t.navFeatures : null,
+    enabledSections.some((s) => s.type === 'catalog') ? t.navCatalog : null,
+    enabledSections.some((s) => s.type === 'pricing') ? t.navPricing : null,
+    enabledSections.some((s) => s.type === 'faq') ? t.navFaq : null,
+    enabledSections.some((s) => s.type === 'contact') ? t.navContact : null,
   ].filter(Boolean) as string[];
 
   const displaySlug = (previewSlug || content.brandName)
@@ -105,19 +109,19 @@ export function LiveSitePreview({
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D0D5DF] bg-white px-4 py-2.5 dark:border-[#262B36] dark:bg-[#111318]">
         <div className="flex items-center gap-3 min-w-0">
           <span className="font-mono text-[11px] font-medium text-[#9A7400] dark:text-[#F5C400] whitespace-nowrap shrink-0">
-            Vista previa en vivo
+            {t.liveLabel}
           </span>
           <span className="truncate font-mono text-[11px] text-[#4B5565] dark:text-[#9BA4B5]">
-            https://{displaySlug || 'mi-web'}.github.io
+            https://{displaySlug || (locale === 'it' ? 'mio-sito' : 'mi-web')}.github.io
           </span>
         </div>
 
         <div className="flex items-center gap-1 border border-[#D0D5DF] bg-[#F3F4F6] p-0.5 dark:border-[#262B36] dark:bg-[#0A0B0D]">
           {(
             [
-              { id: 'desktop', label: 'Escritorio', icon: Monitor },
-              { id: 'tablet', label: 'Tablet', icon: Tablet },
-              { id: 'mobile', label: 'Móvil', icon: Smartphone },
+              { id: 'desktop', label: t.desktop, icon: Monitor },
+              { id: 'tablet', label: t.tablet, icon: Tablet },
+              { id: 'mobile', label: t.mobile, icon: Smartphone },
             ] as const
           ).map((mode) => {
             const Icon = mode.icon;
@@ -217,10 +221,7 @@ export function LiveSitePreview({
                             : 'col-span-6 flex flex-col justify-center space-y-4'
                         }
                       >
-                        <p
-                          className="text-xs font-semibold"
-                          style={{ color: colorPattern.accent }}
-                        >
+                        <p className="text-xs font-semibold" style={{ color: colorPattern.accent }}>
                           {content.heroEyebrow}
                         </p>
                         <h2
@@ -530,9 +531,9 @@ export function LiveSitePreview({
                       {content.testimonialsHeading}
                     </h3>
                     <div className={`grid gap-4 ${isCompact ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                      {content.testimonials.map((t) => (
+                      {content.testimonials.map((item) => (
                         <blockquote
-                          key={t.id}
+                          key={item.id}
                           className="p-5 space-y-3"
                           style={{
                             backgroundColor: colorPattern.surface,
@@ -540,11 +541,11 @@ export function LiveSitePreview({
                             borderRadius: graphicStyle.borderRadius,
                           }}
                         >
-                          <p className="text-xs leading-relaxed">“{t.quote}”</p>
+                          <p className="text-xs leading-relaxed">“{item.quote}”</p>
                           <footer className="text-[11px]">
-                            <strong className="font-semibold">{t.author}</strong>
+                            <strong className="font-semibold">{item.author}</strong>
                             <span style={{ color: colorPattern.textMuted }}>
-                              {' '}· {t.role}, {t.organization}
+                              {' '}· {item.role}, {item.organization}
                             </span>
                           </footer>
                         </blockquote>
@@ -637,7 +638,7 @@ export function LiveSitePreview({
                         <div className="grid grid-cols-2 gap-2.5">
                           <input
                             type="text"
-                            placeholder="Tu nombre"
+                            placeholder={t.formNamePlaceholder}
                             className="w-full bg-transparent px-3 py-2 text-xs"
                             style={{
                               border: `1px solid ${colorPattern.border}`,
@@ -646,7 +647,7 @@ export function LiveSitePreview({
                           />
                           <input
                             type="email"
-                            placeholder="Correo"
+                            placeholder={t.formEmailPlaceholder}
                             className="w-full bg-transparent px-3 py-2 text-xs"
                             style={{
                               border: `1px solid ${colorPattern.border}`,
@@ -656,7 +657,7 @@ export function LiveSitePreview({
                         </div>
                         <textarea
                           rows={2}
-                          placeholder="Mensaje breve..."
+                          placeholder={t.formMessagePlaceholder}
                           className="w-full bg-transparent px-3 py-2 text-xs"
                           style={{
                             border: `1px solid ${colorPattern.border}`,
@@ -673,11 +674,11 @@ export function LiveSitePreview({
                               borderRadius: graphicStyle.buttonRadius,
                             }}
                           >
-                            Enviar consulta
+                            {t.formSubmit}
                           </button>
                           {contactSent ? (
                             <span className="text-xs" style={{ color: colorPattern.accent }}>
-                              Simulación enviada correctamente
+                              {t.formSentFeedback}
                             </span>
                           ) : null}
                         </div>

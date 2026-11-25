@@ -7,15 +7,17 @@ import { TemplateStep } from './components/TemplateStep';
 import { TopBar } from './components/TopBar';
 import { WelcomeView } from './components/WelcomeView';
 import {
-  ALL_STACKS,
   buildSectionsForTemplate,
-  COLOR_PATTERNS,
   computeStackRecommendation,
   DEFAULT_DISCOVERY_ANSWERS,
+  getAllStacks,
+  getColorPatterns,
+  getGraphicStyles,
   getStarterContentForProject,
-  GRAPHIC_STYLES,
-  TEMPLATES,
+  getTemplates,
+  localizeSections,
 } from './data/presets';
+import { Locale, TRANSLATIONS } from './i18n/translations';
 import {
   ColorPatternPreset,
   DiscoveryAnswers,
@@ -29,6 +31,7 @@ import {
 
 const DRAFT_STORAGE_KEY = 'kadre_web_builder_draft_v1';
 const THEME_STORAGE_KEY = 'kadre_theme_v1';
+const LOCALE_STORAGE_KEY = 'kadre_locale_v1';
 
 const STEP_INDEX: Record<StepId, number> = {
   welcome: 0,
@@ -73,6 +76,15 @@ function isLightHex(hex: string): boolean {
 }
 
 export default function App() {
+  const [locale, setLocale] = useState<Locale>(() => {
+    try {
+      const saved = localStorage.getItem(LOCALE_STORAGE_KEY);
+      return saved === 'it' ? 'it' : 'es';
+    } catch {
+      return 'es';
+    }
+  });
+
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     try {
       const saved = localStorage.getItem(THEME_STORAGE_KEY);
@@ -94,30 +106,38 @@ export default function App() {
   const [manualStackId, setManualStackId] = useState<string | null>(
     initialDraft?.manualStackId ?? null
   );
+
+  const initialTemplates = getTemplates(locale);
+  const initialStyles = getGraphicStyles(locale);
+  const initialPatterns = getColorPatterns(locale);
+
   const [templateId, setTemplateId] = useState<string>(
-    initialDraft?.templateId ?? TEMPLATES[0].id
+    initialDraft?.templateId ?? initialTemplates[0].id
   );
   const [sections, setSections] = useState<SectionConfig[]>(
-    initialDraft?.sections ?? buildSectionsForTemplate(TEMPLATES[0])
+    initialDraft?.sections
+      ? localizeSections(initialDraft.sections, locale)
+      : buildSectionsForTemplate(initialTemplates[0], locale)
   );
   const [graphicStyleId, setGraphicStyleId] = useState<string>(
-    initialDraft?.graphicStyleId ?? GRAPHIC_STYLES[0].id
+    initialDraft?.graphicStyleId ?? initialStyles[0].id
   );
   const [colorPatternId, setColorPatternId] = useState<string>(
-    initialDraft?.colorPatternId ?? COLOR_PATTERNS[0].id
+    initialDraft?.colorPatternId ?? initialPatterns[0].id
   );
   const [customAccent, setCustomAccent] = useState<string | null>(
     initialDraft?.customAccent ?? null
   );
   const [content, setContent] = useState<SiteContent>(
-    initialDraft?.content ?? getStarterContentForProject(DEFAULT_DISCOVERY_ANSWERS.projectType)
+    initialDraft?.content ??
+      getStarterContentForProject(DEFAULT_DISCOVERY_ANSWERS.projectType, locale)
   );
   const [contentTouched, setContentTouched] = useState<boolean>(
     initialDraft?.contentTouched ?? false
   );
   const [githubConfig, setGithubConfig] = useState<GithubExportConfig>(
     initialDraft?.githubConfig ?? {
-      username: 'tu-usuario',
+      username: locale === 'it' ? 'tuo-utente' : 'tu-usuario',
       repoName: 'vektor-audio-web',
       visibility: 'public',
       branch: 'main',
@@ -136,9 +156,20 @@ export default function App() {
     try {
       localStorage.setItem(THEME_STORAGE_KEY, theme);
     } catch {
-      // ignore storage quota errors
+      // ignore
     }
   }, [theme]);
+
+  // Sync HTML lang attribute & title when locale changes
+  useEffect(() => {
+    document.documentElement.lang = locale;
+    document.title = TRANSLATIONS[locale].metaTitle;
+    try {
+      localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+    } catch {
+      // ignore
+    }
+  }, [locale]);
 
   // Persist draft when working in steps
   useEffect(() => {
@@ -176,31 +207,58 @@ export default function App() {
     maxVisitedIndex,
   ]);
 
-  const recommendedStack = useMemo(() => computeStackRecommendation(answers), [answers]);
+  const templates = useMemo(() => getTemplates(locale), [locale]);
+  const graphicStyles = useMemo(() => getGraphicStyles(locale), [locale]);
+  const colorPatterns = useMemo(() => getColorPatterns(locale), [locale]);
+  const allStacks = useMemo(() => getAllStacks(locale), [locale]);
+
+  const recommendedStack = useMemo(
+    () => computeStackRecommendation(answers, locale),
+    [answers, locale]
+  );
   const selectedStack = useMemo(() => {
     if (!manualStackId) return recommendedStack;
-    return ALL_STACKS.find((s) => s.id === manualStackId) ?? recommendedStack;
-  }, [manualStackId, recommendedStack]);
+    return allStacks.find((s) => s.id === manualStackId) ?? recommendedStack;
+  }, [manualStackId, recommendedStack, allStacks]);
 
   const selectedTemplate = useMemo(
-    () => TEMPLATES.find((t) => t.id === templateId) ?? TEMPLATES[0],
-    [templateId]
+    () => templates.find((t) => t.id === templateId) ?? templates[0],
+    [templates, templateId]
   );
 
   const selectedGraphicStyle = useMemo(
-    () => GRAPHIC_STYLES.find((g) => g.id === graphicStyleId) ?? GRAPHIC_STYLES[0],
-    [graphicStyleId]
+    () => graphicStyles.find((g) => g.id === graphicStyleId) ?? graphicStyles[0],
+    [graphicStyles, graphicStyleId]
   );
 
   const selectedColorPattern = useMemo(() => {
-    const base = COLOR_PATTERNS.find((c) => c.id === colorPatternId) ?? COLOR_PATTERNS[0];
+    const base = colorPatterns.find((c) => c.id === colorPatternId) ?? colorPatterns[0];
     if (!customAccent) return base;
     return {
       ...base,
       accent: customAccent,
       accentText: isLightHex(customAccent) ? '#0A0B0D' : '#FFFFFF',
     };
-  }, [colorPatternId, customAccent]);
+  }, [colorPatterns, colorPatternId, customAccent]);
+
+  function handleChangeLocale(nextLocale: Locale) {
+    if (nextLocale === locale) return;
+    setLocale(nextLocale);
+    setSections((prev) => localizeSections(prev, nextLocale));
+
+    if (!contentTouched) {
+      setContent(getStarterContentForProject(answers.projectType, nextLocale));
+    }
+    setGithubConfig((prev) => ({
+      ...prev,
+      username:
+        prev.username === 'tu-usuario' || prev.username === 'tuo-utente'
+          ? nextLocale === 'it'
+            ? 'tuo-utente'
+            : 'tu-usuario'
+          : prev.username,
+    }));
+  }
 
   function navigateTo(step: StepId) {
     setCurrentStep(step);
@@ -214,12 +272,12 @@ export default function App() {
 
     if (projectTypeChanged) {
       const matchingTemplate =
-        TEMPLATES.find((t) => t.bestFor.includes(next.projectType)) ?? TEMPLATES[0];
+        templates.find((t) => t.bestFor.includes(next.projectType)) ?? templates[0];
       setTemplateId(matchingTemplate.id);
-      setSections(buildSectionsForTemplate(matchingTemplate));
+      setSections(buildSectionsForTemplate(matchingTemplate, locale));
 
       if (!contentTouched) {
-        const starter = getStarterContentForProject(next.projectType);
+        const starter = getStarterContentForProject(next.projectType, locale);
         setContent(starter);
         setGithubConfig((prev) => ({
           ...prev,
@@ -234,7 +292,7 @@ export default function App() {
 
   function handleSelectTemplate(tpl: TemplateDefinition) {
     setTemplateId(tpl.id);
-    setSections(buildSectionsForTemplate(tpl));
+    setSections(buildSectionsForTemplate(tpl, locale));
   }
 
   function handleToggleSection(sectionId: string) {
@@ -265,18 +323,21 @@ export default function App() {
   }
 
   function handleResetProject() {
-    const freshContent = getStarterContentForProject(DEFAULT_DISCOVERY_ANSWERS.projectType);
+    const freshContent = getStarterContentForProject(
+      DEFAULT_DISCOVERY_ANSWERS.projectType,
+      locale
+    );
     setAnswers(DEFAULT_DISCOVERY_ANSWERS);
     setManualStackId(null);
-    setTemplateId(TEMPLATES[0].id);
-    setSections(buildSectionsForTemplate(TEMPLATES[0]));
-    setGraphicStyleId(GRAPHIC_STYLES[0].id);
-    setColorPatternId(COLOR_PATTERNS[0].id);
+    setTemplateId(templates[0].id);
+    setSections(buildSectionsForTemplate(templates[0], locale));
+    setGraphicStyleId(graphicStyles[0].id);
+    setColorPatternId(colorPatterns[0].id);
     setCustomAccent(null);
     setContent(freshContent);
     setContentTouched(false);
     setGithubConfig({
-      username: 'tu-usuario',
+      username: locale === 'it' ? 'tuo-utente' : 'tu-usuario',
       repoName: 'vektor-audio-web',
       visibility: 'public',
       branch: 'main',
@@ -308,12 +369,16 @@ export default function App() {
     navigateTo(target);
   }
 
+  const footerT = TRANSLATIONS[locale].footer;
+
   return (
     <div className="min-h-screen hud-grid-bg bg-[#F3F4F6] text-[#111318] dark:bg-[#0A0B0D] dark:text-[#F4F6F9] flex flex-col">
       <TopBar
+        locale={locale}
         currentStep={currentStep}
         maxVisitedIndex={maxVisitedIndex}
         theme={theme}
+        onChangeLocale={handleChangeLocale}
         onToggleTheme={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}
         onNavigateStep={navigateTo}
         onResetProject={handleResetProject}
@@ -322,6 +387,7 @@ export default function App() {
       <main className="flex-1">
         {currentStep === 'welcome' ? (
           <WelcomeView
+            locale={locale}
             hasSavedDraft={Boolean(initialDraft)}
             savedBrandName={initialDraft?.content?.brandName}
             onStartNew={handleStartFresh}
@@ -331,6 +397,7 @@ export default function App() {
 
         {currentStep === 'discovery' ? (
           <DiscoveryStep
+            locale={locale}
             answers={answers}
             recommendedStack={recommendedStack}
             selectedStack={selectedStack}
@@ -342,6 +409,7 @@ export default function App() {
 
         {currentStep === 'template' ? (
           <TemplateStep
+            locale={locale}
             answers={answers}
             stack={selectedStack}
             selectedTemplate={selectedTemplate}
@@ -356,11 +424,12 @@ export default function App() {
 
         {currentStep === 'style' ? (
           <StyleStep
+            locale={locale}
             template={selectedTemplate}
             sections={sections}
             graphicStyle={selectedGraphicStyle}
             colorPattern={
-              COLOR_PATTERNS.find((c) => c.id === colorPatternId) ?? COLOR_PATTERNS[0]
+              colorPatterns.find((c) => c.id === colorPatternId) ?? colorPatterns[0]
             }
             customAccent={customAccent}
             content={content}
@@ -374,6 +443,7 @@ export default function App() {
 
         {currentStep === 'content' ? (
           <ContentStep
+            locale={locale}
             template={selectedTemplate}
             sections={sections}
             graphicStyle={selectedGraphicStyle}
@@ -387,6 +457,7 @@ export default function App() {
 
         {currentStep === 'export' ? (
           <ExportStep
+            locale={locale}
             answers={answers}
             stack={selectedStack}
             template={selectedTemplate}
@@ -403,11 +474,11 @@ export default function App() {
 
       <footer className="border-t border-[#D0D5DF] bg-[#F3F4F6]/90 py-5 dark:border-[#262B36] dark:bg-[#0A0B0D]/90">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4 px-6 text-xs text-[#4B5565] dark:text-[#9BA4B5]">
-          <span>KADRE · Generador guiado de arquitectura web y exportación a GitHub</span>
+          <span>{footerT.left}</span>
           <span className="font-mono tabular-nums">
             {currentStep === 'welcome'
-              ? 'Modo oscuro por defecto · Alternable a modo claro'
-              : `Proyecto activo: ${content.brandName}`}
+              ? footerT.rightWelcome
+              : footerT.rightActive(content.brandName)}
           </span>
         </div>
       </footer>

@@ -1,5 +1,6 @@
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, Layers } from 'lucide-react';
-import { TEMPLATES } from '../data/presets';
+import { getTemplates } from '../data/presets';
+import { Locale, TRANSLATIONS } from '../i18n/translations';
 import {
   DiscoveryAnswers,
   SectionConfig,
@@ -8,6 +9,7 @@ import {
 } from '../types/builder';
 
 interface TemplateStepProps {
+  locale: Locale;
   answers: DiscoveryAnswers;
   stack: StackRecommendation;
   selectedTemplate: TemplateDefinition;
@@ -20,6 +22,7 @@ interface TemplateStepProps {
 }
 
 export function TemplateStep({
+  locale,
   answers,
   stack,
   selectedTemplate,
@@ -30,8 +33,10 @@ export function TemplateStep({
   onBack,
   onNext,
 }: TemplateStepProps) {
-  // Rank templates so the ones best matching the diagnostic answers come first
-  const rankedTemplates = [...TEMPLATES].sort((a, b) => {
+  const t = TRANSLATIONS[locale].template;
+  const templates = getTemplates(locale);
+
+  const rankedTemplates = [...templates].sort((a, b) => {
     const aMatch = a.bestFor.includes(answers.projectType) ? 1 : 0;
     const bMatch = b.bestFor.includes(answers.projectType) ? 1 : 0;
     return bMatch - aMatch;
@@ -41,29 +46,28 @@ export function TemplateStep({
 
   return (
     <div className="mx-auto max-w-[1440px] px-6 py-8 lg:py-10 space-y-8">
-      {/* Step Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#D0D5DF] pb-5 dark:border-[#262B36]">
         <div className="space-y-1.5">
           <p className="font-mono text-xs font-medium text-[#9A7400] dark:text-[#F5C400]">
-            Paso 2 de 5 · Plantillas personalizables
+            {t.stepTag}
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#111318] dark:text-[#F4F6F9]">
-            Propuestas de estructura basadas en tu diagnóstico
+            {t.title}
           </h1>
         </div>
         <div className="text-xs font-mono text-[#4B5565] dark:text-[#9BA4B5]">
-          Stack activo: <span className="text-[#111318] dark:text-[#F4F6F9]">{stack.name}</span>
+          {t.activeStackLabel}:{' '}
+          <span className="text-[#111318] dark:text-[#F4F6F9]">{stack.name}</span>
         </div>
       </div>
 
-      {/* Template Grid */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-[#111318] dark:text-[#F4F6F9]">
-            Selecciona una plantilla base
+            {t.selectBaseHeading}
           </h2>
           <span className="text-xs text-[#4B5565] dark:text-[#9BA4B5] tabular-nums">
-            {rankedTemplates.length} plantillas disponibles · Ordenadas por compatibilidad
+            {t.availableCount(rankedTemplates.length)}
           </span>
         </div>
 
@@ -93,7 +97,7 @@ export function TemplateStep({
                   <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between text-xs font-mono text-[#F4F6F9]">
                     <span>{tpl.category}</span>
                     {isRecommended ? (
-                      <span className="text-[#F5C400] font-semibold">Recomendada</span>
+                      <span className="text-[#F5C400] font-semibold">{t.recommendedTag}</span>
                     ) : null}
                   </div>
                 </div>
@@ -125,22 +129,19 @@ export function TemplateStep({
         </div>
       </section>
 
-      {/* Section Architecture Customizer */}
       <section className="hud-frame border border-[#D0D5DF] bg-white p-6 dark:border-[#262B36] dark:bg-[#111318] space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#D0D5DF] pb-4 dark:border-[#262B36]">
           <div className="flex items-center gap-2.5">
             <Layers className="h-4 w-4 text-[#9A7400] dark:text-[#F5C400]" />
             <div>
               <h2 className="text-base font-bold text-[#111318] dark:text-[#F4F6F9]">
-                Estructura de bloques de «{selectedTemplate.name}»
+                {t.blocksHeading(selectedTemplate.name)}
               </h2>
-              <p className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">
-                Activa, desactiva o reordena las secciones que aparecerán en la página generada.
-              </p>
+              <p className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">{t.blocksSubheading}</p>
             </div>
           </div>
           <div className="font-mono text-xs text-[#9A7400] dark:text-[#F5C400] tabular-nums">
-            {enabledCount} de {sections.length} secciones activas
+            {t.activeSectionsCount(enabledCount, sections.length)}
           </div>
         </div>
 
@@ -161,7 +162,7 @@ export function TemplateStep({
                     </span>
                     {section.required ? (
                       <span className="font-mono text-[11px] text-[#9A7400] dark:text-[#F5C400]">
-                        Obligatoria
+                        {t.requiredTag}
                       </span>
                     ) : null}
                   </div>
@@ -176,7 +177,7 @@ export function TemplateStep({
                   type="button"
                   disabled={idx === 0 || section.required}
                   onClick={() => onMoveSection(section.id, 'up')}
-                  aria-label={`Subir ${section.label}`}
+                  aria-label={t.moveUpAria(section.label)}
                   className="inline-flex h-8 w-8 items-center justify-center border border-[#D0D5DF] text-[#4B5565] transition-colors hover:border-[#111318] hover:text-[#111318] disabled:opacity-30 disabled:cursor-not-allowed dark:border-[#262B36] dark:text-[#9BA4B5] dark:hover:border-[#F4F6F9] dark:hover:text-[#F4F6F9] cursor-pointer"
                 >
                   <ArrowUp className="h-3.5 w-3.5" />
@@ -185,7 +186,7 @@ export function TemplateStep({
                   type="button"
                   disabled={idx === sections.length - 1 || section.required}
                   onClick={() => onMoveSection(section.id, 'down')}
-                  aria-label={`Bajar ${section.label}`}
+                  aria-label={t.moveDownAria(section.label)}
                   className="inline-flex h-8 w-8 items-center justify-center border border-[#D0D5DF] text-[#4B5565] transition-colors hover:border-[#111318] hover:text-[#111318] disabled:opacity-30 disabled:cursor-not-allowed dark:border-[#262B36] dark:text-[#9BA4B5] dark:hover:border-[#F4F6F9] dark:hover:text-[#F4F6F9] cursor-pointer"
                 >
                   <ArrowDown className="h-3.5 w-3.5" />
@@ -201,7 +202,7 @@ export function TemplateStep({
                       : 'border border-[#D0D5DF] text-[#4B5565] hover:border-[#111318] dark:border-[#262B36] dark:text-[#9BA4B5]'
                   }`}
                 >
-                  {section.enabled ? 'Activa' : 'Oculta'}
+                  {section.enabled ? t.activeStatus : t.hiddenStatus}
                 </button>
               </div>
             </div>
@@ -209,7 +210,6 @@ export function TemplateStep({
         </div>
       </section>
 
-      {/* Bottom Step Navigation */}
       <div className="flex items-center justify-between pt-2">
         <button
           type="button"
@@ -217,7 +217,7 @@ export function TemplateStep({
           className="inline-flex h-11 items-center gap-2 border border-[#D0D5DF] bg-white px-5 text-sm font-medium text-[#111318] transition-colors hover:border-[#111318] dark:border-[#262B36] dark:bg-[#111318] dark:text-[#F4F6F9] dark:hover:border-[#F4F6F9] cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Volver a arquitectura</span>
+          <span>{t.backBtn}</span>
         </button>
 
         <button
@@ -225,7 +225,7 @@ export function TemplateStep({
           onClick={onNext}
           className="inline-flex h-11 items-center gap-2 bg-[#F5C400] px-6 text-sm font-semibold text-[#0A0B0D] transition-colors hover:bg-[#FFD000] cursor-pointer"
         >
-          <span>Personalizar estilo y colores</span>
+          <span>{t.nextBtn}</span>
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>

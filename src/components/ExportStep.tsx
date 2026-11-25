@@ -9,6 +9,7 @@ import {
   GitBranch,
   Terminal,
 } from 'lucide-react';
+import { Locale, TRANSLATIONS } from '../i18n/translations';
 import {
   ColorPatternPreset,
   DeployPlatform,
@@ -20,9 +21,14 @@ import {
   StackRecommendation,
   TemplateDefinition,
 } from '../types/builder';
-import { downloadRepositoryZip, generateRepositoryFiles } from '../utils/codeGenerator';
+import {
+  downloadRepositoryZip,
+  generateRepositoryFiles,
+  getExportScriptFilename,
+} from '../utils/codeGenerator';
 
 interface ExportStepProps {
+  locale: Locale;
   answers: DiscoveryAnswers;
   stack: StackRecommendation;
   template: TemplateDefinition;
@@ -35,14 +41,10 @@ interface ExportStepProps {
   onBack: () => void;
 }
 
-const DEPLOY_PLATFORMS: { id: DeployPlatform; label: string; note: string }[] = [
-  { id: 'github-pages', label: 'GitHub Pages', note: 'Gratuito vía GitHub Actions' },
-  { id: 'vercel', label: 'Vercel', note: 'Despliegue instantáneo con vista previa' },
-  { id: 'netlify', label: 'Netlify', note: 'CDN global y formularios integrados' },
-  { id: 'cloudflare', label: 'Cloudflare Pages', note: 'Red Edge sin límite de ancho de banda' },
-];
+const PLATFORM_IDS: DeployPlatform[] = ['github-pages', 'vercel', 'netlify', 'cloudflare'];
 
 export function ExportStep({
+  locale,
   answers,
   stack,
   template,
@@ -54,6 +56,9 @@ export function ExportStep({
   onUpdateGithubConfig,
   onBack,
 }: ExportStepProps) {
+  const t = TRANSLATIONS[locale].exportStep;
+  const scriptFilename = getExportScriptFilename(locale);
+
   const [selectedFilePath, setSelectedFilePath] = useState<string>('src/App.tsx');
   const [cliMode, setCliMode] = useState<'git' | 'gh'>('git');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -63,6 +68,7 @@ export function ExportStep({
   const generatedFiles = useMemo(
     () =>
       generateRepositoryFiles({
+        locale,
         answers,
         stack,
         template,
@@ -72,25 +78,31 @@ export function ExportStep({
         content,
         github: githubConfig,
       }),
-    [answers, stack, template, sections, graphicStyle, colorPattern, content, githubConfig]
+    [locale, answers, stack, template, sections, graphicStyle, colorPattern, content, githubConfig]
   );
 
   const activeFile =
     generatedFiles.find((f) => f.path === selectedFilePath) ?? generatedFiles[0];
 
-  const cleanUser = (githubConfig.username || 'tu-usuario').trim();
-  const cleanRepo = (githubConfig.repoName || content.brandName)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-_]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'mi-web-automatizada';
+  const cleanUser = (githubConfig.username || t.ghUserPlaceholder).trim();
+  const cleanRepo =
+    (githubConfig.repoName || content.brandName)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-_]+/g, '-')
+      .replace(/^-+|-+$/g, '') || (locale === 'it' ? 'mio-sito-web' : 'mi-web-automatizada');
   const branch = (githubConfig.branch || 'main').trim();
+
+  const commitMessage =
+    locale === 'it'
+      ? `Versione iniziale di ${content.brandName}`
+      : `Versión inicial de ${content.brandName}`;
 
   const gitPushCommands =
     cliMode === 'git'
       ? `git init
 git add .
-git commit -m "Versión inicial de ${content.brandName}"
+git commit -m "${commitMessage}"
 git branch -M ${branch}
 git remote add origin https://github.com/${cleanUser}/${cleanRepo}.git
 git push -u origin ${branch}`
@@ -114,7 +126,7 @@ npm run dev`;
   async function handleDownloadZip() {
     setDownloading(true);
     try {
-      await downloadRepositoryZip(generatedFiles, content, cleanRepo);
+      await downloadRepositoryZip(generatedFiles, content, cleanRepo, locale);
       setCompletedSteps((prev) => ({ ...prev, 2: true }));
     } finally {
       setDownloading(false);
@@ -122,13 +134,13 @@ npm run dev`;
   }
 
   function handleDownloadScript() {
-    const scriptFile = generatedFiles.find((f) => f.path === 'exportar-github.sh');
+    const scriptFile = generatedFiles.find((f) => f.path === scriptFilename);
     if (!scriptFile) return;
     const blob = new Blob([scriptFile.content], { type: 'text/x-shellscript' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'exportar-github.sh';
+    a.download = scriptFilename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -142,37 +154,36 @@ npm run dev`;
   const inputClass =
     'w-full border border-[#D0D5DF] bg-[#F8F9FB] px-3 py-2 text-sm text-[#111318] font-mono focus:border-[#9A7400] focus:outline-none dark:border-[#262B36] dark:bg-[#0D0F13] dark:text-[#F4F6F9] dark:focus:border-[#F5C400]';
 
+  const activePlatformLabel = t.platforms[githubConfig.deployPlatform].label;
+
   return (
     <div className="mx-auto max-w-[1440px] px-6 py-8 lg:py-10 space-y-8">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#D0D5DF] pb-5 dark:border-[#262B36]">
         <div className="space-y-1.5">
           <p className="font-mono text-xs font-medium text-[#9A7400] dark:text-[#F5C400]">
-            Paso 5 de 5 · Exportación y despliegue en GitHub
+            {t.stepTag}
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#111318] dark:text-[#F4F6F9]">
-            Código generado y guía paso a paso de publicación
+            {t.title}
           </h1>
         </div>
         <div className="font-mono text-xs text-[#4B5565] dark:text-[#9BA4B5] tabular-nums">
-          {generatedFiles.length} archivos listos · {stack.name}
+          {t.filesReady(generatedFiles.length, stack.name)}
         </div>
       </div>
 
-      {/* Top Grid: GitHub Config + Step-by-Step Guide */}
       <div className="grid gap-8 lg:grid-cols-12 items-start">
-        {/* Left: Repo Configurator & Direct Download */}
         <div className="lg:col-span-5 space-y-5">
           <div className="hud-frame border border-[#D0D5DF] bg-white p-6 dark:border-[#262B36] dark:bg-[#111318] space-y-5">
             <div className="flex items-center justify-between border-b border-[#D0D5DF] pb-3.5 dark:border-[#262B36]">
               <div className="flex items-center gap-2">
                 <GitBranch className="h-4 w-4 text-[#9A7400] dark:text-[#F5C400]" />
                 <h2 className="text-sm font-bold text-[#111318] dark:text-[#F4F6F9]">
-                  Parámetros del repositorio GitHub
+                  {t.repoParamsHeading}
                 </h2>
               </div>
               <span className="font-mono text-[11px] text-[#4B5565] dark:text-[#9BA4B5]">
-                Personaliza comandos
+                {t.customizesCommands}
               </span>
             </div>
 
@@ -182,7 +193,7 @@ npm run dev`;
                   htmlFor="gh-user"
                   className="block text-xs font-medium text-[#4B5565] dark:text-[#9BA4B5] mb-1.5"
                 >
-                  Usuario u organización GitHub
+                  {t.ghUserLabel}
                 </label>
                 <input
                   id="gh-user"
@@ -191,7 +202,7 @@ npm run dev`;
                   onChange={(e) =>
                     onUpdateGithubConfig({ ...githubConfig, username: e.target.value })
                   }
-                  placeholder="tu-usuario"
+                  placeholder={t.ghUserPlaceholder}
                   className={inputClass}
                 />
               </div>
@@ -200,7 +211,7 @@ npm run dev`;
                   htmlFor="gh-repo"
                   className="block text-xs font-medium text-[#4B5565] dark:text-[#9BA4B5] mb-1.5"
                 >
-                  Nombre del repositorio
+                  {t.ghRepoLabel}
                 </label>
                 <input
                   id="gh-repo"
@@ -209,7 +220,7 @@ npm run dev`;
                   onChange={(e) =>
                     onUpdateGithubConfig({ ...githubConfig, repoName: e.target.value })
                   }
-                  placeholder="mi-web"
+                  placeholder={t.ghRepoPlaceholder}
                   className={inputClass}
                 />
               </div>
@@ -218,7 +229,7 @@ npm run dev`;
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <span className="block text-xs font-medium text-[#4B5565] dark:text-[#9BA4B5] mb-1.5">
-                  Visibilidad
+                  {t.visibilityLabel}
                 </span>
                 <div className="grid grid-cols-2 gap-1 border border-[#D0D5DF] bg-[#E9ECF1] p-1 dark:border-[#262B36] dark:bg-[#0D0F13]">
                   {(['public', 'private'] as const).map((vis) => (
@@ -234,7 +245,7 @@ npm run dev`;
                           : 'text-[#4B5565] dark:text-[#9BA4B5]'
                       }`}
                     >
-                      {vis === 'public' ? 'Público' : 'Privado'}
+                      {vis === 'public' ? t.visibilityPublic : t.visibilityPrivate}
                     </button>
                   ))}
                 </div>
@@ -245,7 +256,7 @@ npm run dev`;
                   htmlFor="gh-branch"
                   className="block text-xs font-medium text-[#4B5565] dark:text-[#9BA4B5] mb-1.5"
                 >
-                  Rama principal
+                  {t.branchLabel}
                 </label>
                 <input
                   id="gh-branch"
@@ -259,20 +270,20 @@ npm run dev`;
               </div>
             </div>
 
-            {/* Deploy platform */}
             <div className="space-y-2">
               <span className="block text-xs font-medium text-[#4B5565] dark:text-[#9BA4B5]">
-                Plataforma de despliegue destino
+                {t.deployPlatformLabel}
               </span>
               <div className="grid gap-2 sm:grid-cols-2">
-                {DEPLOY_PLATFORMS.map((plat) => {
-                  const active = githubConfig.deployPlatform === plat.id;
+                {PLATFORM_IDS.map((platId) => {
+                  const plat = t.platforms[platId];
+                  const active = githubConfig.deployPlatform === platId;
                   return (
                     <button
-                      key={plat.id}
+                      key={platId}
                       type="button"
                       onClick={() =>
-                        onUpdateGithubConfig({ ...githubConfig, deployPlatform: plat.id })
+                        onUpdateGithubConfig({ ...githubConfig, deployPlatform: platId })
                       }
                       className={`text-left p-2.5 border transition-colors cursor-pointer ${
                         active
@@ -292,7 +303,6 @@ npm run dev`;
               </div>
             </div>
 
-            {/* Primary Download CTA */}
             <div className="pt-3 border-t border-[#D0D5DF] dark:border-[#262B36] space-y-2.5">
               <button
                 type="button"
@@ -301,11 +311,7 @@ npm run dev`;
                 className="inline-flex h-12 w-full items-center justify-center gap-2.5 bg-[#F5C400] px-5 text-sm font-semibold text-[#0A0B0D] transition-colors hover:bg-[#FFD000] disabled:opacity-60 cursor-pointer"
               >
                 <Download className="h-4 w-4" />
-                <span>
-                  {downloading
-                    ? 'Empaquetando proyecto...'
-                    : `Descargar paquete ZIP (${cleanRepo})`}
-                </span>
+                <span>{downloading ? t.packagingBtn : t.downloadZipBtn(cleanRepo)}</span>
               </button>
 
               <button
@@ -314,23 +320,20 @@ npm run dev`;
                 className="inline-flex h-10 w-full items-center justify-center gap-2 border border-[#D0D5DF] bg-[#F8F9FB] px-4 text-xs font-medium text-[#111318] transition-colors hover:border-[#9A7400] dark:border-[#262B36] dark:bg-[#151820] dark:text-[#F4F6F9] dark:hover:border-[#F5C400] cursor-pointer"
               >
                 <Terminal className="h-3.5 w-3.5" />
-                <span>Descargar script exportar-github.sh</span>
+                <span>{t.downloadScriptBtn(scriptFilename)}</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Right: Interactive Step-by-Step GitHub & Deployment Guide */}
         <div className="lg:col-span-7 space-y-4">
           <div className="hud-frame border border-[#D0D5DF] bg-white p-6 dark:border-[#262B36] dark:bg-[#111318] space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D0D5DF] pb-4 dark:border-[#262B36]">
               <div>
                 <h2 className="text-base font-bold text-[#111318] dark:text-[#F4F6F9]">
-                  Instrucciones paso a paso para GitHub y despliegue
+                  {t.guideHeading}
                 </h2>
-                <p className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">
-                  Marca cada paso conforme lo completes. Los comandos ya incluyen tus datos.
-                </p>
+                <p className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">{t.guideSubheading}</p>
               </div>
               <div className="flex items-center gap-1 border border-[#D0D5DF] bg-[#E9ECF1] p-0.5 dark:border-[#262B36] dark:bg-[#0D0F13]">
                 <button
@@ -342,7 +345,7 @@ npm run dev`;
                       : 'text-[#4B5565] dark:text-[#9BA4B5]'
                   }`}
                 >
-                  Git estándar
+                  {t.gitStandard}
                 </button>
                 <button
                   type="button"
@@ -353,12 +356,12 @@ npm run dev`;
                       : 'text-[#4B5565] dark:text-[#9BA4B5]'
                   }`}
                 >
-                  GitHub CLI (gh)
+                  {t.githubCli}
                 </button>
               </div>
             </div>
 
-            {/* Step 1: Create Repo */}
+            {/* Step 1 */}
             <div className="space-y-2.5 border-b border-[#D0D5DF] pb-5 dark:border-[#262B36]">
               <div className="flex items-start justify-between gap-3">
                 <button
@@ -376,7 +379,7 @@ npm run dev`;
                     {completedSteps[1] ? <Check className="h-3.5 w-3.5" /> : '1'}
                   </span>
                   <span className="text-sm font-bold text-[#111318] dark:text-[#F4F6F9]">
-                    Crear el repositorio vacío en GitHub
+                    {t.step1Title}
                   </span>
                 </button>
 
@@ -386,20 +389,22 @@ npm run dev`;
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#9A7400] hover:underline dark:text-[#F5C400] whitespace-nowrap shrink-0"
                 >
-                  <span>Abrir GitHub</span>
+                  <span>{t.openGithub}</span>
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
               </div>
               <p className="pl-9 text-xs leading-relaxed text-[#4B5565] dark:text-[#9BA4B5]">
-                Crea un nuevo repositorio llamado{' '}
+                {t.step1BodyPrefix}{' '}
                 <code className="font-mono text-[#111318] dark:text-[#F4F6F9]">{cleanRepo}</code>{' '}
-                con visibilidad{' '}
-                <strong>{githubConfig.visibility === 'public' ? 'Pública' : 'Privada'}</strong>.
-                No marques las casillas de README ni .gitignore (ya vienen incluidos en el paquete).
+                {t.step1BodyMiddle}{' '}
+                <strong>
+                  {githubConfig.visibility === 'public' ? t.visibilityPublic : t.visibilityPrivate}
+                </strong>
+                . {t.step1BodySuffix}
               </p>
             </div>
 
-            {/* Step 2: Unzip & Verify Locally */}
+            {/* Step 2 */}
             <div className="space-y-2.5 border-b border-[#D0D5DF] pb-5 dark:border-[#262B36]">
               <button
                 type="button"
@@ -416,14 +421,14 @@ npm run dev`;
                   {completedSteps[2] ? <Check className="h-3.5 w-3.5" /> : '2'}
                 </span>
                 <span className="text-sm font-bold text-[#111318] dark:text-[#F4F6F9]">
-                  Descomprimir el paquete y probar en local (opcional)
+                  {t.step2Title}
                 </span>
               </button>
               <div className="pl-9 space-y-2">
                 <p className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">
-                  Extrae el ZIP en una carpeta llamada{' '}
+                  {t.step2BodyPrefix}{' '}
                   <code className="font-mono text-[#111318] dark:text-[#F4F6F9]">{cleanRepo}</code>{' '}
-                  y abre una terminal dentro de ella:
+                  {t.step2BodySuffix}
                 </p>
                 <div className="relative border border-[#D0D5DF] bg-[#F8F9FB] p-3 dark:border-[#262B36] dark:bg-[#0A0B0D]">
                   <pre className="overflow-x-auto font-mono text-xs leading-relaxed text-[#111318] dark:text-[#F4F6F9]">
@@ -437,12 +442,12 @@ npm run dev`;
                     {copiedId === 'local' ? (
                       <>
                         <Check className="h-3 w-3 text-[#9A7400] dark:text-[#F5C400]" />
-                        <span>Copiado</span>
+                        <span>{t.copied}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="h-3 w-3" />
-                        <span>Copiar</span>
+                        <span>{t.copy}</span>
                       </>
                     )}
                   </button>
@@ -450,7 +455,7 @@ npm run dev`;
               </div>
             </div>
 
-            {/* Step 3: Export & Push to GitHub */}
+            {/* Step 3 */}
             <div className="space-y-2.5 border-b border-[#D0D5DF] pb-5 dark:border-[#262B36]">
               <button
                 type="button"
@@ -467,14 +472,12 @@ npm run dev`;
                   {completedSteps[3] ? <Check className="h-3.5 w-3.5" /> : '3'}
                 </span>
                 <span className="text-sm font-bold text-[#111318] dark:text-[#F4F6F9]">
-                  Exportar y subir el código a GitHub
+                  {t.step3Title}
                 </span>
               </button>
               <div className="pl-9 space-y-2">
                 <p className="text-xs text-[#4B5565] dark:text-[#9BA4B5]">
-                  {cliMode === 'git'
-                    ? 'Ejecuta estos comandos (o simplemente ejecuta ./exportar-github.sh en macOS/Linux):'
-                    : 'Crea el repositorio y sube todos los archivos en un solo paso usando GitHub CLI:'}
+                  {cliMode === 'git' ? t.step3BodyGit(scriptFilename) : t.step3BodyGh}
                 </p>
                 <div className="relative border border-[#D0D5DF] bg-[#F8F9FB] p-3 dark:border-[#262B36] dark:bg-[#0A0B0D]">
                   <pre className="overflow-x-auto font-mono text-xs leading-relaxed text-[#111318] dark:text-[#F4F6F9] pr-20">
@@ -488,12 +491,12 @@ npm run dev`;
                     {copiedId === 'push' ? (
                       <>
                         <Check className="h-3 w-3 text-[#9A7400] dark:text-[#F5C400]" />
-                        <span>Copiado</span>
+                        <span>{t.copied}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="h-3 w-3" />
-                        <span>Copiar</span>
+                        <span>{t.copy}</span>
                       </>
                     )}
                   </button>
@@ -501,7 +504,7 @@ npm run dev`;
               </div>
             </div>
 
-            {/* Step 4: Automated Deployment */}
+            {/* Step 4 */}
             <div className="space-y-2.5">
               <button
                 type="button"
@@ -518,28 +521,19 @@ npm run dev`;
                   {completedSteps[4] ? <Check className="h-3.5 w-3.5" /> : '4'}
                 </span>
                 <span className="text-sm font-bold text-[#111318] dark:text-[#F4F6F9]">
-                  Activar el despliegue automático en{' '}
-                  {DEPLOY_PLATFORMS.find((p) => p.id === githubConfig.deployPlatform)?.label}
+                  {t.step4Title(activePlatformLabel)}
                 </span>
               </button>
 
               <div className="pl-9 text-xs leading-relaxed text-[#4B5565] dark:text-[#9BA4B5] space-y-2">
                 {githubConfig.deployPlatform === 'github-pages' && !stack.includesBackend ? (
                   <>
+                    <p>{t.step4Pages1}</p>
+                    <p>{t.step4Pages2}</p>
                     <p>
-                      1. En tu repositorio de GitHub entra a{' '}
-                      <strong className="text-[#111318] dark:text-[#F4F6F9]">
-                        Settings → Pages
-                      </strong>
-                      .
-                    </p>
-                    <p>
-                      2. En el apartado <strong className="text-[#111318] dark:text-[#F4F6F9]">Source</strong>,
-                      selecciona <strong className="text-[#111318] dark:text-[#F4F6F9]">GitHub Actions</strong>.
-                    </p>
-                    <p>
-                      3. El flujo <code className="font-mono">.github/workflows/deploy.yml</code>{' '}
-                      publicará tu web automáticamente en{' '}
+                      {t.step4Pages3Prefix}{' '}
+                      <code className="font-mono">.github/workflows/deploy.yml</code>{' '}
+                      {t.step4Pages3Middle}{' '}
                       <code className="font-mono text-[#9A7400] dark:text-[#F5C400]">
                         https://{cleanUser}.github.io/{cleanRepo}/
                       </code>
@@ -549,25 +543,23 @@ npm run dev`;
                 ) : (
                   <>
                     <p>
-                      1. Inicia sesión en{' '}
+                      {t.step4Other1Prefix}{' '}
                       <strong className="text-[#111318] dark:text-[#F4F6F9]">
-                        {DEPLOY_PLATFORMS.find((p) => p.id === githubConfig.deployPlatform)?.label}
+                        {activePlatformLabel}
                       </strong>{' '}
-                      y selecciona <strong className="text-[#111318] dark:text-[#F4F6F9]">Import Git Repository</strong>.
+                      {t.step4Other1Suffix}
                     </p>
                     <p>
-                      2. Selecciona{' '}
+                      {t.step4Other2Prefix}{' '}
                       <code className="font-mono text-[#111318] dark:text-[#F4F6F9]">
                         {cleanUser}/{cleanRepo}
                       </code>{' '}
-                      (rama <code className="font-mono">{branch}</code>).
+                      ({t.step4Other2Branch} <code className="font-mono">{branch}</code>).
                     </p>
                     <p>
-                      3. Comando de compilación: <code className="font-mono">npm run build</code> ·
-                      Carpeta de salida: <code className="font-mono">dist</code>.
-                      {stack.includesDatabase
-                        ? ' Añade también la variable DATABASE_URL en la configuración de entorno.'
-                        : ''}
+                      {t.step4Other3Build} <code className="font-mono">npm run build</code> ·{' '}
+                      {t.step4Other3Out} <code className="font-mono">dist</code>.
+                      {stack.includesDatabase ? t.step4Other3Db : ''}
                     </p>
                   </>
                 )}
@@ -577,22 +569,20 @@ npm run dev`;
         </div>
       </div>
 
-      {/* Integrated Generated Code Explorer */}
       <section className="hud-frame border border-[#D0D5DF] bg-white dark:border-[#262B36] dark:bg-[#111318] overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#D0D5DF] px-5 py-3.5 dark:border-[#262B36]">
           <div className="flex items-center gap-2">
             <FileCode2 className="h-4 w-4 text-[#9A7400] dark:text-[#F5C400]" />
             <h2 className="text-sm font-bold text-[#111318] dark:text-[#F4F6F9]">
-              Explorador de código generado
+              {t.explorerHeading}
             </h2>
           </div>
           <span className="font-mono text-xs text-[#4B5565] dark:text-[#9BA4B5] tabular-nums">
-            {activeFile.path} · {activeFile.content.split('\n').length} líneas
+            {activeFile.path} · {t.linesCount(activeFile.content.split('\n').length)}
           </span>
         </div>
 
         <div className="grid lg:grid-cols-12">
-          {/* File tree */}
           <div className="lg:col-span-3 border-b lg:border-b-0 lg:border-r border-[#D0D5DF] dark:border-[#262B36] max-h-[460px] overflow-y-auto divide-y divide-[#D0D5DF]/60 dark:divide-[#262B36]/60">
             {generatedFiles.map((file) => {
               const active = file.path === activeFile.path;
@@ -614,7 +604,6 @@ npm run dev`;
             })}
           </div>
 
-          {/* Code Viewer */}
           <div className="lg:col-span-9 flex flex-col bg-[#F8F9FB] dark:bg-[#0A0B0D]">
             <div className="flex items-center justify-between gap-3 border-b border-[#D0D5DF] bg-white px-4 py-2 dark:border-[#262B36] dark:bg-[#151820]">
               <span className="text-xs text-[#4B5565] dark:text-[#9BA4B5] truncate">
@@ -628,12 +617,12 @@ npm run dev`;
                 {copiedId === 'file' ? (
                   <>
                     <Check className="h-3.5 w-3.5 text-[#9A7400] dark:text-[#F5C400]" />
-                    <span>Archivo copiado</span>
+                    <span>{t.fileCopied}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="h-3.5 w-3.5" />
-                    <span>Copiar archivo</span>
+                    <span>{t.copyFile}</span>
                   </>
                 )}
               </button>
@@ -655,7 +644,6 @@ npm run dev`;
         </div>
       </section>
 
-      {/* Bottom Navigation */}
       <div className="flex items-center justify-between pt-2">
         <button
           type="button"
@@ -663,7 +651,7 @@ npm run dev`;
           className="inline-flex h-11 items-center gap-2 border border-[#D0D5DF] bg-white px-5 text-sm font-medium text-[#111318] transition-colors hover:border-[#111318] dark:border-[#262B36] dark:bg-[#111318] dark:text-[#F4F6F9] dark:hover:border-[#F4F6F9] cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Volver a contenidos</span>
+          <span>{t.backBtn}</span>
         </button>
       </div>
     </div>

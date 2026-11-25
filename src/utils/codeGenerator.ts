@@ -1,4 +1,5 @@
 import JSZip from 'jszip';
+import { Locale } from '../i18n/translations';
 import {
   ColorPatternPreset,
   DiscoveryAnswers,
@@ -12,6 +13,7 @@ import {
 } from '../types/builder';
 
 export interface CodeGenerationInput {
+  locale: Locale;
   answers: DiscoveryAnswers;
   stack: StackRecommendation;
   template: TemplateDefinition;
@@ -22,19 +24,24 @@ export interface CodeGenerationInput {
   github: GithubExportConfig;
 }
 
-function sanitizeRepoSlug(raw: string): string {
+function sanitizeRepoSlug(raw: string, locale: Locale): string {
   const cleaned = raw
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9-_]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return cleaned || 'mi-web-automatizada';
+  return cleaned || (locale === 'it' ? 'mio-sito-web' : 'mi-web-automatizada');
 }
 
-function getDeployWorkflowYaml(config: GithubExportConfig, stack: StackRecommendation): string {
+function getDeployWorkflowYaml(
+  config: GithubExportConfig,
+  stack: StackRecommendation,
+  locale: Locale
+): string {
   const branch = config.branch || 'main';
+  const isIt = locale === 'it';
   if (config.deployPlatform === 'github-pages' && !stack.includesBackend) {
-    return `name: Desplegar en GitHub Pages
+    return `name: ${isIt ? 'Deploy su GitHub Pages' : 'Desplegar en GitHub Pages'}
 
 on:
   push:
@@ -54,18 +61,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar código
+      - name: ${isIt ? 'Scarica codice' : 'Descargar código'}
         uses: actions/checkout@v4
-      - name: Configurar Node.js
+      - name: ${isIt ? 'Configura Node.js' : 'Configurar Node.js'}
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - name: Instalar dependencias
+      - name: ${isIt ? 'Installa dipendenze' : 'Instalar dependencias'}
         run: npm ci
-      - name: Compilar aplicación
+      - name: ${isIt ? 'Compila applicazione' : 'Compilar aplicación'}
         run: npm run build
-      - name: Subir artefacto estático
+      - name: ${isIt ? 'Carica artefatto statico' : 'Subir artefacto estático'}
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
@@ -77,13 +84,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Publicar en GitHub Pages
+      - name: ${isIt ? 'Pubblica su GitHub Pages' : 'Publicar en GitHub Pages'}
         id: deployment
         uses: actions/deploy-pages@v4
 `;
   }
 
-  return `name: Integración y verificación continua
+  return `name: ${isIt ? 'Integrazione e verifica continua' : 'Integración y verificación continua'}
 
 on:
   push:
@@ -95,27 +102,29 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - name: Descargar código
+      - name: ${isIt ? 'Scarica codice' : 'Descargar código'}
         uses: actions/checkout@v4
-      - name: Configurar Node.js
+      - name: ${isIt ? 'Configura Node.js' : 'Configurar Node.js'}
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - name: Instalar dependencias
+      - name: ${isIt ? 'Installa dipendenze' : 'Instalar dependencias'}
         run: npm ci
-      - name: Verificar TypeScript y compilación
+      - name: ${isIt ? 'Verifica TypeScript e build' : 'Verificar TypeScript y compilación'}
         run: npm run build
 `;
 }
 
 function generateSiteAppTsx(
+  locale: Locale,
   template: TemplateDefinition,
   sections: SectionConfig[],
   graphicStyle: GraphicStylePreset,
   colorPattern: ColorPatternPreset,
   stack: StackRecommendation
 ): string {
+  const isIt = locale === 'it';
   const enabledTypes = sections.filter((s) => s.enabled).map((s) => s.type);
   const sectionOrderLiteral = JSON.stringify(enabledTypes);
 
@@ -142,7 +151,7 @@ export default function App() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formState),
         });
-        if (!res.ok) throw new Error('Error de envío');
+        if (!res.ok) throw new Error('${isIt ? 'Errore di invio' : 'Error de envío'}');
       }
       setFormStatus('sent');
       setFormState({ name: '', email: '', message: '' });
@@ -152,11 +161,11 @@ export default function App() {
   }
 
   const navItems = [
-    SECTION_ORDER.includes('features') ? { id: 'features', label: 'Capacidades' } : null,
-    SECTION_ORDER.includes('catalog') ? { id: 'catalog', label: 'Selección' } : null,
-    SECTION_ORDER.includes('pricing') ? { id: 'pricing', label: 'Planes' } : null,
-    SECTION_ORDER.includes('faq') ? { id: 'faq', label: 'Preguntas' } : null,
-    SECTION_ORDER.includes('contact') ? { id: 'contact', label: 'Contacto' } : null,
+    SECTION_ORDER.includes('features') ? { id: 'features', label: '${isIt ? 'Capacità' : 'Capacidades'}' } : null,
+    SECTION_ORDER.includes('catalog') ? { id: 'catalog', label: '${isIt ? 'Selezione' : 'Selección'}' } : null,
+    SECTION_ORDER.includes('pricing') ? { id: 'pricing', label: '${isIt ? 'Piani' : 'Planes'}' } : null,
+    SECTION_ORDER.includes('faq') ? { id: 'faq', label: '${isIt ? 'Domande' : 'Preguntas'}' } : null,
+    SECTION_ORDER.includes('contact') ? { id: 'contact', label: '${isIt ? 'Contatti' : 'Contacto'}' } : null,
   ].filter(Boolean) as { id: string; label: string }[];
 
   return (
@@ -560,7 +569,7 @@ export default function App() {
                       <input
                         type="text"
                         required
-                        placeholder="Tu nombre"
+                        placeholder="${isIt ? 'Il tuo nome' : 'Tu nombre'}"
                         value={formState.name}
                         onChange={(e) => setFormState({ ...formState, name: e.target.value })}
                         className="w-full px-4 py-3 text-sm bg-transparent border"
@@ -569,7 +578,7 @@ export default function App() {
                       <input
                         type="email"
                         required
-                        placeholder="Correo electrónico"
+                        placeholder="${isIt ? 'Indirizzo email' : 'Correo electrónico'}"
                         value={formState.email}
                         onChange={(e) => setFormState({ ...formState, email: e.target.value })}
                         className="w-full px-4 py-3 text-sm bg-transparent border"
@@ -578,7 +587,7 @@ export default function App() {
                     </div>
                     <textarea
                       rows={4}
-                      placeholder="Cuéntanos sobre tu proyecto..."
+                      placeholder="${isIt ? 'Raccontaci il tuo progetto...' : 'Cuéntanos sobre tu proyecto...'}"
                       value={formState.message}
                       onChange={(e) => setFormState({ ...formState, message: e.target.value })}
                       className="w-full px-4 py-3 text-sm bg-transparent border"
@@ -595,15 +604,19 @@ export default function App() {
                           borderRadius: 'var(--radius-btn)',
                         }}
                       >
-                        {formStatus === 'sending' ? 'Enviando...' : 'Enviar mensaje'}
+                        {formStatus === 'sending'
+                          ? '${isIt ? 'Invio in corso...' : 'Enviando...'}'
+                          : '${isIt ? 'Invia messaggio' : 'Enviar mensaje'}'}
                       </button>
                       {formStatus === 'sent' ? (
                         <span className="text-sm" style={{ color: 'var(--color-accent)' }}>
-                          Mensaje recibido correctamente.
+                          ${isIt ? 'Messaggio ricevuto correttamente.' : 'Mensaje recibido correctamente.'}
                         </span>
                       ) : null}
                       {formStatus === 'error' ? (
-                        <span className="text-sm text-red-500">No se pudo enviar. Inténtalo de nuevo.</span>
+                        <span className="text-sm text-red-500">
+                          ${isIt ? 'Invio non riuscito. Riprova.' : 'No se pudo enviar. Inténtalo de nuevo.'}
+                        </span>
                       ) : null}
                     </div>
                   </form>
@@ -630,26 +643,28 @@ export default function App() {
 `;
 }
 
-export function generateRepositoryFiles(input: CodeGenerationInput): GeneratedFile[] {
-  const { answers, stack, template, sections, graphicStyle, colorPattern, content, github } = input;
-  const repoSlug = sanitizeRepoSlug(github.repoName || content.brandName);
-  const ghUser = (github.username || 'tu-usuario').trim();
-  const branch = (github.branch || 'main').trim();
+export function getExportScriptFilename(locale: Locale): string {
+  return locale === 'it' ? 'esporta-github.sh' : 'exportar-github.sh';
+}
 
-  // Prepare exported content with portable public asset paths if user uploaded data URLs
+export function generateRepositoryFiles(input: CodeGenerationInput): GeneratedFile[] {
+  const { locale, answers, stack, template, sections, graphicStyle, colorPattern, content, github } =
+    input;
+  const isIt = locale === 'it';
+  const repoSlug = sanitizeRepoSlug(github.repoName || content.brandName, locale);
+  const ghUser = (github.username || (isIt ? 'tuo-utente' : 'tu-usuario')).trim();
+  const branch = (github.branch || 'main').trim();
+  const scriptFilename = getExportScriptFilename(locale);
+
   const exportedContent: SiteContent = {
     ...content,
     logoDataUrl: content.logoDataUrl?.startsWith('data:')
       ? './assets/logo-marca.png'
       : content.logoDataUrl,
-    heroImageUrl: content.heroImageUrl.startsWith('data:')
-      ? `./assets/${content.heroImageName || 'portada.jpg'}`
-      : `./assets/${content.heroImageName || 'portada.jpg'}`,
+    heroImageUrl: `./assets/${content.heroImageName || (isIt ? 'copertina.jpg' : 'portada.jpg')}`,
     catalogItems: content.catalogItems.map((item, idx) => ({
       ...item,
-      imageUrl: item.imageUrl.startsWith('data:')
-        ? `./assets/catalogo-${idx + 1}.jpg`
-        : `./assets/catalogo-${idx + 1}.jpg`,
+      imageUrl: `./assets/catalogo-${idx + 1}.jpg`,
     })),
   };
 
@@ -707,7 +722,7 @@ export function generateRepositoryFiles(input: CodeGenerationInput): GeneratedFi
   );
 
   const indexHtml = `<!doctype html>
-<html lang="es">
+<html lang="${locale}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -801,50 +816,62 @@ createRoot(document.getElementById('root')!).render(
     {
       path: 'index.html',
       language: 'html',
-      description: 'Documento raíz con metadatos SEO y tipografías seleccionadas.',
+      description: isIt
+        ? 'Documento radice con metadati SEO e font selezionati.'
+        : 'Documento raíz con metadatos SEO y tipografías seleccionadas.',
       content: indexHtml,
     },
     {
       path: 'package.json',
       language: 'json',
-      description: 'Dependencias y scripts configurados para el stack elegido.',
+      description: isIt
+        ? 'Dipendenze e script configurati per lo stack scelto.'
+        : 'Dependencias y scripts configurados para el stack elegido.',
       content: packageJson,
     },
     {
       path: 'vite.config.ts',
       language: 'typescript',
-      description: 'Configuración de compilación Vite con base URL adaptada al despliegue.',
+      description: isIt
+        ? 'Configurazione di build Vite con base URL adattata al deploy.'
+        : 'Configuración de compilación Vite con base URL adaptada al despliegue.',
       content: viteConfig,
     },
     {
       path: 'tsconfig.json',
       language: 'json',
-      description: 'Configuración estricta de TypeScript.',
+      description: isIt ? 'Configurazione rigorosa di TypeScript.' : 'Configuración estricta de TypeScript.',
       content: tsconfigJson,
     },
     {
       path: 'src/main.tsx',
       language: 'typescript',
-      description: 'Punto de entrada React.',
+      description: isIt ? 'Punto di ingresso React.' : 'Punto de entrada React.',
       content: mainTsx,
     },
     {
       path: 'src/index.css',
       language: 'css',
-      description: 'Tokens de color, tipografía y geometría del estilo gráfico elegido.',
+      description: isIt
+        ? 'Token di colore, tipografia e geometria dello stile scelto.'
+        : 'Tokens de color, tipografía y geometría del estilo gráfico elegido.',
       content: indexCss,
     },
     {
       path: 'src/data/siteContent.json',
       language: 'json',
-      description: 'Contenidos desacoplados editables sin modificar componentes.',
+      description: isIt
+        ? 'Contenuti disaccoppiati modificabili senza toccare i componenti.'
+        : 'Contenidos desacoplados editables sin modificar componentes.',
       content: JSON.stringify(exportedContent, null, 2),
     },
     {
       path: 'src/App.tsx',
       language: 'typescript',
-      description: 'Aplicación React completa con todas las secciones activadas.',
-      content: generateSiteAppTsx(template, sections, graphicStyle, colorPattern, stack),
+      description: isIt
+        ? 'Applicazione React completa con tutte le sezioni attivate.'
+        : 'Aplicación React completa con todas las secciones activadas.',
+      content: generateSiteAppTsx(locale, template, sections, graphicStyle, colorPattern, stack),
     },
   ];
 
@@ -852,7 +879,9 @@ createRoot(document.getElementById('root')!).render(
     files.push({
       path: 'server/index.ts',
       language: 'typescript',
-      description: 'Servidor Express con endpoint /api/contact y servicio de aplicación.',
+      description: isIt
+        ? 'Server Express con endpoint /api/contact e servizio statico.'
+        : 'Servidor Express con endpoint /api/contact y servicio de aplicación.',
       content: `import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -871,10 +900,9 @@ app.get('/api/health', (_req, res) => {
 app.post('/api/contact', async (req, res) => {
   const { name, email, message } = req.body ?? {};
   if (!name || !email) {
-    return res.status(400).json({ error: 'Nombre y correo son obligatorios.' });
+    return res.status(400).json({ error: '${isIt ? 'Nome ed email sono obbligatori.' : 'Nombre y correo son obligatorios.'}' });
   }
-  // Conecta aquí tu proveedor de correo o consulta SQL de persistencia
-  console.info('[Contacto recibido]', { name, email, length: String(message || '').length });
+  console.info('[${isIt ? 'Contatto ricevuto' : 'Contacto recibido'}]', { name, email, length: String(message || '').length });
   return res.status(201).json({ received: true });
 });
 
@@ -887,7 +915,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 app.listen(PORT, () => {
-  console.log(\`Servidor activo en http://localhost:\${PORT}\`);
+  console.log(\`${isIt ? 'Server attivo su' : 'Servidor activo en'} http://localhost:\${PORT}\`);
 });
 `,
     });
@@ -897,9 +925,11 @@ app.listen(PORT, () => {
     files.push({
       path: 'db/schema.sql',
       language: 'sql',
-      description: 'Esquema SQL inicial para contactos, catálogo y usuarios.',
-      content: `-- Esquema relacional generado para ${content.brandName}
--- Compatible con PostgreSQL 15+
+      description: isIt
+        ? 'Schema SQL iniziale per contatti, catalogo e utenti.'
+        : 'Esquema SQL inicial para contactos, catálogo y usuarios.',
+      content: `-- ${isIt ? 'Schema relazionale generato per' : 'Esquema relacional generado para'} ${content.brandName}
+-- ${isIt ? 'Compatibile con PostgreSQL 15+' : 'Compatible con PostgreSQL 15+'}
 
 CREATE TABLE IF NOT EXISTS contact_submissions (
   id SERIAL PRIMARY KEY,
@@ -940,13 +970,17 @@ CREATE TABLE IF NOT EXISTS users (
     {
       path: '.github/workflows/deploy.yml',
       language: 'yaml',
-      description: 'Flujo automático de GitHub Actions para compilación y despliegue.',
-      content: getDeployWorkflowYaml(github, stack),
+      description: isIt
+        ? 'Workflow automatico GitHub Actions per compilazione e deploy.'
+        : 'Flujo automático de GitHub Actions para compilación y despliegue.',
+      content: getDeployWorkflowYaml(github, stack, locale),
     },
     {
       path: '.gitignore',
       language: 'text',
-      description: 'Exclusiones estándar para Node.js, Vite y archivos de entorno.',
+      description: isIt
+        ? 'Esclusioni standard per Node.js, Vite e file di ambiente.'
+        : 'Exclusiones estándar para Node.js, Vite y archivos de entorno.',
       content: `node_modules
 dist
 .env
@@ -958,25 +992,33 @@ dist
     {
       path: '.env.example',
       language: 'text',
-      description: 'Plantilla de variables de entorno sin secretos.',
-      content: `# Puerto del servidor local
+      description: isIt
+        ? 'Modello di variabili d’ambiente senza segreti.'
+        : 'Plantilla de variables de entorno sin secretos.',
+      content: `# ${isIt ? 'Porta del server locale' : 'Puerto del servidor local'}
 PORT=3000
-${stack.includesDatabase ? '# Cadena de conexión PostgreSQL\nDATABASE_URL="postgresql://usuario:clave@localhost:5432/mi_bd"\n' : ''}`,
+${
+  stack.includesDatabase
+    ? `# ${isIt ? 'Stringa di connessione PostgreSQL' : 'Cadena de conexión PostgreSQL'}\nDATABASE_URL="postgresql://${isIt ? 'utente:password' : 'usuario:clave'}@localhost:5432/${isIt ? 'mio_db' : 'mi_bd'}"\n`
+    : ''
+}`,
     },
     {
-      path: 'exportar-github.sh',
+      path: scriptFilename,
       language: 'bash',
-      description: 'Script automatizado para inicializar Git y subir el código a tu repositorio.',
+      description: isIt
+        ? 'Script automatizzato per inizializzare Git e caricare il codice sul tuo repository.'
+        : 'Script automatizado para inicializar Git y subir el código a tu repositorio.',
       content: `#!/usr/bin/env bash
 set -e
 
 REPO_URL="https://github.com/${ghUser}/${repoSlug}.git"
 BRANCH="${branch}"
 
-echo "Inicializando repositorio local para ${repoSlug}..."
+echo "${isIt ? 'Inizializzazione repository locale per' : 'Inicializando repositorio local para'} ${repoSlug}..."
 git init
 git add .
-git commit -m "Versión inicial generada para ${content.brandName}"
+git commit -m "${isIt ? 'Versione iniziale generata per' : 'Versión inicial generada para'} ${content.brandName}"
 git branch -M "$BRANCH"
 
 if git remote get-url origin >/dev/null 2>&1; then
@@ -985,16 +1027,68 @@ else
   git remote add origin "$REPO_URL"
 fi
 
-echo "Subiendo código a $REPO_URL en la rama $BRANCH..."
+echo "${isIt ? 'Caricamento codice su' : 'Subiendo código a'} $REPO_URL (${branch})..."
 git push -u origin "$BRANCH"
-echo "Exportación completada correctamente."
+echo "${isIt ? 'Esportazione completata correttamente.' : 'Exportación completada correctamente.'}"
 `,
     },
     {
       path: 'README.md',
       language: 'markdown',
-      description: 'Documentación paso a paso de instalación, exportación a GitHub y despliegue.',
-      content: `# ${content.brandName}
+      description: isIt
+        ? 'Documentazione passo dopo passo per installazione, GitHub e deploy.'
+        : 'Documentación paso a paso de instalación, exportación a GitHub y despliegue.',
+      content: isIt
+        ? `# ${content.brandName}
+
+${content.tagline}
+
+## Architettura tecnica selezionata
+
+- **Stack**: ${stack.name}
+- **Frontend**: ${stack.frontend}
+- **Backend**: ${stack.backend}
+- **Database**: ${stack.database}
+- **Modello**: ${template.name}
+- **Stile grafico**: ${graphicStyle.name} · ${colorPattern.name}
+
+## Avvio in locale
+
+\`\`\`bash
+npm install
+npm run dev
+\`\`\`
+
+## Esportazione su GitHub passo dopo passo
+
+1. Crea un repository vuoto chiamato \`${repoSlug}\` su https://github.com/new (senza README né .gitignore).
+2. Esegui questi comandi dentro la cartella del progetto:
+
+\`\`\`bash
+git init
+git add .
+git commit -m "Versione iniziale di ${content.brandName}"
+git branch -M ${branch}
+git remote add origin https://github.com/${ghUser}/${repoSlug}.git
+git push -u origin ${branch}
+\`\`\`
+
+In alternativa puoi avviare lo script automatizzato incluso:
+
+\`\`\`bash
+chmod +x ${scriptFilename}
+./${scriptFilename}
+\`\`\`
+
+## Pubblicazione (${github.deployPlatform})
+
+${
+  github.deployPlatform === 'github-pages'
+    ? `1. Apri il repository su GitHub → **Settings** → **Pages**.\n2. In **Build and deployment / Source**, seleziona **GitHub Actions**.\n3. Il workflow \`.github/workflows/deploy.yml\` pubblicherà automaticamente il sito su \`https://${ghUser}.github.io/${repoSlug}/\`.`
+    : `1. Accedi al tuo account **${github.deployPlatform.toUpperCase()}** e scegli **Import Git Repository**.\n2. Seleziona \`${ghUser}/${repoSlug}\`.\n3. Comando di build: \`npm run build\` · Cartella di output: \`dist\`.`
+}
+`
+        : `# ${content.brandName}
 
 ${content.tagline}
 
@@ -1031,8 +1125,8 @@ git push -u origin ${branch}
 También puedes ejecutar el script automatizado incluido:
 
 \`\`\`bash
-chmod +x exportar-github.sh
-./exportar-github.sh
+chmod +x ${scriptFilename}
+./${scriptFilename}
 \`\`\`
 
 ## Despliegue (${github.deployPlatform})
@@ -1062,19 +1156,22 @@ async function fetchImageAsBlob(url: string): Promise<Blob | null> {
 export async function downloadRepositoryZip(
   files: GeneratedFile[],
   content: SiteContent,
-  repoName: string
+  repoName: string,
+  locale: Locale = 'es'
 ): Promise<void> {
   const zip = new JSZip();
-  const slug = sanitizeRepoSlug(repoName || content.brandName);
+  const slug = sanitizeRepoSlug(repoName || content.brandName, locale);
 
   for (const file of files) {
     zip.file(file.path, file.content);
   }
 
-  // Package hero, logo, and catalog images into public/assets so the exported build has zero broken images
   const heroBlob = await fetchImageAsBlob(content.heroImageUrl);
   if (heroBlob) {
-    zip.file(`public/assets/${content.heroImageName || 'portada.jpg'}`, heroBlob);
+    zip.file(
+      `public/assets/${content.heroImageName || (locale === 'it' ? 'copertina.jpg' : 'portada.jpg')}`,
+      heroBlob
+    );
   }
 
   if (content.logoDataUrl) {

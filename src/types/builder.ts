@@ -43,7 +43,7 @@ export interface StackRecommendation {
   includesDatabase: boolean;
   rationale: string[];
   estimatedBuildTime: string;
-  complexity: 'Baja' | 'Media' | 'Avanzada';
+  complexity: string;
 }
 
 export type SectionType =

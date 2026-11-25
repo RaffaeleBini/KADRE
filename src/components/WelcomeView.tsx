@@ -1,73 +1,26 @@
 import { ArrowRight, Layers, Cpu, Palette, GitBranch, FolderDown } from 'lucide-react';
 import { GENERATED_ASSETS } from '../data/presets';
+import { Locale, TRANSLATIONS } from '../i18n/translations';
 
 interface WelcomeViewProps {
+  locale: Locale;
   hasSavedDraft: boolean;
   savedBrandName?: string;
   onStartNew: () => void;
   onResumeDraft: () => void;
 }
 
-const PROCESS_STAGES = [
-  {
-    index: '01',
-    title: 'Diagnóstico técnico',
-    description:
-      'Responde cinco preguntas clave sobre tu objetivo, servidor, datos y renderizado para identificar la arquitectura óptima.',
-    icon: Cpu,
-  },
-  {
-    index: '02',
-    title: 'Plantillas adaptadas',
-    description:
-      'Explora estructuras propuestas según tu diagnóstico y activa, oculta o reordena cada bloque de la página.',
-    icon: Layers,
-  },
-  {
-    index: '03',
-    title: 'Estilo y contenidos',
-    description:
-      'Selecciona el sistema tipográfico, patrón de colores y carga textos, imágenes o archivos JSON con vista previa en vivo.',
-    icon: Palette,
-  },
-  {
-    index: '04',
-    title: 'Exportación a GitHub',
-    description:
-      'Genera el código completo listo para compilar, descarga el paquete del repositorio y sigue la guía paso a paso de despliegue.',
-    icon: GitBranch,
-  },
-];
-
-const SUPPORTED_ARCHITECTURES = [
-  {
-    name: 'Estática Ultrarrápida (SSG)',
-    stack: 'React + Vite + Tailwind',
-    detail: 'Cero mantenimiento de servidor y publicación gratuita directa en GitHub Pages.',
-  },
-  {
-    name: 'Aplicación Dinámica (SPA)',
-    stack: 'React + TypeScript + JSON',
-    detail: 'Navegación instantánea y catálogos interactivos preparados para CMS externo.',
-  },
-  {
-    name: 'Frontend + API Ligera',
-    stack: 'React + Express + Rutas API',
-    detail: 'Incluye servidor Node.js para procesar formularios, envíos y webhooks seguros.',
-  },
-  {
-    name: 'Full-Stack con Base de Datos',
-    stack: 'React + Express + Esquema SQL',
-    detail: 'Estructura completa con tablas relacionales listas para PostgreSQL y autenticación.',
-  },
-];
+const STAGE_ICONS = [Cpu, Layers, Palette, GitBranch] as const;
 
 export function WelcomeView({
+  locale,
   hasSavedDraft,
   savedBrandName,
   onStartNew,
   onResumeDraft,
 }: WelcomeViewProps) {
+  const t = TRANSLATIONS[locale].welcome;
+
   return (
     <div className="mx-auto max-w-[1440px] px-6 py-12 lg:py-20 space-y-20">
       {/* Hero Split */}
@@ -75,15 +28,13 @@ export function WelcomeView({
         <div className="lg:col-span-6 flex flex-col justify-between space-y-8 py-2">
           <div className="space-y-6">
             <p className="text-sm font-semibold tracking-wide text-[#9A7400] dark:text-[#F5C400]">
-              Sistema guiado de arquitectura y generación web
+              {t.kicker}
             </p>
             <h1 className="text-4xl sm:text-5xl lg:text-[3.35rem] font-bold leading-[1.08] tracking-tight text-[#111318] dark:text-[#F4F6F9] [text-wrap:balance]">
-              Diseña tu página web paso a paso y expórtala lista para GitHub
+              {t.headline}
             </h1>
             <p className="max-w-xl text-base lg:text-lg leading-relaxed text-[#4B5565] dark:text-[#9BA4B5]">
-              KADRE analiza tus requisitos técnicos para recomendar el stack adecuado, propone
-              plantillas y estilos personalizables, simplifica la carga de contenidos y genera el
-              repositorio completo con instrucciones exactas de despliegue.
+              {t.subtitle}
             </p>
           </div>
 
@@ -94,7 +45,7 @@ export function WelcomeView({
                 onClick={onStartNew}
                 className="inline-flex h-12 items-center gap-2.5 bg-[#F5C400] px-7 text-sm font-semibold text-[#0A0B0D] transition-colors hover:bg-[#FFD000] whitespace-nowrap cursor-pointer"
               >
-                <span>Comenzar diseño guiado</span>
+                <span>{t.startCta}</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
 
@@ -104,17 +55,19 @@ export function WelcomeView({
                   onClick={onResumeDraft}
                   className="inline-flex h-12 items-center gap-2 border border-[#D0D5DF] bg-white px-5 text-sm font-medium text-[#111318] transition-colors hover:border-[#9A7400] dark:border-[#262B36] dark:bg-[#111318] dark:text-[#F4F6F9] dark:hover:border-[#F5C400] whitespace-nowrap cursor-pointer"
                 >
-                  <span>Reanudar: {savedBrandName || 'Borrador anterior'}</span>
+                  <span>
+                    {t.resumePrefix}: {savedBrandName || t.previousDraft}
+                  </span>
                 </button>
               ) : null}
             </div>
 
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#4B5565] dark:text-[#9BA4B5] tabular-nums">
-              <span>5 pasos guiados</span>
+              <span>{t.metaSteps}</span>
               <span aria-hidden="true">·</span>
-              <span>Vista previa en tiempo real</span>
+              <span>{t.metaPreview}</span>
               <span aria-hidden="true">·</span>
-              <span>Código fuente propio sin ataduras</span>
+              <span>{t.metaOwnership}</span>
             </div>
           </div>
         </div>
@@ -123,17 +76,15 @@ export function WelcomeView({
           <div className="hud-frame relative h-full min-h-[340px] border border-[#D0D5DF] bg-white dark:border-[#262B36] dark:bg-[#111318] overflow-hidden">
             <img
               src={GENERATED_ASSETS.welcomeHero}
-              alt="Consola industrial de diseño web y planos arquitectónicos digitales"
+              alt={t.heroImgAlt}
               referrerPolicy="no-referrer"
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#0A0B0D]/95 via-[#0A0B0D]/60 to-transparent p-6 pt-16">
               <div className="flex flex-wrap items-end justify-between gap-4 text-[#F4F6F9]">
                 <div>
-                  <p className="text-xs font-mono text-[#F5C400]">Arquitectura + Diseño + Repositorio</p>
-                  <p className="mt-1 text-base font-semibold">
-                    Del diagnóstico inicial al primer despliegue en producción
-                  </p>
+                  <p className="text-xs font-mono text-[#F5C400]">{t.heroOverlayKicker}</p>
+                  <p className="mt-1 text-base font-semibold">{t.heroOverlayTitle}</p>
                 </div>
                 <span className="font-mono text-xs text-[#9BA4B5] tabular-nums">
                   ZIP · Git CLI · GitHub Actions
@@ -148,16 +99,14 @@ export function WelcomeView({
       <section id="proceso" className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-[#D0D5DF] pb-4 dark:border-[#262B36]">
           <h2 className="text-2xl font-bold text-[#111318] dark:text-[#F4F6F9]">
-            Flujo estructurado en cuatro etapas
+            {t.processHeading}
           </h2>
-          <p className="text-sm text-[#4B5565] dark:text-[#9BA4B5]">
-            Cada decisión se refleja inmediatamente en la vista previa y en el código final.
-          </p>
+          <p className="text-sm text-[#4B5565] dark:text-[#9BA4B5]">{t.processSubheading}</p>
         </div>
 
         <div className="grid gap-px bg-[#D0D5DF] dark:bg-[#262B36] sm:grid-cols-2 lg:grid-cols-4 border border-[#D0D5DF] dark:border-[#262B36]">
-          {PROCESS_STAGES.map((stage) => {
-            const Icon = stage.icon;
+          {t.stages.map((stage, idx) => {
+            const Icon = STAGE_ICONS[idx] ?? Cpu;
             return (
               <div
                 key={stage.index}
@@ -188,17 +137,15 @@ export function WelcomeView({
         <div className="lg:col-span-7 space-y-6">
           <div className="space-y-2">
             <h2 className="text-2xl font-bold text-[#111318] dark:text-[#F4F6F9]">
-              Selección automática del stack técnico
+              {t.stacksHeading}
             </h2>
             <p className="text-sm leading-relaxed text-[#4B5565] dark:text-[#9BA4B5]">
-              No necesitas decidir a ciegas entre un sitio estático o un servidor completo. El
-              cuestionario técnico evalúa si requieres lógica backend, base de datos o renderizado
-              estático y genera la estructura exacta.
+              {t.stacksSubheading}
             </p>
           </div>
 
           <div className="divide-y divide-[#D0D5DF] border-y border-[#D0D5DF] dark:divide-[#262B36] dark:border-[#262B36]">
-            {SUPPORTED_ARCHITECTURES.map((arch) => (
+            {t.supportedArchitectures.map((arch) => (
               <div
                 key={arch.name}
                 className="grid gap-2 py-4 sm:grid-cols-12 sm:items-baseline"
@@ -223,30 +170,24 @@ export function WelcomeView({
         >
           <div className="flex items-center justify-between border-b border-[#D0D5DF] pb-4 dark:border-[#262B36]">
             <h3 className="text-lg font-bold text-[#111318] dark:text-[#F4F6F9]">
-              Entrega lista para GitHub
+              {t.githubCardTitle}
             </h3>
             <FolderDown className="h-5 w-5 text-[#9A7400] dark:text-[#F5C400]" />
           </div>
 
           <p className="text-sm leading-relaxed text-[#4B5565] dark:text-[#9BA4B5]">
-            Al finalizar obtienes el código completo empaquetado con tus imágenes locales, flujo
-            automático de GitHub Actions y un asistente interactivo que genera los comandos Git
-            exactos para tu usuario y repositorio.
+            {t.githubCardBody}
           </p>
 
           <ul className="space-y-2.5 text-sm text-[#111318] dark:text-[#F4F6F9]">
-            <li className="flex items-baseline gap-3">
-              <span className="font-mono text-xs text-[#9A7400] dark:text-[#F5C400]">01</span>
-              <span>Paquete ZIP con código fuente, estilos y recursos multimedia</span>
-            </li>
-            <li className="flex items-baseline gap-3">
-              <span className="font-mono text-xs text-[#9A7400] dark:text-[#F5C400]">02</span>
-              <span>Script automatizado exportar-github.sh preconfigurado</span>
-            </li>
-            <li className="flex items-baseline gap-3">
-              <span className="font-mono text-xs text-[#9A7400] dark:text-[#F5C400]">03</span>
-              <span>Guía paso a paso para GitHub Pages, Vercel, Netlify o Cloudflare</span>
-            </li>
+            {t.githubBullets.map((bullet, idx) => (
+              <li key={idx} className="flex items-baseline gap-3">
+                <span className="font-mono text-xs text-[#9A7400] dark:text-[#F5C400]">
+                  0{idx + 1}
+                </span>
+                <span>{bullet}</span>
+              </li>
+            ))}
           </ul>
 
           <button
@@ -254,7 +195,7 @@ export function WelcomeView({
             onClick={onStartNew}
             className="inline-flex h-11 w-full items-center justify-center gap-2 bg-[#F5C400] px-5 text-sm font-semibold text-[#0A0B0D] transition-colors hover:bg-[#FFD000] cursor-pointer"
           >
-            <span>Iniciar asistente ahora</span>
+            <span>{t.githubCardCta}</span>
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>

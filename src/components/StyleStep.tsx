@@ -1,5 +1,6 @@
 import { ArrowLeft, ArrowRight, Check, Palette, Type } from 'lucide-react';
-import { COLOR_PATTERNS, GRAPHIC_STYLES } from '../data/presets';
+import { getColorPatterns, getGraphicStyles } from '../data/presets';
+import { Locale, TRANSLATIONS } from '../i18n/translations';
 import {
   ColorPatternPreset,
   GraphicStylePreset,
@@ -10,6 +11,7 @@ import {
 import { LiveSitePreview } from './LiveSitePreview';
 
 interface StyleStepProps {
+  locale: Locale;
   template: TemplateDefinition;
   sections: SectionConfig[];
   graphicStyle: GraphicStylePreset;
@@ -26,6 +28,7 @@ interface StyleStepProps {
 const ACCENT_SWATCHES = ['#F5C400', '#E07A38', '#38BDF8', '#22C55E', '#EF4444', '#A855F7'];
 
 export function StyleStep({
+  locale,
   template,
   sections,
   graphicStyle,
@@ -38,6 +41,10 @@ export function StyleStep({
   onBack,
   onNext,
 }: StyleStepProps) {
+  const t = TRANSLATIONS[locale].style;
+  const graphicStyles = getGraphicStyles(locale);
+  const colorPatterns = getColorPatterns(locale);
+
   const effectiveColorPattern: ColorPatternPreset = customAccent
     ? {
         ...colorPattern,
@@ -48,14 +55,13 @@ export function StyleStep({
 
   return (
     <div className="mx-auto max-w-[1440px] px-6 py-8 lg:py-10 space-y-8">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#D0D5DF] pb-5 dark:border-[#262B36]">
         <div className="space-y-1.5">
           <p className="font-mono text-xs font-medium text-[#9A7400] dark:text-[#F5C400]">
-            Paso 3 de 5 · Dirección visual y paleta
+            {t.stepTag}
           </p>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#111318] dark:text-[#F4F6F9]">
-            Elige el estilo gráfico y patrón de colores
+            {t.title}
           </h1>
         </div>
         <div className="text-xs font-mono text-[#4B5565] dark:text-[#9BA4B5]">
@@ -63,21 +69,18 @@ export function StyleStep({
         </div>
       </div>
 
-      {/* Split Studio */}
       <div className="grid gap-8 lg:grid-cols-12 items-start">
-        {/* Left Controls */}
         <div className="lg:col-span-5 space-y-6">
-          {/* Graphic Styles */}
           <div className="hud-frame border border-[#D0D5DF] bg-white p-5 dark:border-[#262B36] dark:bg-[#111318] space-y-4">
             <div className="flex items-center gap-2 border-b border-[#D0D5DF] pb-3 dark:border-[#262B36]">
               <Type className="h-4 w-4 text-[#9A7400] dark:text-[#F5C400]" />
               <h2 className="text-sm font-bold text-[#111318] dark:text-[#F4F6F9]">
-                Estilo gráfico y tipografía
+                {t.graphicHeading}
               </h2>
             </div>
 
             <div className="grid gap-2.5">
-              {GRAPHIC_STYLES.map((style) => {
+              {graphicStyles.map((style) => {
                 const selected = style.id === graphicStyle.id;
                 return (
                   <button
@@ -99,7 +102,7 @@ export function StyleStep({
                       </span>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-[11px] text-[#4B5565] dark:text-[#9BA4B5]">
-                          Radio {style.borderRadius}
+                          {t.radiusLabel} {style.borderRadius}
                         </span>
                         {selected ? (
                           <Check className="h-4 w-4 text-[#9A7400] dark:text-[#F5C400]" />
@@ -115,22 +118,21 @@ export function StyleStep({
             </div>
           </div>
 
-          {/* Color Patterns */}
           <div className="hud-frame border border-[#D0D5DF] bg-white p-5 dark:border-[#262B36] dark:bg-[#111318] space-y-4">
             <div className="flex items-center justify-between border-b border-[#D0D5DF] pb-3 dark:border-[#262B36]">
               <div className="flex items-center gap-2">
                 <Palette className="h-4 w-4 text-[#9A7400] dark:text-[#F5C400]" />
                 <h2 className="text-sm font-bold text-[#111318] dark:text-[#F4F6F9]">
-                  Patrones de colores
+                  {t.colorsHeading}
                 </h2>
               </div>
               <span className="font-mono text-[11px] text-[#4B5565] dark:text-[#9BA4B5]">
-                Oscuros y claros
+                {t.darkAndLightNote}
               </span>
             </div>
 
             <div className="grid gap-2.5 sm:grid-cols-2">
-              {COLOR_PATTERNS.map((pattern) => {
+              {colorPatterns.map((pattern) => {
                 const selected = pattern.id === colorPattern.id;
                 return (
                   <button
@@ -151,26 +153,22 @@ export function StyleStep({
                         <span
                           className="h-4 w-4 border border-black/15"
                           style={{ backgroundColor: pattern.background }}
-                          title="Fondo"
                         />
                         <span
                           className="h-4 w-4 border border-black/15"
                           style={{ backgroundColor: pattern.surface }}
-                          title="Superficie"
                         />
                         <span
                           className="h-4 w-4 border border-black/15"
                           style={{ backgroundColor: pattern.text }}
-                          title="Texto"
                         />
                         <span
                           className="h-4 w-4 border border-black/15"
                           style={{ backgroundColor: pattern.accent }}
-                          title="Acento"
                         />
                       </div>
                       <span className="font-mono text-[10px] text-[#4B5565] dark:text-[#9BA4B5]">
-                        {pattern.mode === 'dark' ? 'Oscuro' : 'Claro'}
+                        {pattern.mode === 'dark' ? t.modeDark : t.modeLight}
                       </span>
                     </div>
                     <div>
@@ -186,14 +184,13 @@ export function StyleStep({
               })}
             </div>
 
-            {/* Custom Accent Fine-Tuning */}
             <div className="pt-3 border-t border-[#D0D5DF] dark:border-[#262B36] space-y-2.5">
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="accent-color-picker"
                   className="text-xs font-medium text-[#111318] dark:text-[#F4F6F9]"
                 >
-                  Ajuste fino de color de acento
+                  {t.customAccentLabel}
                 </label>
                 {customAccent ? (
                   <button
@@ -201,7 +198,7 @@ export function StyleStep({
                     onClick={() => onSetCustomAccent(null)}
                     className="text-[11px] text-[#9A7400] underline dark:text-[#F5C400] cursor-pointer"
                   >
-                    Restaurar original
+                    {t.restoreOriginal}
                   </button>
                 ) : null}
               </div>
@@ -212,7 +209,7 @@ export function StyleStep({
                     key={hex}
                     type="button"
                     onClick={() => onSetCustomAccent(hex)}
-                    aria-label={`Color de acento ${hex}`}
+                    aria-label={t.accentAria(hex)}
                     className={`h-7 w-7 border cursor-pointer transition-transform hover:scale-105 ${
                       effectiveColorPattern.accent.toLowerCase() === hex.toLowerCase()
                         ? 'ring-2 ring-[#9A7400] dark:ring-[#F5C400] border-white'
@@ -236,9 +233,9 @@ export function StyleStep({
           </div>
         </div>
 
-        {/* Right Live Preview */}
         <div className="lg:col-span-7 lg:sticky lg:top-20">
           <LiveSitePreview
+            locale={locale}
             template={template}
             sections={sections}
             graphicStyle={graphicStyle}
@@ -248,7 +245,6 @@ export function StyleStep({
         </div>
       </div>
 
-      {/* Bottom Step Navigation */}
       <div className="flex items-center justify-between pt-2">
         <button
           type="button"
@@ -256,7 +252,7 @@ export function StyleStep({
           className="inline-flex h-11 items-center gap-2 border border-[#D0D5DF] bg-white px-5 text-sm font-medium text-[#111318] transition-colors hover:border-[#111318] dark:border-[#262B36] dark:bg-[#111318] dark:text-[#F4F6F9] dark:hover:border-[#F4F6F9] cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
-          <span>Volver a plantillas</span>
+          <span>{t.backBtn}</span>
         </button>
 
         <button
@@ -264,7 +260,7 @@ export function StyleStep({
           onClick={onNext}
           className="inline-flex h-11 items-center gap-2 bg-[#F5C400] px-6 text-sm font-semibold text-[#0A0B0D] transition-colors hover:bg-[#FFD000] cursor-pointer"
         >
-          <span>Cargar contenidos de la página</span>
+          <span>{t.nextBtn}</span>
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>
