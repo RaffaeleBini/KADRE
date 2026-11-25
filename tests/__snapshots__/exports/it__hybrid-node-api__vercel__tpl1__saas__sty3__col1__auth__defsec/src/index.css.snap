@@ -14,14 +14,12 @@
   --radius-card: 0px;
   --radius-btn: 0px;
   --border-w: 2px;
+  --heading-tracking: -0.03em;
+  --space-section: 3.5rem;
 }
 
 html {
   scroll-behavior: smooth;
   background-color: var(--color-bg);
   color: var(--color-text);
-}
-
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
 }

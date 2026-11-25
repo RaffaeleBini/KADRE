@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "lint": "tsc --noEmit",
     "test": "vitest run",
-    "verify:exports": "tsx scripts/verify-exports.ts"
+    "verify:exports": "vitest run --config vitest.verify.config.ts"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",
@@ -27,7 +27,6 @@
     "@types/react-dom": "^19.3.0",
     "esbuild": "^0.27.0",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.1.2"
   }

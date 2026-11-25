@@ -1,0 +1,29 @@
+{
+  "sectionOrder": [
+    "hero",
+    "features",
+    "catalog",
+    "faq",
+    "contact"
+  ],
+  "heroLayout": "editorial",
+  "hasBackendApi": false,
+  "ui": {
+    "nav": {
+      "features": "Capacità",
+      "catalog": "Selezione",
+      "pricing": "Piani",
+      "faq": "Domande",
+      "contact": "Contatti"
+    },
+    "form": {
+      "name": "Il tuo nome",
+      "email": "Indirizzo email",
+      "message": "Raccontaci il tuo progetto...",
+      "send": "Invia messaggio",
+      "sending": "Invio in corso...",
+      "sent": "Messaggio ricevuto correttamente.",
+      "error": "Invio non riuscito. Riprova."
+    }
+  }
+}

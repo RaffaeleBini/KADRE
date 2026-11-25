@@ -1,6 +1,6 @@
 import { GeneratedFile } from '../../../types/builder';
 import { AssembledProject, GenContext, Skeleton } from '../../types';
-import { generateSiteAppTsx } from './appTsx';
+import { buildSiteConfig, siteCssVars } from './siteConfig';
 
 /** Scheletro React + Vite + Tailwind: SPA a una pagina con sezioni. */
 export const viteReactSkeleton: Skeleton = {
@@ -81,22 +81,14 @@ export default defineConfig({
     2
   );
 
+  const cssVars = Object.entries(siteCssVars(graphicStyle, colorPattern))
+    .map(([name, value]) => `  ${name}: ${value};`)
+    .join('\n');
+
   const indexCss = `@import "tailwindcss";
 
 :root {
-  --font-display: ${graphicStyle.fontDisplay};
-  --font-body: ${graphicStyle.fontBody};
-  --color-bg: ${colorPattern.background};
-  --color-surface: ${colorPattern.surface};
-  --color-surface-alt: ${colorPattern.surfaceAlt};
-  --color-text: ${colorPattern.text};
-  --color-text-muted: ${colorPattern.textMuted};
-  --color-accent: ${colorPattern.accent};
-  --color-accent-text: ${colorPattern.accentText};
-  --color-border: ${colorPattern.border};
-  --radius-card: ${graphicStyle.borderRadius};
-  --radius-btn: ${graphicStyle.buttonRadius};
-  --border-w: ${graphicStyle.borderWidth};
+${cssVars}
 }
 
 html {
@@ -104,9 +96,22 @@ html {
   background-color: var(--color-bg);
   color: var(--color-text);
 }
+`;
 
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
+  const siteConfig = buildSiteConfig({ locale, template, sections, hasBackendApi: ctx.hasBackend });
+
+  const appTsx = `import config from './data/siteConfig.json';
+import content from './data/siteContent.json';
+import { Site } from './site/Site';
+import type { SiteConfig, SiteContent } from './site/types';
+
+// ${isIt ? 'Il contenuto viene verificato contro SiteContent dal compilatore.' : 'El compilador comprueba el contenido contra SiteContent.'}
+const siteContent: SiteContent = content;
+// ${isIt ? 'Nel JSON i valori come "hero" sono stringhe generiche: il cast li restringe ai tipi del sito.' : 'En el JSON valores como "hero" son cadenas genéricas: el cast los restringe a los tipos del sitio.'}
+const siteConfig = config as SiteConfig;
+
+export default function App() {
+  return <Site content={siteContent} config={siteConfig} />;
 }
 `;
 
@@ -176,12 +181,47 @@ createRoot(document.getElementById('root')!).render(
       content: JSON.stringify(exportedContent, null, 2),
     },
     {
+      path: 'src/data/siteConfig.json',
+      language: 'json',
+      description: isIt
+        ? 'Struttura del sito: ordine delle sezioni, layout e testi dell’interfaccia.'
+        : 'Estructura del sitio: orden de secciones, diseño y textos de la interfaz.',
+      content: JSON.stringify(siteConfig, null, 2),
+    },
+    {
       path: 'src/App.tsx',
       language: 'typescript',
       description: isIt
-        ? 'Applicazione React completa con tutte le sezioni attivate.'
-        : 'Aplicación React completa con todas las secciones activadas.',
-      content: generateSiteAppTsx(locale, template, sections, graphicStyle, colorPattern, stack),
+        ? 'Punto di unione tra dati JSON e componenti del sito.'
+        : 'Punto de unión entre los datos JSON y los componentes del sitio.',
+      content: appTsx,
     },
+    ...siteComponentFiles(isIt),
   ];
+}
+
+/**
+ * Componenti del sito: file .tsx veri in src/site-template/vite-react/site/,
+ * copiati tali e quali. Sono gli stessi che l'anteprima di KADRE renderizza.
+ */
+const SITE_SOURCES = import.meta.glob('../../../site-template/vite-react/site/**/*.{ts,tsx}', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+}) as Record<string, string>;
+
+function siteComponentFiles(isIt: boolean): GeneratedFile[] {
+  return Object.keys(SITE_SOURCES)
+    .sort()
+    .map((key) => {
+      const relative = key.split('/site-template/vite-react/')[1];
+      return {
+        path: `src/${relative}`,
+        language: 'typescript' as const,
+        description: isIt
+          ? 'Componente del sito, identico a quello mostrato nell’anteprima di KADRE.'
+          : 'Componente del sitio, idéntico al que muestra la vista previa de KADRE.',
+        content: SITE_SOURCES[key],
+      };
+    });
 }

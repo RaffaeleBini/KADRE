@@ -183,16 +183,6 @@ export interface AppTranslations {
     desktop: string;
     tablet: string;
     mobile: string;
-    navFeatures: string;
-    navCatalog: string;
-    navPricing: string;
-    navFaq: string;
-    navContact: string;
-    formNamePlaceholder: string;
-    formEmailPlaceholder: string;
-    formMessagePlaceholder: string;
-    formSubmit: string;
-    formSentFeedback: string;
   };
   exportStep: {
     stepTag: string;
@@ -501,16 +491,6 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
       desktop: 'Escritorio',
       tablet: 'Tablet',
       mobile: 'Móvil',
-      navFeatures: 'Capacidades',
-      navCatalog: 'Selección',
-      navPricing: 'Planes',
-      navFaq: 'Preguntas',
-      navContact: 'Contacto',
-      formNamePlaceholder: 'Tu nombre',
-      formEmailPlaceholder: 'Correo',
-      formMessagePlaceholder: 'Mensaje breve...',
-      formSubmit: 'Enviar consulta',
-      formSentFeedback: 'Simulación enviada correctamente',
     },
     exportStep: {
       stepTag: 'Paso 5 de 5 · Exportación y despliegue en GitHub',
@@ -822,16 +802,6 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
       desktop: 'Desktop',
       tablet: 'Tablet',
       mobile: 'Mobile',
-      navFeatures: 'Capacità',
-      navCatalog: 'Selezione',
-      navPricing: 'Piani',
-      navFaq: 'Domande',
-      navContact: 'Contatti',
-      formNamePlaceholder: 'Il tuo nome',
-      formEmailPlaceholder: 'Email',
-      formMessagePlaceholder: 'Breve messaggio...',
-      formSubmit: 'Invia richiesta',
-      formSentFeedback: 'Simulazione inviata correttamente',
     },
     exportStep: {
       stepTag: 'Passo 5 di 5 · Esportazione e deploy su GitHub',

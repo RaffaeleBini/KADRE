@@ -2,9 +2,11 @@
  * Verifica che ogni sito esportato da KADRE si installi, superi il controllo dei
  * tipi e compili.
  *
- *   npm run verify:exports                 32 combinazioni strutturali
- *   npm run verify:exports -- --full       prodotto completo (lento)
- *   npm run verify:exports -- --filter=it  solo le combinazioni il cui id contiene "it"
+ *   npm run verify:exports                          32 combinazioni strutturali
+ *   VERIFY_FULL=1 npm run verify:exports            prodotto completo (lento)
+ *   VERIFY_FILTER=it__ npm run verify:exports       solo le combinazioni il cui id contiene "it__"
+ *
+ * Esegue con Vitest (config: vitest.verify.config.ts), non con `npm test`.
  *
  * Per ogni combinazione: genera i file → li scrive in una cartella di lavoro →
  * `tsc --noEmit` (tsconfig strict generato) → `vite build` → `bash -n` sullo script
@@ -15,16 +17,16 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { ExportCombo, fullCombos, generate, structuralCombos } from '../tests/exportMatrix';
+import { expect, test } from 'vitest';
+import { ExportCombo, fullCombos, generate, structuralCombos } from './exportMatrix';
 
-const ROOT = path.resolve(import.meta.dirname, '..');
+const ROOT = path.resolve(__dirname, '..');
 const CACHE = path.join(ROOT, '.cache', 'verify-exports');
 const REPORT = path.join(CACHE, 'report.json');
 const KEEP = new Set(['node_modules', 'package-lock.json', 'package.json']);
 
-const args = process.argv.slice(2);
-const full = args.includes('--full');
-const filter = args.find((a) => a.startsWith('--filter='))?.split('=')[1];
+const full = process.env.VERIFY_FULL === '1';
+const filter = process.env.VERIFY_FILTER;
 
 type Step = 'install' | 'typecheck' | 'build' | 'script';
 
@@ -155,8 +157,11 @@ function main() {
       console.log(`\n── ${signature} — ${g.ids.length} combinazioni, es. ${g.ids[0]}\n${g.sample}`);
     }
     console.log(`\nReport completo: ${path.relative(ROOT, REPORT)}`);
-    process.exit(1);
   }
+  return failed.map((r) => r.id);
 }
 
-main();
+// Gira dentro Vitest perché il generatore usa import.meta.glob (funzione di Vite).
+test('i siti esportati si installano, superano tsc e compilano', () => {
+  expect(main()).toEqual([]);
+});
