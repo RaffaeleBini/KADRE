@@ -6,3 +6,7 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Documenti di lavoro locali (non pubblicare)
+context.md
+PIANO-generatore-deterministico.md

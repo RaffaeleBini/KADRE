@@ -475,10 +475,13 @@ export default function App() {
       <footer className="border-t border-[#D0D5DF] bg-[#F3F4F6]/90 py-5 dark:border-[#262B36] dark:bg-[#0A0B0D]/90">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4 px-6 text-xs text-[#4B5565] dark:text-[#9BA4B5]">
           <span>{footerT.left}</span>
-          <span className="font-mono tabular-nums">
-            {currentStep === 'welcome'
-              ? footerT.rightWelcome
-              : footerT.rightActive(content.brandName)}
+          <span className="inline-flex items-center gap-2 font-mono tabular-nums text-[#111318] dark:text-[#F4F6F9]">
+            <img
+              src="./assets/aistudio/RB-logo-2026_84fe83ea.png"
+              alt="Logo Raffaele Bini"
+              className="h-5 w-5 rounded-[3px] object-contain shrink-0"
+            />
+            <span>{footerT.rightWelcome}</span>
           </span>
         </div>
       </footer>

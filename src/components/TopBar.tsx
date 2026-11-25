@@ -37,14 +37,19 @@ export function TopBar({
   return (
     <header className="sticky top-0 z-40 border-b border-[#D0D5DF] bg-[#F3F4F6]/95 backdrop-blur-md dark:border-[#262B36] dark:bg-[#0A0B0D]/95">
       <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-6 px-6 py-3.5">
-        {/* Zone 1: Single-element Brand Wordmark */}
+        {/* Zone 1: Brand Lockup */}
         <button
           type="button"
           onClick={() => onNavigateStep('welcome')}
-          className="text-lg font-bold tracking-[0.14em] text-[#111318] transition-colors hover:text-[#9A7400] dark:text-[#F4F6F9] dark:hover:text-[#F5C400] whitespace-nowrap shrink-0 cursor-pointer"
+          className="inline-flex items-center gap-2.5 text-lg font-bold tracking-[0.14em] text-[#111318] transition-colors hover:text-[#9A7400] dark:text-[#F4F6F9] dark:hover:text-[#F5C400] whitespace-nowrap shrink-0 cursor-pointer"
           style={{ fontFamily: 'var(--font-display)' }}
         >
-          KADRE
+          <img
+            src="./assets/aistudio/RB-logo-2026_84fe83ea.png"
+            alt="Logo Raffaele Bini"
+            className="h-8 w-8 rounded-[4px] object-contain shrink-0"
+          />
+          <span>KADRE</span>
         </button>
 
         {/* Zone 2: Clean single-line navigation links */}

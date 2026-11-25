@@ -577,8 +577,8 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
     },
     footer: {
       left: 'KADRE · Generador guiado de arquitectura web y exportación a GitHub',
-      rightWelcome: 'Modo oscuro por defecto · Alternable a modo claro',
-      rightActive: (b) => `Proyecto activo: ${b}`,
+      rightWelcome: '@2026 Raffaele Bini',
+      rightActive: () => '@2026 Raffaele Bini',
     },
   },
 
@@ -898,8 +898,8 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
     },
     footer: {
       left: 'KADRE · Generatore guidato di architetture web ed esportazione GitHub',
-      rightWelcome: 'Modalità scura predefinita · Passaggio rapido a modalità chiara',
-      rightActive: (b) => `Progetto attivo: ${b}`,
+      rightWelcome: '@2026 Raffaele Bini',
+      rightActive: () => '@2026 Raffaele Bini',
     },
   },
 };

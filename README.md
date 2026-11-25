@@ -1,20 +1,34 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# KADRE
 
-# Run and deploy your AI Studio app
+Plataforma interactiva en estilo HUD para diseñar una web paso a paso: define el stack técnico, elige plantilla, estilo y colores, carga los contenidos y exporta un repositorio listo para GitHub.
 
-This contains everything you need to run your app locally.
+**En producción:** https://kadre-sigma.vercel.app/
 
-View your app in AI Studio: https://ai.studio/apps/d5a1017a-5735-4c89-837f-143a17c697ba
+## Cómo funciona
 
-## Run Locally
+Seis pasos: bienvenida → descubrimiento (tipo de proyecto, arquitectura, datos, renderizado, integraciones) → plantilla y secciones → estilo y colores → contenidos → exportación (ZIP con el código, un README y un script para subirlo a GitHub).
 
-**Prerequisites:**  Node.js
+Todo ocurre en el navegador: no hay backend ni llamadas a APIs de IA, y no hace falta ninguna variable de entorno. El borrador se guarda en `localStorage`.
 
+Interfaz en español e italiano.
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## Desarrollo
+
+Requisitos: Node.js 20 o superior.
+
+```bash
+npm install
+npm run dev      # http://localhost:3000
+npm run build    # genera dist/
+npm run lint     # comprobación de tipos
+```
+
+## Despliegue
+
+Vercel, conectado a este repositorio: cada push a `main` publica una nueva versión. Preset Vite, comando `npm run build`, salida `dist`.
+
+## Origen
+
+Creada con Google AI Studio (Gemini) como ejercicio de un curso de formación y mantenida después con Claude Code.
+
+© 2026 Raffaele Bini
