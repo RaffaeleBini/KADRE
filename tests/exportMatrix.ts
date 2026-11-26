@@ -21,7 +21,7 @@ import {
 import { CodeGenerationInput, generateRepositoryFiles } from '../src/generator';
 import { STACK_PROFILES, StackId } from '../src/generator/matrix';
 import { Locale } from '../src/i18n/translations';
-import { DeployPlatform, DiscoveryAnswers, GeneratedFile, ProjectType } from '../src/types/builder';
+import { DeployPlatform, DiscoveryAnswers, GeneratedFile, IntegrationOption, ProjectType } from '../src/types/builder';
 
 export const LOCALES: Locale[] = ['es', 'it'];
 export const PROJECT_TYPES: ProjectType[] = [
@@ -46,6 +46,8 @@ export interface ExportCombo {
   allSections: boolean;
   /** con la integración de analytics activada */
   analytics?: boolean;
+  /** con la integración de formulario de contacto con envío real */
+  contact?: boolean;
 }
 
 /** Coppie (stack, piattaforma) che il configuratore offre. */
@@ -66,6 +68,7 @@ function makeId(c: Omit<ExportCombo, 'id'>): string {
     `col${c.colorIndex}`,
     c.allSections ? 'allsec' : 'defsec',
     ...(c.analytics ? ['analytics'] : []),
+    ...(c.contact ? ['contact'] : []),
   ].join('__');
 }
 
@@ -108,6 +111,23 @@ export function structuralCombos(): ExportCombo[] {
     };
     combos.push({ ...base, id: makeId(base) });
   });
+  // Formulario de contacto con envío real: una variante por stack y por cada plataforma de
+  // los stacks con servidor (cada adapter de Astro lee los secretos a su manera).
+  offeredStackPlatforms().forEach(({ stackId, platform }, k) => {
+    if (!STACK_PROFILES[stackId].backend && platform !== STACK_PROFILES[stackId].platforms[0]) return;
+    const base = {
+      locale: LOCALES[(k + 1) % LOCALES.length],
+      stackId,
+      platform,
+      templateIndex: (i + k + 1) % nTemplates,
+      projectType: PROJECT_TYPES[(i + k + 1) % PROJECT_TYPES.length],
+      styleIndex: (i + k + 1) % nStyles,
+      colorIndex: (i + k + 1) % nColors,
+      allSections: false,
+      contact: true,
+    };
+    combos.push({ ...base, id: makeId(base) });
+  });
   return combos;
 }
 
@@ -143,18 +163,19 @@ export function snapshotCombos(): ExportCombo[] {
     const pick = (platform: DeployPlatform, locale: Locale) =>
       all.find((c) => c.stackId === stackId && c.platform === platform && c.locale === locale)!;
     return [pick(platforms[0], 'es'), pick(platforms[platforms.length - 1], 'it')];
-  }).concat(all.filter((c) => c.analytics && ['static-vite-react', 'astro-hybrid'].includes(c.stackId)));
+  }).concat(all.filter((c) => c.analytics && ['static-vite-react', 'astro-hybrid'].includes(c.stackId)))
+    .concat(all.filter((c) => c.contact && c.platform !== 'netlify' && c.platform !== 'cloudflare'));
 }
 
 /** Risposte del passo Discovery coerenti con lo stack (come le produrrebbe l'utente). */
-function answersFor(stackId: StackId, projectType: ProjectType, analytics = false): DiscoveryAnswers {
+function answersFor(stackId: StackId, projectType: ProjectType, integrations: IntegrationOption[] = []): DiscoveryAnswers {
   const profile = STACK_PROFILES[stackId];
   return {
     ...DEFAULT_DISCOVERY_ANSWERS,
     projectType,
     architectureMode: profile.backend ? 'light-api' : 'frontend-only',
     databaseNeed: profile.database ? 'sql-relational' : 'none',
-    integrations: analytics ? ['analytics'] : [],
+    integrations,
   };
 }
 
@@ -167,7 +188,10 @@ export function buildInput(c: ExportCombo): CodeGenerationInput {
   );
   return {
     locale: c.locale,
-    answers: answersFor(c.stackId, c.projectType, c.analytics),
+    answers: answersFor(c.stackId, c.projectType, [
+      ...(c.analytics ? (['analytics'] as const) : []),
+      ...(c.contact ? (['contact-form'] as const) : []),
+    ]),
     stack,
     template,
     sections,

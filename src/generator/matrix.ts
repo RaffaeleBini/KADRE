@@ -155,13 +155,7 @@ const INTEGRATION_SOON: Msg = {
 };
 
 const INTEGRATIONS: Record<IntegrationOption, Availability> = {
-  'contact-form': {
-    status: 'planned',
-    reason: {
-      es: 'El envío real llegará como integración. Hoy el formulario de la sección Contacto es demostrativo en sitios estáticos y llega a /api/contact con servidor Express.',
-      it: 'L’invio reale arriverà come integrazione. Oggi il modulo della sezione Contatti è dimostrativo nei siti statici e arriva a /api/contact con server Express.',
-    },
-  },
+  'contact-form': AVAILABLE,
   payments: { status: 'planned', reason: INTEGRATION_SOON },
   analytics: AVAILABLE,
   i18n: { status: 'planned', reason: INTEGRATION_SOON },

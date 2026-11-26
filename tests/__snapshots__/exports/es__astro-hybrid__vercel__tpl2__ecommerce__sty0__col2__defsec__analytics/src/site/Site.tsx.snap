@@ -98,7 +98,15 @@ export function Site({ content, config }: { content: SiteContent; config: SiteCo
             case 'faq':
               return <Faq key={type} content={content} />;
             case 'contact':
-              return <Contact key={type} content={content} ui={ui.form} hasBackendApi={config.hasBackendApi} />;
+              return (
+                <Contact
+                  key={type}
+                  content={content}
+                  ui={ui.form}
+                  hasBackendApi={config.hasBackendApi}
+                  provider={config.contactProvider}
+                />
+              );
           }
         })}
       </main>

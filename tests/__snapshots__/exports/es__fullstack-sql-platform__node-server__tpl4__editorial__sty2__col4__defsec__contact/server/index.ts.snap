@@ -1,0 +1,40 @@
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import 'dotenv/config';
+import { parseContact, sendContactEmail } from './contactEmail';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const app = express();
+const PORT = Number(process.env.PORT || 3000);
+
+app.use(express.json());
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, timestamp: new Date().toISOString() });
+});
+
+app.post('/api/contact', async (req, res) => {
+  const parsed = parseContact(req.body);
+  if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+  // Campo trampa relleno: se responde "ok" sin enviar nada.
+  if (parsed.spam) return res.status(201).json({ received: true });
+  const result = await sendContactEmail(process.env, parsed.data);
+  if (result === 'unconfigured') {
+    return res.status(503).json({ error: 'Envío de correo no configurado (ver README).' });
+  }
+  if (result === 'failed') return res.status(502).json({ error: 'El servicio de correo no aceptó el mensaje.' });
+  return res.status(201).json({ received: true });
+});
+
+if (process.env.NODE_ENV === 'production') {
+  const distDir = path.resolve(__dirname, '../dist');
+  app.use(express.static(distDir));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(distDir, 'index.html'));
+  });
+}
+
+app.listen(PORT, () => {
+  console.log(`Servidor activo en http://localhost:${PORT}`);
+});

@@ -1,0 +1,56 @@
+# Vektor Audio
+
+Ingeniería acústica de escritorio
+
+## Arquitectura técnica seleccionada
+
+- **Stack**: Astro híbrido (página estática + endpoint de servidor)
+- **Frontend**: Astro 7 + React 19 (componentes hidratados)
+- **Backend**: Endpoints de Astro: /api/contact y /api/health
+- **Base de datos**: Ninguna
+- **Plantilla**: Lanzamiento de Producto
+- **Estilo gráfico**: Minimalista Moderno · Obsidiana y Amarillo Industrial
+
+## Ejecución local
+
+```bash
+npm install
+npm run dev
+```
+
+## Exportar a GitHub paso a paso
+
+1. Crea un repositorio vacío llamado `vektor-audio` en https://github.com/new (sin README ni .gitignore).
+2. Ejecuta los siguientes comandos dentro de esta carpeta:
+
+```bash
+git init
+git add .
+git commit -m "Versión inicial de Vektor Audio"
+git branch -M main
+git remote add origin https://github.com/kadre-test/vektor-audio.git
+git push -u origin main
+```
+
+También puedes ejecutar el script automatizado incluido:
+
+```bash
+chmod +x exportar-github.sh
+./exportar-github.sh
+```
+
+## Despliegue (node-server)
+
+1. En un hosting Node (Render, Railway…) crea un servicio web conectado a `kadre-test/vektor-audio`.
+2. Comando de compilación: `npm install && npm run build` · Comando de arranque: `npm start`.
+3. El servidor escucha en el puerto de la variable `PORT` (la definen los proveedores).
+
+## Envío del formulario de contacto (Resend)
+
+`/api/contact` envía un correo por cada mensaje recibido. Mientras no esté configurado responde **503** y el sitio muestra un error: no finge haber enviado.
+
+1. Crea una cuenta gratuita en https://resend.com (100 correos al día, 3.000 al mes) y genera una **API key**.
+2. Define las variables `RESEND_API_KEY` (secreta) y `CONTACT_TO_EMAIL` (donde quieres recibir los mensajes). En local copia `.env.example` a `.env`; en el hosting añádelas en los ajustes de variables de entorno.
+3. Para probar basta el remitente de prueba `onboarding@resend.dev`, que solo entrega **al correo de tu cuenta de Resend**. Para recibir en otra dirección verifica un dominio en Resend y define `CONTACT_FROM_EMAIL` (p. ej. `web@tudominio.com`).
+
+La clave nunca está en el código ni en el navegador: solo la lee el servidor.

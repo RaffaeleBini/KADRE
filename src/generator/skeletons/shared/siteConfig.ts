@@ -5,7 +5,7 @@
  * passa direttamente ai componenti): un'unica fonte, nessuna divergenza.
  */
 import { Locale } from '../../../i18n/translations';
-import type { SiteConfig, SiteUi } from '../../../site-template/site/types';
+import type { ContactProvider, SiteConfig, SiteUi } from '../../../site-template/site/types';
 import {
   ColorPatternPreset,
   GraphicStylePreset,
@@ -57,11 +57,13 @@ export function buildSiteConfig(params: {
   template: TemplateDefinition;
   sections: SectionConfig[];
   hasBackendApi: boolean;
+  contactProvider?: ContactProvider;
 }): SiteConfig {
   return {
     sectionOrder: params.sections.filter((s) => s.enabled).map((s) => s.type),
     heroLayout: params.template.heroLayout,
     hasBackendApi: params.hasBackendApi,
+    ...(params.contactProvider ? { contactProvider: params.contactProvider } : {}),
     ui: SITE_UI[params.locale],
   };
 }

@@ -8,6 +8,7 @@
  */
 import { DeployPlatform } from '../../types/builder';
 import { GenContext, GeneratorModule } from '../types';
+import { CONTACT_ENV_VARS, hasContactForm } from './contactForm';
 
 const astroWithServer = (ctx: GenContext) => ctx.skeleton === 'astro' && ctx.hasBackend;
 const onPlatform = (platform: DeployPlatform) => (ctx: GenContext) =>
@@ -24,14 +25,41 @@ const ASTRO_SCRIPTS = {
 export const astroEndpoints: GeneratorModule = {
   id: 'astro-endpoints',
   enabled: astroWithServer,
-  files: ({ isIt }) => [
+  files: (ctx) => {
+    const { isIt } = ctx;
+    const realEmail = hasContactForm(ctx);
+    const contactEndpoint = realEmail
+      ? `import type { APIRoute } from 'astro';
+import { ${CONTACT_ENV_VARS.join(', ')} } from 'astro:env/server';
+import { parseContact, sendContactEmail } from '../../lib/contactEmail';
+
+// ${isIt ? 'Eseguito sul server a ogni richiesta (non generato in build).' : 'Se ejecuta en el servidor en cada petición (no se genera al compilar).'}
+export const prerender = false;
+
+export const POST: APIRoute = async ({ request }) => {
+  const parsed = parseContact(await request.json().catch(() => null));
+  if (!parsed.ok) return Response.json({ error: parsed.error }, { status: 400 });
+  // ${isIt ? 'Campo trappola riempito: si risponde "ok" senza inviare nulla.' : 'Campo trampa relleno: se responde "ok" sin enviar nada.'}
+  if (parsed.spam) return Response.json({ received: true }, { status: 201 });
+  const result = await sendContactEmail({ ${CONTACT_ENV_VARS.join(', ')} }, parsed.data);
+  if (result === 'unconfigured') {
+    return Response.json({ error: '${isIt ? 'Invio email non configurato (vedi README).' : 'Envío de correo no configurado (ver README).'}' }, { status: 503 });
+  }
+  if (result === 'failed') {
+    return Response.json({ error: '${isIt ? 'Il servizio email non ha accettato il messaggio.' : 'El servicio de correo no aceptó el mensaje.'}' }, { status: 502 });
+  }
+  return Response.json({ received: true }, { status: 201 });
+};
+`
+      : null;
+    return [
     {
       path: 'src/pages/api/contact.ts',
       language: 'typescript',
       description: isIt
         ? 'Endpoint server: riceve e valida il modulo di contatto.'
         : 'Endpoint de servidor: recibe y valida el formulario de contacto.',
-      content: `import type { APIRoute } from 'astro';
+      content: contactEndpoint ?? `import type { APIRoute } from 'astro';
 
 // ${isIt ? 'Eseguito sul server a ogni richiesta (non generato in build).' : 'Se ejecuta en el servidor en cada petición (no se genera al compilar).'}
 export const prerender = false;
@@ -63,7 +91,8 @@ export const prerender = false;
 export const GET: APIRoute = () => Response.json({ ok: true, timestamp: new Date().toISOString() });
 `,
     },
-  ],
+    ];
+  },
 };
 
 export const astroAdapterVercel: GeneratorModule = {

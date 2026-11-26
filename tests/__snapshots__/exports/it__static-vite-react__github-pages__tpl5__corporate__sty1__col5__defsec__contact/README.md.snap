@@ -1,0 +1,56 @@
+# Italia Precisione Industriale
+
+Automazione e manifattura avanzata
+
+## Architettura tecnica selezionata
+
+- **Stack**: React + Vite + Tailwind (SPA statica)
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Nessuno
+- **Database**: Contenuti in src/data/siteContent.json
+- **Modello**: Editoriale e Documentazione
+- **Stile grafico**: Editoriale Svizzero · Bianco Puro e Blu Ingegneria
+
+## Avvio in locale
+
+```bash
+npm install
+npm run dev
+```
+
+## Esportazione su GitHub passo dopo passo
+
+1. Crea un repository vuoto chiamato `italia-precisione-industriale` su https://github.com/new (senza README né .gitignore).
+2. Esegui questi comandi dentro la cartella del progetto:
+
+```bash
+git init
+git add .
+git commit -m "Versione iniziale di Italia Precisione Industriale"
+git branch -M main
+git remote add origin https://github.com/kadre-test/italia-precisione-industriale.git
+git push -u origin main
+```
+
+In alternativa puoi avviare lo script automatizzato incluso:
+
+```bash
+chmod +x esporta-github.sh
+./esporta-github.sh
+```
+
+## Pubblicazione (github-pages)
+
+1. Apri il repository su GitHub → **Settings** → **Pages**.
+2. In **Build and deployment / Source**, seleziona **GitHub Actions**.
+3. Il workflow `.github/workflows/deploy.yml` pubblicherà automaticamente il sito su `https://kadre-test.github.io/italia-precisione-industriale/`.
+
+## Invio del modulo di contatto (Web3Forms)
+
+Il sito è statico e non ha un server: il modulo invia a **Web3Forms**, un servizio gratuito (250 messaggi al mese) che ti inoltra ogni messaggio per email. Finché la chiave è vuota il modulo mostra un errore invece di fingere di inviare.
+
+1. Su https://web3forms.com inserisci la tua email e ricevi una **access key**.
+2. Incollala in `src/data/siteConfig.json`, nel campo `contactProvider.accessKey`.
+3. Pubblica di nuovo il sito e prova il modulo.
+
+La access key è pubblica per costruzione (compare nel browser): serve solo a indicare a quale email recapitare i messaggi. Un campo nascosto e il filtro anti-bot del servizio riducono lo spam.

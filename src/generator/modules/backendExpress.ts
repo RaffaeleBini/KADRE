@@ -1,4 +1,5 @@
 import { GeneratorModule } from '../types';
+import { hasContactForm } from './contactForm';
 
 /** Server Express con /api/contact e servizio della build in produzione. */
 export const backendExpress: GeneratorModule = {
@@ -22,6 +23,28 @@ export const backendExpress: GeneratorModule = {
   tsInclude: ['server'],
   files: (ctx) => {
     const { isIt } = ctx;
+    const realEmail = hasContactForm(ctx);
+    const contactRoute = realEmail
+      ? `app.post('/api/contact', async (req, res) => {
+  const parsed = parseContact(req.body);
+  if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+  // ${isIt ? 'Campo trappola riempito: si risponde "ok" senza inviare nulla.' : 'Campo trampa relleno: se responde "ok" sin enviar nada.'}
+  if (parsed.spam) return res.status(201).json({ received: true });
+  const result = await sendContactEmail(process.env, parsed.data);
+  if (result === 'unconfigured') {
+    return res.status(503).json({ error: '${isIt ? 'Invio email non configurato (vedi README).' : 'Envío de correo no configurado (ver README).'}' });
+  }
+  if (result === 'failed') return res.status(502).json({ error: '${isIt ? 'Il servizio email non ha accettato il messaggio.' : 'El servicio de correo no aceptó el mensaje.'}' });
+  return res.status(201).json({ received: true });
+});`
+      : `app.post('/api/contact', async (req, res) => {
+  const { name, email, message } = req.body ?? {};
+  if (!name || !email) {
+    return res.status(400).json({ error: '${isIt ? 'Nome ed email sono obbligatori.' : 'Nombre y correo son obligatorios.'}' });
+  }
+  console.info('[${isIt ? 'Contatto ricevuto' : 'Contacto recibido'}]', { name, email, length: String(message || '').length });
+  return res.status(201).json({ received: true });
+});`;
     return [
       {
       path: 'server/index.ts',
@@ -32,7 +55,7 @@ export const backendExpress: GeneratorModule = {
       content: `import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import 'dotenv/config';
+import 'dotenv/config';${realEmail ? "\nimport { parseContact, sendContactEmail } from './contactEmail';" : ''}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -44,14 +67,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
 
-app.post('/api/contact', async (req, res) => {
-  const { name, email, message } = req.body ?? {};
-  if (!name || !email) {
-    return res.status(400).json({ error: '${isIt ? 'Nome ed email sono obbligatori.' : 'Nombre y correo son obligatorios.'}' });
-  }
-  console.info('[${isIt ? 'Contatto ricevuto' : 'Contacto recibido'}]', { name, email, length: String(message || '').length });
-  return res.status(201).json({ received: true });
-});
+${contactRoute}
 
 if (process.env.NODE_ENV === 'production') {
   const distDir = path.resolve(__dirname, '../dist');

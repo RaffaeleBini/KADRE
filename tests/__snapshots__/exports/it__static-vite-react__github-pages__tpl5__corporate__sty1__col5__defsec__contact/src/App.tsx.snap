@@ -1,0 +1,13 @@
+import config from './data/siteConfig.json';
+import content from './data/siteContent.json';
+import { Site } from './site/Site';
+import type { SiteConfig, SiteContent } from './site/types';
+
+// Il contenuto viene verificato contro SiteContent dal compilatore.
+const siteContent: SiteContent = content;
+// Nel JSON i valori come "hero" sono stringhe generiche: il cast li restringe ai tipi del sito.
+const siteConfig = config as SiteConfig;
+
+export default function App() {
+  return <Site content={siteContent} config={siteConfig} />;
+}

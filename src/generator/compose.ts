@@ -16,6 +16,7 @@ import {
   astroAdapterVercel,
   astroEndpoints,
 } from './modules/astroServer';
+import { contactEmailAstro, contactEmailExpress, contactWeb3forms } from './modules/contactForm';
 import { databasePostgres } from './modules/databasePostgres';
 import { deployWorkflowFile } from './project/deployWorkflow';
 import { envExampleFile } from './project/envExample';
@@ -42,6 +43,9 @@ export const MODULES: GeneratorModule[] = [
   astroAdapterCloudflare,
   astroAdapterNode,
   analytics,
+  contactEmailExpress,
+  contactEmailAstro,
+  contactWeb3forms,
 ];
 
 function assemblePackageJson(ctx: GenContext, skeleton: Skeleton, modules: GeneratorModule[]): string {
@@ -77,6 +81,7 @@ export function generateRepositoryFiles(input: CodeGenerationInput): GeneratedFi
     packageJson: assemblePackageJson(ctx, skeleton, modules),
     tsInclude: [...skeleton.tsInclude, ...modules.flatMap((m) => m.tsInclude ?? [])],
     astroAdapter: modules.find((m) => m.astroAdapter)?.astroAdapter,
+    astroEnv: modules.flatMap((m) => m.astroEnv ?? []),
     clientImports: modules.flatMap((m) => m.clientImports ?? []),
   };
 

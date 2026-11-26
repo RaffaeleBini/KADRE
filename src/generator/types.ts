@@ -62,6 +62,8 @@ export interface AssembledProject {
   astroAdapter?: AstroAdapter;
   /** moduli di src/ da importare nell'entry point del browser (es. './analytics') */
   clientImports: string[];
+  /** variabili d'ambiente segrete dichiarate nello schema astro:env */
+  astroEnv: string[];
 }
 
 /** Come registrare un adapter in astro.config.mjs. */
@@ -90,6 +92,8 @@ export interface GeneratorModule {
   envExample?(ctx: GenContext): string;
   /** moduli di src/ eseguiti nel browser all'avvio, importati dall'entry point dello scheletro */
   clientImports?: string[];
+  /** variabili del server che Astro legge a runtime con astro:env (segreti opzionali) */
+  astroEnv?: string[];
   /** sezione Markdown aggiunta in coda al README */
   readme?(ctx: GenContext): string;
   files?(ctx: GenContext): GeneratedFile[];

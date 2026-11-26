@@ -57,7 +57,9 @@ describe('invarianti su tutte le combinazioni strutturali', () => {
 
       // nessun placeholder del template rimasto non sostituito
       for (const f of files) {
-        expect(f.content, f.path).not.toMatch(/\bundefined\b|\[object Object\]/);
+        // contactEmail.ts usa "string | undefined" como tipo legítimo: solo se busca [object Object]
+        const placeholder = f.path.endsWith('contactEmail.ts') ? /\[object Object\]/ : /\bundefined\b|\[object Object\]/;
+        expect(f.content, f.path).not.toMatch(placeholder);
       }
 
       // l'innesto analytics c'è se e solo se richiesto, ed è collegato all'entry point

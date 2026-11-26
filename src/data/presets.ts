@@ -217,8 +217,8 @@ export function getDiscoveryOptions(locale: Locale): {
         {
           value: 'contact-form',
           title: 'Modulo di contatto',
-          description: 'Raccolta diretta di richieste con validazione e invio strutturato.',
-          technicalHint: 'Validazione client/server',
+          description: 'Il modulo invia davvero i messaggi alla tua email: Web3Forms nei siti statici, Resend con server.',
+          technicalHint: 'Anti-bot · Chiave da configurare dopo l’export',
         },
         {
           value: 'payments',
@@ -366,8 +366,8 @@ export function getDiscoveryOptions(locale: Locale): {
       {
         value: 'contact-form',
         title: 'Formulario de contacto',
-        description: 'Captación directa de consultas con validación y envío estructurado.',
-        technicalHint: 'Validación cliente/servidor',
+        description: 'El formulario envía de verdad los mensajes a tu correo: Web3Forms en sitios estáticos, Resend con servidor.',
+        technicalHint: 'Antibots · Clave por configurar tras exportar',
       },
       {
         value: 'payments',

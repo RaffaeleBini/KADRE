@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import type { SiteContent, SiteUi } from '../types';
+import type { ContactProvider, SiteContent, SiteUi } from '../types';
 import { cardStyle } from './SectionHeading';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';
@@ -10,28 +10,49 @@ export function Contact({
   content,
   ui,
   hasBackendApi,
+  provider,
 }: {
   content: SiteContent;
   ui: SiteUi['form'];
   hasBackendApi: boolean;
+  provider?: ContactProvider;
 }) {
   const [form, setForm] = useState({ name: '', email: '', message: '' });
+  // trampa para bots: un campo invisible que una persona nunca rellena
+  const [botcheck, setBotcheck] = useState('');
   const [status, setStatus] = useState<Status>('idle');
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!form.name.trim() || !form.email.trim()) return;
+    // un bot ha rellenado el campo oculto: se simula el éxito y no se envía nada
+    if (botcheck) return setStatus('sent');
     setStatus('sending');
     try {
-      // senza backend il form è dimostrativo: conferma senza inviare nulla
-      if (hasBackendApi) {
+      if (provider) {
+        // sitio estático: el servicio externo envía el mensaje al correo del propietario
+        if (!provider.accessKey) throw new Error('access key');
+        const res = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            access_key: provider.accessKey,
+            subject: `${content.brandName}: ${form.name}`,
+            from_name: content.brandName,
+            ...form,
+          }),
+        });
+        const result = (await res.json().catch(() => null)) as { success?: boolean } | null;
+        if (!res.ok || !result?.success) throw new Error(String(res.status));
+      } else if (hasBackendApi) {
         const res = await fetch('/api/contact', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify({ ...form, botcheck }),
         });
         if (!res.ok) throw new Error(String(res.status));
       }
+      // sin servidor ni servicio, el formulario es demostrativo: confirma sin enviar nada
       setStatus('sent');
       setForm({ name: '', email: '', message: '' });
     } catch {
@@ -80,6 +101,16 @@ export function Contact({
               style={fieldStyle}
             />
           </div>
+          <input
+            type="text"
+            name="botcheck"
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            value={botcheck}
+            onChange={(e) => setBotcheck(e.target.value)}
+            style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, opacity: 0 }}
+          />
           <textarea
             rows={4}
             aria-label={ui.message}

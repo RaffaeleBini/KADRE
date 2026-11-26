@@ -48,11 +48,18 @@ function astroFiles(ctx: GenContext, assembled: AssembledProject): GeneratedFile
   const adapterImport = adapter ? `\n${adapter.importLine}` : '';
   const adapterLine = adapter ? `\n  adapter: ${adapter.call},` : '';
 
-  const astroConfig = `import { defineConfig } from 'astro/config';
+  // Segreti del servidor (p. ej. la clave de Resend): astro:env los lee en runtime en cualquier adapter
+  const envSchema = assembled.astroEnv.length
+    ? `\n  env: {\n    schema: {\n${assembled.astroEnv
+        .map((v) => `      ${v}: envField.string({ context: 'server', access: 'secret', optional: true }),`)
+        .join('\n')}\n    },\n  },`
+    : '';
+
+  const astroConfig = `import { defineConfig${assembled.astroEnv.length ? ', envField' : ''} } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';${adapterImport}
 
-export default defineConfig({${siteAndBase}${adapterLine}
+export default defineConfig({${siteAndBase}${adapterLine}${envSchema}
   integrations: [react()],
   vite: { plugins: [tailwindcss()] },
 });

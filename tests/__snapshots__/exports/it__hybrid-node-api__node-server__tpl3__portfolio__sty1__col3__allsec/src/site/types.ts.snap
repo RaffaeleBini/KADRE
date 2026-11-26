@@ -73,11 +73,20 @@ export interface SiteUi {
   };
 }
 
+/** Servizio esterno che riceve il modulo nei siti statici. La chiave è pubblica per costruzione. */
+export interface ContactProvider {
+  type: 'web3forms';
+  /** access key di Web3Forms; vuota finché il proprietario non la incolla */
+  accessKey: string;
+}
+
 /** Struttura del sito: quali sezioni, in che ordine, con quale layout. */
 export interface SiteConfig {
   sectionOrder: SectionType[];
   heroLayout: HeroLayout;
   /** true se esiste /api/contact (stack con backend); altrimenti il form è solo dimostrativo */
   hasBackendApi: boolean;
+  /** envío real en sitios estáticos (sin /api/contact): servicio externo con su clave pública */
+  contactProvider?: ContactProvider;
   ui: SiteUi;
 }

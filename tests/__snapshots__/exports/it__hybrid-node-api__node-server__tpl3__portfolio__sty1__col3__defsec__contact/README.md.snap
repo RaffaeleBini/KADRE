@@ -1,0 +1,56 @@
+# Studio Bini & Associati
+
+Architettura contemporanea e spazi culturali
+
+## Architettura tecnica selezionata
+
+- **Stack**: React + server Express (API leggera)
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Node.js + Express: /api/contact e /api/health
+- **Database**: Nessuno
+- **Modello**: Catalogo Tecnico e Commercio
+- **Stile grafico**: Editoriale Svizzero · Carta Tecnica e Grafite
+
+## Avvio in locale
+
+```bash
+npm install
+npm run dev
+```
+
+## Esportazione su GitHub passo dopo passo
+
+1. Crea un repository vuoto chiamato `studio-bini-associati` su https://github.com/new (senza README né .gitignore).
+2. Esegui questi comandi dentro la cartella del progetto:
+
+```bash
+git init
+git add .
+git commit -m "Versione iniziale di Studio Bini & Associati"
+git branch -M main
+git remote add origin https://github.com/kadre-test/studio-bini-associati.git
+git push -u origin main
+```
+
+In alternativa puoi avviare lo script automatizzato incluso:
+
+```bash
+chmod +x esporta-github.sh
+./esporta-github.sh
+```
+
+## Pubblicazione (node-server)
+
+1. Su un hosting Node (Render, Railway…) crea un servizio web collegato a `kadre-test/studio-bini-associati`.
+2. Comando di build: `npm install && npm run build` · Comando di avvio: `npm start`.
+3. Il server ascolta sulla porta indicata dalla variabile `PORT` (la impostano i provider).
+
+## Invio del modulo di contatto (Resend)
+
+`/api/contact` invia un’email a ogni messaggio ricevuto. Finché non è configurato risponde **503** e il sito mostra un errore: non finge di aver inviato.
+
+1. Crea un account gratuito su https://resend.com (100 email al giorno, 3.000 al mese) e genera una **API key**.
+2. Imposta le variabili `RESEND_API_KEY` (segreta) e `CONTACT_TO_EMAIL` (dove vuoi ricevere i messaggi). In locale copia `.env.example` in `.env`; sull’hosting aggiungile nelle impostazioni delle variabili d’ambiente.
+3. Per provare basta il mittente di prova `onboarding@resend.dev`, che però consegna **solo all’email del tuo account Resend**. Per ricevere messaggi su un altro indirizzo verifica un dominio su Resend e imposta `CONTACT_FROM_EMAIL` (es. `web@tuodominio.com`).
+
+La chiave non è mai nel codice né nel browser: legge solo il server.

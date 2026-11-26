@@ -44,7 +44,17 @@ html {
 
 export function siteDataFiles(ctx: GenContext): GeneratedFile[] {
   const { isIt, locale, template, sections, exportedContent } = ctx;
-  const siteConfig = buildSiteConfig({ locale, template, sections, hasBackendApi: ctx.hasBackend });
+  const siteConfig = buildSiteConfig({
+    locale,
+    template,
+    sections,
+    hasBackendApi: ctx.hasBackend,
+    // sin servidor propio, el envío real pasa por un servicio externo
+    contactProvider:
+      !ctx.hasBackend && ctx.answers.integrations.includes('contact-form')
+        ? { type: 'web3forms', accessKey: '' }
+        : undefined,
+  });
   return [
     {
       path: 'src/data/siteContent.json',

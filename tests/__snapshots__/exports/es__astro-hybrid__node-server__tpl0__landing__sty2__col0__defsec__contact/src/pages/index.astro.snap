@@ -1,0 +1,28 @@
+---
+import '../index.css';
+import config from '../data/siteConfig.json';
+import content from '../data/siteContent.json';
+import { Site } from '../site/Site';
+import type { SiteConfig, SiteContent } from '../site/types';
+
+// El compilador comprueba el contenido contra SiteContent (npm run check).
+const siteContent: SiteContent = content;
+const siteConfig = config as SiteConfig;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vektor Audio — Ingeniería acústica de escritorio</title>
+    <meta name="description" content="Un controlador táctil modular diseñado para estudios de mezcla y creadores que exigen respuesta instantánea, calibración limpia y cero latencia." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- HTML generado al compilar; client:load hace interactivos las FAQ y el formulario. -->
+    <Site client:load content={siteContent} config={siteConfig} />
+  </body>
+</html>

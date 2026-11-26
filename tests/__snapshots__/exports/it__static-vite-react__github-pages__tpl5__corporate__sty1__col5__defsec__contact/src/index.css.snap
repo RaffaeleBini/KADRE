@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'DM Sans', sans-serif;
+  --color-bg: #FFFFFF;
+  --color-surface: #F8FAFC;
+  --color-surface-alt: #EEF2F6;
+  --color-text: #0F172A;
+  --color-text-muted: #475569;
+  --color-accent: #1D4ED8;
+  --color-accent-text: #FFFFFF;
+  --color-border: #CBD5E1;
+  --radius-card: 4px;
+  --radius-btn: 4px;
+  --border-w: 1px;
+  --heading-tracking: -0.025em;
+  --space-section: 6.5rem;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}

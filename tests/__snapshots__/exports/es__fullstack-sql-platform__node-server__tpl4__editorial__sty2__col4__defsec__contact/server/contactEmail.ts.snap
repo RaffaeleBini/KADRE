@@ -1,0 +1,56 @@
+export interface ContactData {
+  name: string;
+  email: string;
+  message: string;
+}
+
+export type ParsedContact =
+  | { ok: false; error: string }
+  | { ok: true; spam: boolean; data: ContactData };
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const clean = (value: unknown, max: number) => (typeof value === 'string' ? value.trim().slice(0, max) : '');
+
+/** Valida el cuerpo de la petición. Un campo "botcheck" relleno indica un bot. */
+export function parseContact(body: unknown): ParsedContact {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const name = clean(b.name, 120);
+  const email = clean(b.email, 200);
+  const message = clean(b.message, 5000);
+  if (!name || !email) return { ok: false, error: 'Nombre y correo son obligatorios.' };
+  if (!EMAIL.test(email)) return { ok: false, error: 'Correo no válido.' };
+  return { ok: true, spam: clean(b.botcheck, 10) !== '', data: { name, email, message } };
+}
+
+export type SendResult = 'sent' | 'unconfigured' | 'failed';
+
+/** Envía el mensaje con Resend. La clave llega solo desde variables de entorno. */
+export async function sendContactEmail(
+  env: Record<string, string | undefined>,
+  data: ContactData
+): Promise<SendResult> {
+  const apiKey = env.RESEND_API_KEY;
+  const to = env.CONTACT_TO_EMAIL;
+  if (!apiKey || !to) return 'unconfigured';
+
+  // onboarding@resend.dev es el remitente de prueba de Resend: solo entrega al propietario de la cuenta.
+  const from = env.CONTACT_FROM_EMAIL || 'onboarding@resend.dev';
+  const oneLine = (s: string) => s.replace(/[\r\n]+/g, ' ');
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        reply_to: data.email,
+        subject: `Nuevo mensaje de ${oneLine(data.name)}`,
+        text: `Nombre: ${oneLine(data.name)}\nEmail: ${data.email}\n\n${data.message}`,
+      }),
+    });
+    return res.ok ? 'sent' : 'failed';
+  } catch {
+    return 'failed';
+  }
+}

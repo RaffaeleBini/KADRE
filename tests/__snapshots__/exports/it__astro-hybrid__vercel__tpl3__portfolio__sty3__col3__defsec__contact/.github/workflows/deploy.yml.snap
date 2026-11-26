@@ -1,0 +1,23 @@
+name: Integrazione e verifica continua
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scarica codice
+        uses: actions/checkout@v7
+      - name: Configura Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # npm install (non npm ci): il progetto esportato non include package-lock.json
+      - name: Installa dipendenze
+        run: npm install
+      - name: Verifica TypeScript e build
+        run: npm run build
