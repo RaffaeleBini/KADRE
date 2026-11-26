@@ -72,6 +72,8 @@ export interface SiteUi {
     sent: string;
     error: string;
   };
+  /** solo con pagos de tipo checkout */
+  payment?: { redirecting: string; error: string };
 }
 
 /** Servizio esterno che riceve il modulo nei siti statici. La chiave è pubblica per costruzione. */
@@ -81,6 +83,15 @@ export interface ContactProvider {
   accessKey: string;
 }
 
+/**
+ * Pagos con Stripe. Todo es público por diseño (enlaces y price IDs no son secretos):
+ *  - links: sitio estático, un Payment Link de Stripe por plan (vacío = el botón lleva a Contacto);
+ *  - checkout: sitio con servidor, /api/checkout crea una sesión de Stripe Checkout con el price ID.
+ */
+export type PaymentsConfig =
+  | { type: 'links'; links: Record<string, string> }
+  | { type: 'checkout'; prices: Record<string, { priceId: string; mode: 'payment' | 'subscription' }> };
+
 /** Struttura del sito: quali sezioni, in che ordine, con quale layout. */
 export interface SiteConfig {
   sectionOrder: SectionType[];
@@ -89,5 +100,7 @@ export interface SiteConfig {
   hasBackendApi: boolean;
   /** envío real en sitios estáticos (sin /api/contact): servicio externo con su clave pública */
   contactProvider?: ContactProvider;
+  /** botones de pago de Stripe en la sección de planes */
+  payments?: PaymentsConfig;
   ui: SiteUi;
 }

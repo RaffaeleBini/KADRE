@@ -16,6 +16,7 @@ import {
   astroAdapterVercel,
   astroEndpoints,
 } from './modules/astroServer';
+import { paymentsAstro, paymentsExpress, paymentsStaticLinks } from './modules/paymentsStripe';
 import { contentMarkdown } from './modules/contentMarkdown';
 import { contactEmailAstro, contactEmailExpress, contactWeb3forms } from './modules/contactForm';
 import { databasePostgres } from './modules/databasePostgres';
@@ -48,6 +49,9 @@ export const MODULES: GeneratorModule[] = [
   contactEmailAstro,
   contactWeb3forms,
   contentMarkdown,
+  paymentsStaticLinks,
+  paymentsExpress,
+  paymentsAstro,
 ];
 
 function assemblePackageJson(ctx: GenContext, skeleton: Skeleton, modules: GeneratorModule[]): string {

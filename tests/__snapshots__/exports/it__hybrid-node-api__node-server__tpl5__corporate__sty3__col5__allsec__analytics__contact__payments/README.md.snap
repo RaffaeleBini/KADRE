@@ -1,0 +1,79 @@
+# Italia Precisione Industriale
+
+Automazione e manifattura avanzata
+
+## Architettura tecnica selezionata
+
+- **Stack**: React + server Express (API leggera)
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Node.js + Express: /api/contact e /api/health
+- **Database**: Nessuno
+- **Modello**: Editoriale e Documentazione
+- **Stile grafico**: Architettonico Solido · Bianco Puro e Blu Ingegneria
+
+## Avvio in locale
+
+```bash
+npm install
+npm run dev
+```
+
+## Esportazione su GitHub passo dopo passo
+
+1. Crea un repository vuoto chiamato `italia-precisione-industriale` su https://github.com/new (senza README né .gitignore).
+2. Esegui questi comandi dentro la cartella del progetto:
+
+```bash
+git init
+git add .
+git commit -m "Versione iniziale di Italia Precisione Industriale"
+git branch -M main
+git remote add origin https://github.com/kadre-test/italia-precisione-industriale.git
+git push -u origin main
+```
+
+In alternativa puoi avviare lo script automatizzato incluso:
+
+```bash
+chmod +x esporta-github.sh
+./esporta-github.sh
+```
+
+## Pubblicazione (node-server)
+
+1. Su un hosting Node (Render, Railway…) crea un servizio web collegato a `kadre-test/italia-precisione-industriale`.
+2. Comando di build: `npm install && npm run build` · Comando di avvio: `npm start`.
+3. Il server ascolta sulla porta indicata dalla variabile `PORT` (la impostano i provider).
+
+## Statistiche di visita (Cloudflare Web Analytics)
+
+Il sito è predisposto per Cloudflare Web Analytics: gratuito, senza cookie e valido su qualsiasi hosting.
+
+1. In Cloudflare apri **Analytics & Logs** → **Web Analytics** → **Add a site** (serve un account gratuito; non occorre spostare il dominio su Cloudflare).
+2. Scegli l’impostazione manuale (**JS snippet**) e copia il valore `token` dello snippet.
+3. Incollalo in `src/data/analytics.json`, nel campo `cloudflareToken`.
+4. Pubblica di nuovo il sito. Finché il token è vuoto non viene caricato nessuno script.
+
+Il token non è un segreto: compare comunque nell’HTML pubblico.
+
+## Invio del modulo di contatto (Resend)
+
+`/api/contact` invia un’email a ogni messaggio ricevuto. Finché non è configurato risponde **503** e il sito mostra un errore: non finge di aver inviato.
+
+1. Crea un account gratuito su https://resend.com (100 email al giorno, 3.000 al mese) e genera una **API key**.
+2. Imposta le variabili `RESEND_API_KEY` (segreta) e `CONTACT_TO_EMAIL` (dove vuoi ricevere i messaggi). In locale copia `.env.example` in `.env`; sull’hosting aggiungile nelle impostazioni delle variabili d’ambiente.
+3. Per provare basta il mittente di prova `onboarding@resend.dev`, che però consegna **solo all’email del tuo account Resend**. Per ricevere messaggi su un altro indirizzo verifica un dominio su Resend e imposta `CONTACT_FROM_EMAIL` (es. `web@tuodominio.com`).
+
+La chiave non è mai nel codice né nel browser: legge solo il server.
+
+## Pagamenti (Stripe Checkout)
+
+Il pulsante di ogni piano chiama `POST /api/checkout`, che crea una sessione di Stripe Checkout e porta il cliente alla pagina di pagamento di Stripe. Stripe non ha canone ma trattiene una **commissione su ogni transazione** (vedi https://stripe.com/pricing).
+
+1. Nella dashboard di Stripe crea un prodotto e un **prezzo** per ogni piano (modalità di prova per cominciare) e copia il **price ID** (`price_...`).
+2. Incollalo in `src/data/siteConfig.json`, in `payments.prices`, nel campo `priceId` del piano. Per i prezzi ricorrenti imposta anche `"mode": "subscription"`. Un piano senza price ID continua a portare al modulo di contatto.
+3. Imposta `STRIPE_SECRET_KEY` (chiave segreta, `sk_test_…` per provare) nelle variabili d’ambiente: in locale in `.env`, sull’hosting nelle sue impostazioni. Facoltativa `SITE_URL`, l’indirizzo pubblico del sito.
+
+Finché la chiave manca, `/api/checkout` risponde **503**. Il cliente sceglie solo il piano: prezzo e importo arrivano sempre dal server.
+
+**Non incluso:** webhook e gestione degli ordini. Stripe invia ricevute e mostra i pagamenti nella dashboard; se ti serve automatizzare altro (consegna, accessi) va aggiunto a parte.

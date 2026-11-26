@@ -5,7 +5,7 @@
  * passa direttamente ai componenti): un'unica fonte, nessuna divergenza.
  */
 import { Locale } from '../../../i18n/translations';
-import type { ContactProvider, SiteConfig, SiteUi } from '../../../site-template/site/types';
+import type { ContactProvider, PaymentsConfig, SiteConfig, SiteUi } from '../../../site-template/site/types';
 import {
   ColorPatternPreset,
   GraphicStylePreset,
@@ -52,19 +52,30 @@ const SITE_UI: Record<Locale, SiteUi> = {
   },
 };
 
+/** Textos del botón de pago con servidor (solo se añaden al config si hay checkout). */
+const PAYMENT_UI: Record<Locale, NonNullable<SiteUi['payment']>> = {
+  es: { redirecting: 'Redirigiendo al pago...', error: 'No se pudo iniciar el pago. Inténtalo de nuevo.' },
+  it: { redirecting: 'Reindirizzamento al pagamento...', error: 'Impossibile avviare il pagamento. Riprova.' },
+};
+
 export function buildSiteConfig(params: {
   locale: Locale;
   template: TemplateDefinition;
   sections: SectionConfig[];
   hasBackendApi: boolean;
   contactProvider?: ContactProvider;
+  payments?: PaymentsConfig;
 }): SiteConfig {
   return {
     sectionOrder: params.sections.filter((s) => s.enabled).map((s) => s.type),
     heroLayout: params.template.heroLayout,
     hasBackendApi: params.hasBackendApi,
     ...(params.contactProvider ? { contactProvider: params.contactProvider } : {}),
-    ui: SITE_UI[params.locale],
+    ...(params.payments ? { payments: params.payments } : {}),
+    ui:
+      params.payments?.type === 'checkout'
+        ? { ...SITE_UI[params.locale], payment: PAYMENT_UI[params.locale] }
+        : SITE_UI[params.locale],
   };
 }
 

@@ -53,6 +53,9 @@ export function buildContext(input: CodeGenerationInput): GenContext {
     hasDatabase: stack.includesDatabase,
     skeleton,
     // Markdown solo con Astro (content collections); con otro stack la opción no tiene efecto
+    payments:
+      input.answers.integrations.includes('payments') &&
+      input.sections.some((s) => s.type === 'pricing' && s.enabled),
     markdown: skeleton === 'astro' && input.answers.databaseNeed === 'markdown-cms',
   };
 }

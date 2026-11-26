@@ -223,8 +223,8 @@ export function getDiscoveryOptions(locale: Locale): {
         {
           value: 'payments',
           title: 'Pagamenti online',
-          description: 'Struttura predisposta per listini, piani tariffari e flusso di acquisto.',
-          technicalHint: 'Webhook e checkout pronti',
+          description: 'Pulsanti di pagamento Stripe sui piani: Payment Link nei siti statici, Checkout con server. Stripe trattiene una commissione per transazione.',
+          technicalHint: 'Richiede la sezione Piani · Niente webhook',
         },
         {
           value: 'auth',
@@ -372,8 +372,8 @@ export function getDiscoveryOptions(locale: Locale): {
       {
         value: 'payments',
         title: 'Pasarela de pagos',
-        description: 'Preparación de estructura de precios, planes y flujo de contratación.',
-        technicalHint: 'Webhook y checkout preparado',
+        description: 'Botones de pago de Stripe en los planes: Payment Link en sitios estáticos, Checkout con servidor. Stripe retiene una comisión por transacción.',
+        technicalHint: 'Requiere la sección Planes · Sin webhooks',
       },
       {
         value: 'auth',

@@ -166,7 +166,7 @@ const INTEGRATION_SOON: Msg = {
 
 const INTEGRATIONS: Record<IntegrationOption, Availability> = {
   'contact-form': AVAILABLE,
-  payments: { status: 'planned', reason: INTEGRATION_SOON },
+  payments: AVAILABLE,
   analytics: AVAILABLE,
   i18n: { status: 'planned', reason: INTEGRATION_SOON },
   auth: { status: 'planned', reason: INTEGRATION_SOON },

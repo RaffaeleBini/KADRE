@@ -9,7 +9,7 @@
  */
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { skeletonFor } from '../src/generator/matrix';
+import { skeletonFor, STACK_PROFILES } from '../src/generator/matrix';
 import { generate, snapshotCombos, structuralCombos } from './exportMatrix';
 
 const SNAP_DIR = path.join(__dirname, '__snapshots__', 'exports');
@@ -57,8 +57,8 @@ describe('invarianti su tutte le combinazioni strutturali', () => {
 
       // nessun placeholder del template rimasto non sostituito
       for (const f of files) {
-        // contactEmail.ts usa "string | undefined" como tipo legítimo: solo se busca [object Object]
-        const placeholder = f.path.endsWith('contactEmail.ts') ? /\[object Object\]/ : /\bundefined\b|\[object Object\]/;
+        // contactEmail.ts y stripeCheckout.ts usan "string | undefined" como tipo legítimo: solo se busca [object Object]
+        const placeholder = /(contactEmail|stripeCheckout)\.ts$/.test(f.path) ? /\[object Object\]/ : /\bundefined\b|\[object Object\]/;
         expect(f.content, f.path).not.toMatch(placeholder);
       }
 
@@ -74,6 +74,17 @@ describe('invarianti su tutte le combinazioni strutturali', () => {
       expect(faqFiles.length > 0, 'FAQ .md').toBe(!!combo.markdown);
       expect(JSON.parse(byPath.get('src/data/siteContent.json')!).faqs.length === 0, 'faqs vacías en JSON').toBe(!!combo.markdown);
       if (combo.markdown) expect(byPath.get('src/pages/index.astro')).toContain("getCollection('faqs')");
+
+      // pagos: configuración por plan (enlaces o price IDs) y endpoint/ruta solo con servidor
+      const cfg = JSON.parse(byPath.get('src/data/siteConfig.json')!);
+      const expectedPayments = !combo.payments ? undefined : STACK_PROFILES[combo.stackId].backend ? 'checkout' : 'links';
+      expect(cfg.payments?.type, 'payments en siteConfig').toBe(expectedPayments);
+      const checkoutFile = skeletonFor(combo.stackId) === 'astro' ? 'src/lib/stripeCheckout.ts' : 'server/stripeCheckout.ts';
+      expect(byPath.has(checkoutFile), checkoutFile).toBe(expectedPayments === 'checkout');
+      if (expectedPayments) {
+        const plans = Object.keys(cfg.payments.links ?? cfg.payments.prices);
+        expect(plans.length, 'un plan por cada plan del contenido').toBeGreaterThan(0);
+      }
 
       // coerenza backend: server presente se e solo se lo script dev lo avvia
       const pkg = JSON.parse(byPath.get('package.json')!);

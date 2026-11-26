@@ -1,0 +1,40 @@
+---
+import '../index.css';
+import config from '../data/siteConfig.json';
+import content from '../data/siteContent.json';
+import { Site } from '../site/Site';
+import type { SiteConfig, SiteContent } from '../site/types';
+import { getCollection } from 'astro:content';
+
+// El compilador comprueba el contenido contra SiteContent (npm run check).
+// Las FAQ están en src/content/faqs/*.md, ordenadas por nombre de archivo.
+const faqEntries = (await getCollection('faqs')).sort((a, b) => a.id.localeCompare(b.id));
+const siteContent: SiteContent = {
+  ...content,
+  faqs: faqEntries.map((entry) => ({
+    id: entry.id,
+    question: entry.data.question,
+    answer: entry.body ?? '',
+    answerHtml: entry.rendered?.html,
+  })),
+};
+const siteConfig = config as SiteConfig;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Taller Nord — Instrumentos y mobiliario técnico</title>
+    <meta name="description" content="Cada pieza se produce en series cortas con aluminio anodizado, acero cepillado y acabados reparables con garantía directa de taller." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script>import '../analytics';</script>
+  </head>
+  <body>
+    <!-- HTML generado al compilar; client:load hace interactivos las FAQ y el formulario. -->
+    <Site client:load content={siteContent} config={siteConfig} />
+  </body>
+</html>

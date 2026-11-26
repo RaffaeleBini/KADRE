@@ -1,0 +1,40 @@
+{
+  "sectionOrder": [
+    "hero",
+    "metrics",
+    "features",
+    "pricing",
+    "testimonials",
+    "faq",
+    "contact",
+    "catalog"
+  ],
+  "heroLayout": "centered",
+  "hasBackendApi": false,
+  "payments": {
+    "type": "links",
+    "links": {
+      "p1": "",
+      "p2": "",
+      "p3": ""
+    }
+  },
+  "ui": {
+    "nav": {
+      "features": "Capacità",
+      "catalog": "Selezione",
+      "pricing": "Piani",
+      "faq": "Domande",
+      "contact": "Contatti"
+    },
+    "form": {
+      "name": "Il tuo nome",
+      "email": "Indirizzo email",
+      "message": "Raccontaci il tuo progetto...",
+      "send": "Invia messaggio",
+      "sending": "Invio in corso...",
+      "sent": "Messaggio ricevuto correttamente.",
+      "error": "Invio non riuscito. Riprova."
+    }
+  }
+}

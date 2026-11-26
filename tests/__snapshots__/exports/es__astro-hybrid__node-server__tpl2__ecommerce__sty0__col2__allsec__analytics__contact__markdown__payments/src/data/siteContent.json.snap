@@ -1,0 +1,161 @@
+{
+  "brandName": "Taller Nord",
+  "tagline": "Instrumentos y mobiliario técnico",
+  "logoDataUrl": null,
+  "heroEyebrow": "Colección Permanente",
+  "heroHeadline": "Objetos funcionales fabricados para durar décadas",
+  "heroSubheadline": "Cada pieza se produce en series cortas con aluminio anodizado, acero cepillado y acabados reparables con garantía directa de taller.",
+  "heroCtaPrimary": "Explorar catálogo",
+  "heroCtaSecondary": "Consultar envío",
+  "heroImageUrl": "./assets/hardware-estudio.jpg",
+  "heroImageName": "hardware-estudio.jpg",
+  "metrics": [
+    {
+      "id": "m1",
+      "value": "99,98%",
+      "label": "Disponibilidad verificada",
+      "context": "Últimos 12 meses en producción"
+    },
+    {
+      "id": "m2",
+      "value": "< 0,6 s",
+      "label": "Tiempo de carga inicial",
+      "context": "Medido en redes móviles 4G"
+    },
+    {
+      "id": "m3",
+      "value": "+140",
+      "label": "Proyectos desplegados",
+      "context": "Equipos en Europa y Latinoamérica"
+    },
+    {
+      "id": "m4",
+      "value": "5 años",
+      "label": "Garantía y soporte directo",
+      "context": "Mantenimiento evolutivo incluido"
+    }
+  ],
+  "featuresHeading": "Diseñado con rigor técnico de principio a fin",
+  "featuresSubheading": "Cada decisión estructural busca reducir fricción, acelerar la entrega y garantizar una experiencia impecable en cualquier pantalla.",
+  "features": [
+    {
+      "id": "f1",
+      "title": "Arquitectura modular sin deuda técnica",
+      "description": "Componentes limpios y tipados que permiten ampliar páginas o integrar servicios externos sin reescribir la base.",
+      "metric": "100% TypeScript"
+    },
+    {
+      "id": "f2",
+      "title": "Rendimiento optimizado para buscadores",
+      "description": "Estructura semántica HTML5, carga eficiente de recursos y jerarquía visual calibrada para máxima legibilidad.",
+      "metric": "Core Web Vitals A+"
+    },
+    {
+      "id": "f3",
+      "title": "Despliegue continuo automatizado",
+      "description": "Flujo conectado a GitHub para publicar cambios con trazabilidad completa y reversión en segundos.",
+      "metric": "CI/CD integrado"
+    }
+  ],
+  "catalogHeading": "Selección destacada",
+  "catalogSubheading": "Referencias recientes con especificaciones completas y resultados documentados.",
+  "catalogItems": [
+    {
+      "id": "c1",
+      "title": "Módulo Serie K-01",
+      "category": "Hardware / Precisión",
+      "priceOrTag": "490 €",
+      "description": "Chasis mecanizado CNC en aluminio anodizado con interfaz táctil de respuesta instantánea.",
+      "imageUrl": "./assets/catalogo-1.jpg"
+    },
+    {
+      "id": "c2",
+      "title": "Pabellón Norte",
+      "category": "Espacio / Arquitectura",
+      "priceOrTag": "2026",
+      "description": "Rehabilitación integral de 680 m² con fachada acristalada de control térmico y patio de agua.",
+      "imageUrl": "./assets/catalogo-2.jpg"
+    },
+    {
+      "id": "c3",
+      "title": "Sistema de Ingeniería v3",
+      "category": "Plataforma / Digital",
+      "priceOrTag": "A medida",
+      "description": "Entorno unificado de planificación, control documental y despliegue automatizado para equipos.",
+      "imageUrl": "./assets/catalogo-3.jpg"
+    }
+  ],
+  "pricingHeading": "Planes claros sin costes ocultos",
+  "pricingSubheading": "Escoge el nivel de alcance que mejor se adapta a la etapa actual de tu equipo.",
+  "pricingPlans": [
+    {
+      "id": "p1",
+      "name": "Esencial",
+      "audience": "Para equipos en fase inicial",
+      "price": "29 €",
+      "cadence": "/ mes",
+      "featured": false,
+      "features": [
+        "Hasta 3 proyectos activos",
+        "Despliegue automático en GitHub",
+        "Certificado SSL y dominio propio",
+        "Soporte por correo en 24 h"
+      ],
+      "ctaLabel": "Elegir Esencial"
+    },
+    {
+      "id": "p2",
+      "name": "Profesional",
+      "audience": "Para operaciones en crecimiento",
+      "price": "79 €",
+      "cadence": "/ mes",
+      "featured": true,
+      "features": [
+        "Proyectos ilimitados y entornos previos",
+        "Integración de API y base de datos",
+        "Analítica avanzada y exportación CSV",
+        "Soporte técnico prioritario"
+      ],
+      "ctaLabel": "Elegir Profesional"
+    },
+    {
+      "id": "p3",
+      "name": "Corporativo",
+      "audience": "Para organizaciones con SLA dedicado",
+      "price": "A medida",
+      "cadence": "anual",
+      "featured": false,
+      "features": [
+        "Arquitectura dedicada y auditoría",
+        "Roles personalizados y SSO",
+        "Acuerdo de nivel de servicio 99,99%",
+        "Acompañamiento de ingeniería dedicado"
+      ],
+      "ctaLabel": "Contactar ventas"
+    }
+  ],
+  "testimonialsHeading": "Lo que dicen quienes ya trabajan con nosotros",
+  "testimonials": [
+    {
+      "id": "t1",
+      "quote": "Pasamos de tardar tres semanas en publicar una nueva campaña a desplegarla en menos de una tarde con un código que nuestro equipo entiende al instante.",
+      "author": "Clara Mendoza",
+      "role": "Directora de Producto",
+      "organization": "Norte Sistemas"
+    },
+    {
+      "id": "t2",
+      "quote": "La claridad visual y la velocidad de carga elevaron nuestras solicitudes de presupuesto en un 38% durante el primer trimestre tras el rediseño.",
+      "author": "Javier Soler",
+      "role": "Socio Fundador",
+      "organization": "Soler Ingeniería Industrial"
+    }
+  ],
+  "faqHeading": "Preguntas frecuentes",
+  "faqs": [],
+  "contactHeading": "Hablemos de tu próximo lanzamiento",
+  "contactSubheading": "Cuéntanos brevemente tu objetivo y te responderemos con una propuesta técnica clara en menos de un día laborable.",
+  "contactEmail": "contacto@proyecto-ejemplo.es",
+  "contactLocation": "Madrid · Trabajo remoto internacional",
+  "footerNote": "Todos los derechos reservados."
+}

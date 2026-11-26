@@ -1,0 +1,16 @@
+import { defineConfig, envField } from 'astro/config';
+import react from '@astrojs/react';
+import tailwindcss from '@tailwindcss/vite';
+import vercel from '@astrojs/vercel';
+
+export default defineConfig({
+  adapter: vercel(),
+  env: {
+    schema: {
+      STRIPE_SECRET_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      SITE_URL: envField.string({ context: 'server', access: 'secret', optional: true }),
+    },
+  },
+  integrations: [react()],
+  vite: { plugins: [tailwindcss()] },
+});

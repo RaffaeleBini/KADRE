@@ -1,0 +1,95 @@
+# Taller Nord
+
+Instrumentos y mobiliario técnico
+
+## Arquitectura técnica seleccionada
+
+- **Stack**: Astro híbrido (página estática + endpoint de servidor)
+- **Frontend**: Astro 7 + React 19 (componentes hidratados)
+- **Backend**: Endpoints de Astro: /api/contact y /api/health
+- **Base de datos**: Ninguna
+- **Plantilla**: Estudio y Arquitectura
+- **Estilo gráfico**: Industrial Técnico · Pizarra Profunda y Azul Precisión
+
+## Ejecución local
+
+```bash
+npm install
+npm run dev
+```
+
+## Exportar a GitHub paso a paso
+
+1. Crea un repositorio vacío llamado `taller-nord` en https://github.com/new (sin README ni .gitignore).
+2. Ejecuta los siguientes comandos dentro de esta carpeta:
+
+```bash
+git init
+git add .
+git commit -m "Versión inicial de Taller Nord"
+git branch -M main
+git remote add origin https://github.com/kadre-test/taller-nord.git
+git push -u origin main
+```
+
+También puedes ejecutar el script automatizado incluido:
+
+```bash
+chmod +x exportar-github.sh
+./exportar-github.sh
+```
+
+## Despliegue (node-server)
+
+1. En un hosting Node (Render, Railway…) crea un servicio web conectado a `kadre-test/taller-nord`.
+2. Comando de compilación: `npm install && npm run build` · Comando de arranque: `npm start`.
+3. El servidor escucha en el puerto de la variable `PORT` (la definen los proveedores).
+
+## Estadísticas de visitas (Cloudflare Web Analytics)
+
+El sitio está preparado para Cloudflare Web Analytics: gratuito, sin cookies y válido en cualquier hosting.
+
+1. En Cloudflare abre **Analytics & Logs** → **Web Analytics** → **Add a site** (hace falta una cuenta gratuita; no es necesario mover el dominio a Cloudflare).
+2. Elige la configuración manual (**JS snippet**) y copia el valor `token` del fragmento.
+3. Pégalo en `src/data/analytics.json`, en el campo `cloudflareToken`.
+4. Vuelve a publicar el sitio. Mientras el token esté vacío no se carga ningún script.
+
+El token no es un secreto: de todos modos aparece en el HTML público.
+
+## Envío del formulario de contacto (Resend)
+
+`/api/contact` envía un correo por cada mensaje recibido. Mientras no esté configurado responde **503** y el sitio muestra un error: no finge haber enviado.
+
+1. Crea una cuenta gratuita en https://resend.com (100 correos al día, 3.000 al mes) y genera una **API key**.
+2. Define las variables `RESEND_API_KEY` (secreta) y `CONTACT_TO_EMAIL` (donde quieres recibir los mensajes). En local copia `.env.example` a `.env`; en el hosting añádelas en los ajustes de variables de entorno.
+3. Para probar basta el remitente de prueba `onboarding@resend.dev`, que solo entrega **al correo de tu cuenta de Resend**. Para recibir en otra dirección verifica un dominio en Resend y define `CONTACT_FROM_EMAIL` (p. ej. `web@tudominio.com`).
+
+La clave nunca está en el código ni en el navegador: solo la lee el servidor.
+
+## Contenidos en Markdown
+
+Las **FAQ** son archivos Markdown en `src/content/faqs/`: uno por pregunta, ordenados por nombre de archivo.
+
+```markdown
+---
+question: "¿Cuánto tarda la entrega?"
+---
+
+Normalmente **5 días laborables**. Para pedidos urgentes [escríbenos](#contact).
+```
+
+- Para añadir una pregunta, crea un archivo nuevo (p. ej. `06-devoluciones.md`); para quitarla, bórralo.
+- La respuesta admite Markdown: negrita, listas, enlaces.
+- El resto del sitio (títulos, precios, métricas…) sigue en `src/data/siteContent.json`.
+
+## Pagos (Stripe Checkout)
+
+El botón de cada plan llama a `POST /api/checkout`, que crea una sesión de Stripe Checkout y lleva al cliente a la página de pago de Stripe. Stripe no tiene cuota fija pero retiene una **comisión por cada transacción** (ver https://stripe.com/pricing).
+
+1. En el panel de Stripe crea un producto y un **precio** por cada plan (empieza en modo de prueba) y copia el **price ID** (`price_...`).
+2. Pégalo en `src/data/siteConfig.json`, en `payments.prices`, en el campo `priceId` del plan. Para precios recurrentes pon también `"mode": "subscription"`. Un plan sin price ID sigue llevando al formulario de contacto.
+3. Define `STRIPE_SECRET_KEY` (clave secreta, `sk_test_…` para probar) en las variables de entorno: en local en `.env`, en el hosting en sus ajustes. Opcional `SITE_URL`, la dirección pública del sitio.
+
+Mientras falte la clave, `/api/checkout` responde **503**. El cliente solo elige el plan: el precio y el importe siempre vienen del servidor.
+
+**No incluido:** webhooks y gestión de pedidos. Stripe envía los recibos y muestra los cobros en su panel; si necesitas automatizar algo más (entrega, accesos) hay que añadirlo aparte.

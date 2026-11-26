@@ -1,0 +1,46 @@
+name: Deploy su GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scarica codice
+        uses: actions/checkout@v7
+      - name: Configura Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      # npm install (non npm ci): il progetto esportato non include package-lock.json
+      - name: Installa dipendenze
+        run: npm install
+      - name: Compila applicazione
+        run: npm run build
+      - name: Carica artefatto statico
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Pubblica su GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

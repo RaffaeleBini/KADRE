@@ -76,11 +76,11 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
  * Prova di avvio per gli stack con server: `npm start` come farebbe un hosting
  * Node, poi /api/health, la home page servita dalla build e /api/contact.
  */
-async function smokeServer(dir: string, port: number, realEmail: boolean): Promise<string | null> {
+async function smokeServer(dir: string, port: number, realEmail: boolean, payments: boolean): Promise<string | null> {
   const child = spawn('npm', ['start'], {
     cwd: dir,
     // sin claves de Resend: el servidor debe reconocer que no está configurado
-    env: { ...process.env, PORT: String(port), RESEND_API_KEY: '', CONTACT_TO_EMAIL: '' },
+    env: { ...process.env, PORT: String(port), RESEND_API_KEY: '', CONTACT_TO_EMAIL: '', STRIPE_SECRET_KEY: '' },
     detached: true, // gruppo di processi proprio: si chiude anche il figlio di npm
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -114,6 +114,15 @@ async function smokeServer(dir: string, port: number, realEmail: boolean): Promi
     if (ok.status !== expected) return `POST /api/contact valido → ${ok.status} (atteso ${expected})`;
     const bad = await post({ message: 'senza nome' });
     if (bad.status !== 400) return `POST /api/contact incompleto → ${bad.status} (atteso 400)`;
+    if (payments) {
+      const checkout = await fetch(`${base}/api/checkout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId: 'cualquiera' }),
+      });
+      // sin STRIPE_SECRET_KEY el servidor debe decir que no está configurado, no inventar una sesión
+      if (checkout.status !== 503) return `POST /api/checkout senza chiave → ${checkout.status} (atteso 503)`;
+    }
     if (realEmail) {
       const badEmail = await post({ name: 'Test', email: 'no-es-un-correo' });
       if (badEmail.status !== 400) return `POST /api/contact email non valida → ${badEmail.status} (atteso 400)`;
@@ -183,7 +192,7 @@ async function verify(combo: ExportCombo): Promise<Result> {
 
   // prova di avvio per ogni progetto avviabile con `npm start` (Express o Astro + adapter Node)
   if (scripts.start && build.ok) {
-    const error = await smokeServer(dir, nextPort++, !!combo.contact);
+    const error = await smokeServer(dir, nextPort++, !!combo.contact, !!combo.payments);
     if (error) failures.push({ step: 'server', error });
   }
 

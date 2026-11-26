@@ -92,7 +92,7 @@ export function Site({ content, config }: { content: SiteContent; config: SiteCo
             case 'catalog':
               return <Catalog key={type} content={content} />;
             case 'pricing':
-              return <Pricing key={type} content={content} />;
+              return <Pricing key={type} content={content} payments={config.payments} ui={ui.payment} />;
             case 'testimonials':
               return <Testimonials key={type} content={content} />;
             case 'faq':

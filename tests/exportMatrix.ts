@@ -50,6 +50,8 @@ export interface ExportCombo {
   contact?: boolean;
   /** FAQ en Markdown (solo stacks Astro) */
   markdown?: boolean;
+  /** botones de pago de Stripe en los planes (la sección Planes está activa) */
+  payments?: boolean;
 }
 
 /** Coppie (stack, piattaforma) che il configuratore offre. */
@@ -72,6 +74,7 @@ function makeId(c: Omit<ExportCombo, 'id'>): string {
     ...(c.analytics ? ['analytics'] : []),
     ...(c.contact ? ['contact'] : []),
     ...(c.markdown ? ['markdown'] : []),
+    ...(c.payments ? ['payments'] : []),
   ].join('__');
 }
 
@@ -148,6 +151,28 @@ export function structuralCombos(): ExportCombo[] {
     };
     combos.push({ ...base, id: makeId(base) });
   });
+  // Pagos con Stripe: una variante por stack (primera plataforma) y, en los híbridos, Node (smoke real).
+  // La última combina TODAS las integraciones para probar que conviven (env, README, astro:env).
+  offeredStackPlatforms().forEach(({ stackId, platform }, k) => {
+    const first = platform === STACK_PROFILES[stackId].platforms[0];
+    const hybridNode = stackId === 'astro-hybrid' && platform === 'node-server';
+    if (!first && !hybridNode) return;
+    const base = {
+      locale: LOCALES[(k + 1) % LOCALES.length],
+      stackId,
+      platform,
+      templateIndex: (i + k + 3) % nTemplates,
+      projectType: PROJECT_TYPES[(i + k + 3) % PROJECT_TYPES.length],
+      styleIndex: (i + k + 3) % nStyles,
+      colorIndex: (i + k + 3) % nColors,
+      allSections: true,
+      payments: true,
+      // integraciones combinadas en los híbridos con Node y en Express
+      ...(hybridNode ? { analytics: true, contact: true, markdown: true } : {}),
+      ...(stackId === 'hybrid-node-api' ? { analytics: true, contact: true } : {}),
+    };
+    combos.push({ ...base, id: makeId(base) });
+  });
   return combos;
 }
 
@@ -185,7 +210,8 @@ export function snapshotCombos(): ExportCombo[] {
     return [pick(platforms[0], 'es'), pick(platforms[platforms.length - 1], 'it')];
   }).concat(all.filter((c) => c.analytics && ['static-vite-react', 'astro-hybrid'].includes(c.stackId)))
     .concat(all.filter((c) => c.contact && c.platform !== 'netlify' && c.platform !== 'cloudflare'))
-    .concat(all.filter((c) => c.markdown && c.platform !== 'cloudflare'));
+    .concat(all.filter((c) => c.markdown && !c.payments && c.platform !== 'cloudflare'))
+    .concat(all.filter((c) => c.payments && ['static-vite-react', 'astro-hybrid', 'hybrid-node-api'].includes(c.stackId)));
 }
 
 /** Risposte del passo Discovery coerenti con lo stack (come le produrrebbe l'utente). */
@@ -213,6 +239,7 @@ export function buildInput(c: ExportCombo): CodeGenerationInput {
     answers: answersFor(c.stackId, c.projectType, [
       ...(c.analytics ? (['analytics'] as const) : []),
       ...(c.contact ? (['contact-form'] as const) : []),
+      ...(c.payments ? (['payments'] as const) : []),
     ], c.markdown),
     stack,
     template,

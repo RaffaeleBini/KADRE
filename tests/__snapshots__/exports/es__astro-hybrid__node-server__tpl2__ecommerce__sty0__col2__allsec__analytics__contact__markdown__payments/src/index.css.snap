@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --font-display: 'Archivo', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --color-bg: #0B111C;
+  --color-surface: #121A2B;
+  --color-surface-alt: #1A253D;
+  --color-text: #F1F5F9;
+  --color-text-muted: #94A3B8;
+  --color-accent: #38BDF8;
+  --color-accent-text: #082032;
+  --color-border: #23324D;
+  --radius-card: 2px;
+  --radius-btn: 2px;
+  --border-w: 1px;
+  --heading-tracking: -0.02em;
+  --space-section: 5rem;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}

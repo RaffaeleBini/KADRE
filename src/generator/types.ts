@@ -40,6 +40,8 @@ export interface GenContext extends CodeGenerationInput {
   skeleton: SkeletonId;
   /** FAQ en archivos Markdown (content collections de Astro) en lugar de siteContent.json */
   markdown: boolean;
+  /** botones de pago de Stripe en la sección de planes (necesita la sección activa) */
+  payments: boolean;
 }
 
 /**

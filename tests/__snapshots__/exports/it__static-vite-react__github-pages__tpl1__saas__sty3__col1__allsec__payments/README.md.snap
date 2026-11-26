@@ -1,0 +1,56 @@
+# Metrika Ops
+
+Controllo operativo per team di ingegneria
+
+## Architettura tecnica selezionata
+
+- **Stack**: React + Vite + Tailwind (SPA statica)
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Nessuno
+- **Database**: Contenuti in src/data/siteContent.json
+- **Modello**: Piattaforma SaaS Modulare
+- **Stile grafico**: Architettonico Solido · Grafite e Ambra Rame
+
+## Avvio in locale
+
+```bash
+npm install
+npm run dev
+```
+
+## Esportazione su GitHub passo dopo passo
+
+1. Crea un repository vuoto chiamato `metrika-ops` su https://github.com/new (senza README né .gitignore).
+2. Esegui questi comandi dentro la cartella del progetto:
+
+```bash
+git init
+git add .
+git commit -m "Versione iniziale di Metrika Ops"
+git branch -M main
+git remote add origin https://github.com/kadre-test/metrika-ops.git
+git push -u origin main
+```
+
+In alternativa puoi avviare lo script automatizzato incluso:
+
+```bash
+chmod +x esporta-github.sh
+./esporta-github.sh
+```
+
+## Pubblicazione (github-pages)
+
+1. Apri il repository su GitHub → **Settings** → **Pages**.
+2. In **Build and deployment / Source**, seleziona **GitHub Actions**.
+3. Il workflow `.github/workflows/deploy.yml` pubblicherà automaticamente il sito su `https://kadre-test.github.io/metrika-ops/`.
+
+## Pagamenti (Stripe Payment Links)
+
+I piani possono avere un pulsante di pagamento senza server né codice. Stripe non ha canone ma trattiene una **commissione su ogni transazione** (vedi https://stripe.com/pricing).
+
+1. Nella dashboard di Stripe crea un **prodotto** con il suo prezzo e poi un **Payment Link** (Prodotti → Payment Links). Usa prima la modalità di prova.
+2. Copia l’URL (`https://buy.stripe.com/...`) e incollalo in `src/data/siteConfig.json`, in `payments.links`, nel campo del piano corrispondente.
+3. Pubblica di nuovo il sito. Un piano con il link vuoto continua a portare al modulo di contatto (utile per i piani “su misura”).
+
+I Payment Link sono pubblici per costruzione. Pagamenti, ricevute ed email al cliente li gestisce Stripe: non c’è nessun codice di ordini da mantenere.

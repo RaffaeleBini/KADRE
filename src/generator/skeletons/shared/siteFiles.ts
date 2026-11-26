@@ -3,6 +3,7 @@
  * Vite-React e Astro differiscono solo nel "guscio" (entry point, config, build).
  */
 import { GeneratedFile } from '../../../types/builder';
+import type { PaymentsConfig } from '../../../site-template/site/types';
 import { GenContext } from '../../types';
 import { buildSiteConfig, siteCssVars } from './siteConfig';
 
@@ -42,6 +43,18 @@ html {
   };
 }
 
+/** Pagos de Stripe: enlaces vacíos (estático) o price IDs vacíos (servidor), por plan. */
+function paymentsConfig(ctx: GenContext): PaymentsConfig | undefined {
+  if (!ctx.payments) return undefined;
+  const plans = ctx.exportedContent.pricingPlans;
+  return ctx.hasBackend
+    ? {
+        type: 'checkout',
+        prices: Object.fromEntries(plans.map((p) => [p.id, { priceId: '', mode: 'payment' as const }])),
+      }
+    : { type: 'links', links: Object.fromEntries(plans.map((p) => [p.id, ''])) };
+}
+
 export function siteDataFiles(ctx: GenContext): GeneratedFile[] {
   const { isIt, locale, template, sections, exportedContent } = ctx;
   const siteConfig = buildSiteConfig({
@@ -54,6 +67,7 @@ export function siteDataFiles(ctx: GenContext): GeneratedFile[] {
       !ctx.hasBackend && ctx.answers.integrations.includes('contact-form')
         ? { type: 'web3forms', accessKey: '' }
         : undefined,
+    payments: paymentsConfig(ctx),
   });
   return [
     {

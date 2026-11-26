@@ -1,0 +1,59 @@
+import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import 'dotenv/config';
+import config from '../src/data/siteConfig.json';
+import { createCheckoutSession, type PlanPrices } from './stripeCheckout';
+import { parseContact, sendContactEmail } from './contactEmail';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const app = express();
+const PORT = Number(process.env.PORT || 3000);
+
+app.use(express.json());
+
+app.get('/api/health', (_req, res) => {
+  res.json({ ok: true, timestamp: new Date().toISOString() });
+});
+
+app.post('/api/contact', async (req, res) => {
+  const parsed = parseContact(req.body);
+  if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+  // Campo trappola riempito: si risponde "ok" senza inviare nulla.
+  if (parsed.spam) return res.status(201).json({ received: true });
+  const result = await sendContactEmail(process.env, parsed.data);
+  if (result === 'unconfigured') {
+    return res.status(503).json({ error: 'Invio email non configurato (vedi README).' });
+  }
+  if (result === 'failed') return res.status(502).json({ error: 'Il servizio email non ha accettato il messaggio.' });
+  return res.status(201).json({ received: true });
+});
+
+const prices = ((config as { payments?: { prices?: PlanPrices } }).payments?.prices ?? {}) as PlanPrices;
+
+app.post('/api/checkout', async (req, res) => {
+  // SITE_URL fissa l’indirizzo pubblico; altrimenti si ricava dalla richiesta.
+  const proto = req.get('x-forwarded-proto') ?? req.protocol;
+  const siteUrl = (process.env.SITE_URL || `${proto}://${req.get('host')}`).replace(/\/$/, '');
+  const result = await createCheckoutSession(process.env.STRIPE_SECRET_KEY, prices, req.body?.planId, siteUrl);
+  if (result.ok) return res.json({ url: result.url });
+  if (result.reason === 'unconfigured') {
+    return res.status(503).json({ error: 'Pagamenti non configurati (vedi README).' });
+  }
+  if (result.reason === 'unknown-plan') {
+    return res.status(400).json({ error: 'Piano non acquistabile.' });
+  }
+  return res.status(502).json({ error: 'Stripe non ha creato la sessione di pagamento.' });
+});
+
+if (process.env.NODE_ENV === 'production') {
+  const distDir = path.resolve(__dirname, '../dist');
+  app.use(express.static(distDir));
+  app.get('*', (_req, res) => {
+    res.sendFile(path.join(distDir, 'index.html'));
+  });
+}
+
+app.listen(PORT, () => {
+  console.log(`Server attivo su http://localhost:${PORT}`);
+});
