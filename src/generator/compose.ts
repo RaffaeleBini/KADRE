@@ -16,6 +16,7 @@ import {
   astroAdapterVercel,
   astroEndpoints,
 } from './modules/astroServer';
+import { contentMarkdown } from './modules/contentMarkdown';
 import { contactEmailAstro, contactEmailExpress, contactWeb3forms } from './modules/contactForm';
 import { databasePostgres } from './modules/databasePostgres';
 import { deployWorkflowFile } from './project/deployWorkflow';
@@ -46,6 +47,7 @@ export const MODULES: GeneratorModule[] = [
   contactEmailExpress,
   contactEmailAstro,
   contactWeb3forms,
+  contentMarkdown,
 ];
 
 function assemblePackageJson(ctx: GenContext, skeleton: Skeleton, modules: GeneratorModule[]): string {

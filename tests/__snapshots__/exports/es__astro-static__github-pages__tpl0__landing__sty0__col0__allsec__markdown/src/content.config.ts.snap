@@ -1,0 +1,11 @@
+import { defineCollection } from 'astro:content';
+import { glob } from 'astro/loaders';
+import { z } from 'astro/zod';
+
+// Una FAQ = un archivo .md en src/content/faqs/ (el nombre fija el orden)
+const faqs = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: './src/content/faqs' }),
+  schema: z.object({ question: z.string() }),
+});
+
+export const collections = { faqs };

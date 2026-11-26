@@ -40,6 +40,7 @@ function toExportedContent(content: SiteContent, isIt: boolean): SiteContent {
 export function buildContext(input: CodeGenerationInput): GenContext {
   const { locale, content, github, stack } = input;
   const isIt = locale === 'it';
+  const skeleton = skeletonFor(stack.id);
   return {
     ...input,
     isIt,
@@ -50,6 +51,8 @@ export function buildContext(input: CodeGenerationInput): GenContext {
     exportedContent: toExportedContent(content, isIt),
     hasBackend: stack.includesBackend,
     hasDatabase: stack.includesDatabase,
-    skeleton: skeletonFor(stack.id),
+    skeleton,
+    // Markdown solo con Astro (content collections); con otro stack la opción no tiene efecto
+    markdown: skeleton === 'astro' && input.answers.databaseNeed === 'markdown-cms',
   };
 }

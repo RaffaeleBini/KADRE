@@ -68,6 +68,13 @@ describe('invarianti su tutte le combinazioni strutturali', () => {
       expect(byPath.has('src/data/analytics.json'), 'analytics.json').toBe(!!combo.analytics);
       expect(/analytics'/.test(byPath.get(entry)!), `${entry} importa analytics`).toBe(!!combo.analytics);
 
+      // Markdown: colección de FAQ + un .md por pregunta; el JSON ya no las contiene
+      const faqFiles = [...byPath.keys()].filter((k) => /^src\/content\/faqs\/\d\d-.+\.md$/.test(k));
+      expect(byPath.has('src/content.config.ts'), 'content.config.ts').toBe(!!combo.markdown);
+      expect(faqFiles.length > 0, 'FAQ .md').toBe(!!combo.markdown);
+      expect(JSON.parse(byPath.get('src/data/siteContent.json')!).faqs.length === 0, 'faqs vacías en JSON').toBe(!!combo.markdown);
+      if (combo.markdown) expect(byPath.get('src/pages/index.astro')).toContain("getCollection('faqs')");
+
       // coerenza backend: server presente se e solo se lo script dev lo avvia
       const pkg = JSON.parse(byPath.get('package.json')!);
       const hasServer = byPath.has('server/index.ts');

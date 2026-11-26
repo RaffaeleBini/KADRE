@@ -1,0 +1,61 @@
+# Cuaderno Técnico
+
+Ensayos sobre diseño de sistemas y software
+
+## Arquitectura técnica seleccionada
+
+- **Stack**: Astro híbrido (página estática + endpoint de servidor)
+- **Frontend**: Astro 7 + React 19 (componentes hidratados)
+- **Backend**: Endpoints de Astro: /api/contact y /api/health
+- **Base de datos**: Ninguna
+- **Plantilla**: Corporativa Industrial B2B
+- **Estilo gráfico**: Industrial Técnico · Marfil Editorial y Borgoña
+
+## Ejecución local
+
+```bash
+npm install
+npm run dev
+```
+
+## Exportar a GitHub paso a paso
+
+1. Crea un repositorio vacío llamado `cuaderno-tecnico` en https://github.com/new (sin README ni .gitignore).
+2. Ejecuta los siguientes comandos dentro de esta carpeta:
+
+```bash
+git init
+git add .
+git commit -m "Versión inicial de Cuaderno Técnico"
+git branch -M main
+git remote add origin https://github.com/kadre-test/cuaderno-tecnico.git
+git push -u origin main
+```
+
+También puedes ejecutar el script automatizado incluido:
+
+```bash
+chmod +x exportar-github.sh
+./exportar-github.sh
+```
+
+## Despliegue (vercel)
+
+1. Accede a tu cuenta de **VERCEL** y elige **Import Git Repository**.
+2. Selecciona `kadre-test/cuaderno-tecnico`: Astro se detecta automáticamente (compilación `npm run build`) y el adaptador publica la página y el endpoint `/api/contact`.
+
+## Contenidos en Markdown
+
+Las **FAQ** son archivos Markdown en `src/content/faqs/`: uno por pregunta, ordenados por nombre de archivo.
+
+```markdown
+---
+question: "¿Cuánto tarda la entrega?"
+---
+
+Normalmente **5 días laborables**. Para pedidos urgentes [escríbenos](#contact).
+```
+
+- Para añadir una pregunta, crea un archivo nuevo (p. ej. `06-devoluciones.md`); para quitarla, bórralo.
+- La respuesta admite Markdown: negrita, listas, enlaces.
+- El resto del sitio (títulos, precios, métricas…) sigue en `src/data/siteContent.json`.

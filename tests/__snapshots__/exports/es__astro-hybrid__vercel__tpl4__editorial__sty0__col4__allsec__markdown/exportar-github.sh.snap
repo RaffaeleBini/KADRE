@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -e
+
+REPO_URL="https://github.com/kadre-test/cuaderno-tecnico.git"
+BRANCH="main"
+
+echo "Inicializando repositorio local para cuaderno-tecnico..."
+git init
+git add .
+git commit -m "Versión inicial generada para Cuaderno Técnico"
+git branch -M "$BRANCH"
+
+if git remote get-url origin >/dev/null 2>&1; then
+  git remote set-url origin "$REPO_URL"
+else
+  git remote add origin "$REPO_URL"
+fi
+
+echo "Subiendo código a $REPO_URL (main)..."
+git push -u origin "$BRANCH"
+echo "Exportación completada correctamente."

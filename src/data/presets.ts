@@ -177,10 +177,10 @@ export function getDiscoveryOptions(locale: Locale): {
         },
         {
           value: 'markdown-cms',
-          title: 'Contenuti strutturati / CMS leggero',
+          title: 'Contenuti in Markdown',
           description:
-            'Ideale per aggiornare articoli, schede catalogo o casi studio senza modificare il codice.',
-          technicalHint: 'JSON / Markdown strutturato',
+            'Le FAQ diventano file Markdown, uno per domanda, modificabili senza toccare il codice. Il resto resta in JSON.',
+          technicalHint: 'Astro content collections · Richiede Astro',
         },
         {
           value: 'sql-relational',
@@ -326,10 +326,10 @@ export function getDiscoveryOptions(locale: Locale): {
       },
       {
         value: 'markdown-cms',
-        title: 'Contenidos estructurados / CMS ligero',
+        title: 'Contenidos en Markdown',
         description:
-          'Ideal para actualizar artículos, fichas de catálogo o casos de estudio sin tocar código.',
-        technicalHint: 'JSON / Markdown estructurado',
+          'Las FAQ pasan a archivos Markdown, uno por pregunta, editables sin tocar código. El resto sigue en JSON.',
+        technicalHint: 'Astro content collections · Requiere Astro',
       },
       {
         value: 'sql-relational',
@@ -623,7 +623,18 @@ export function computeStackRecommendation(
   locale: Locale = 'es'
 ): StackRecommendation {
   const id = recommendStackId(answers);
-  return getAllStacks(locale).find((s) => s.id === id)!;
+  const stack = getAllStacks(locale).find((s) => s.id === id)!;
+  // con Markdown el contenido ya no vive solo en el JSON: la ficha del stack debe decirlo
+  if (answers.databaseNeed === 'markdown-cms' && stack.id.startsWith('astro-')) {
+    return {
+      ...stack,
+      database:
+        locale === 'it'
+          ? 'FAQ in Markdown (src/content/faqs/) + resto in src/data/siteContent.json'
+          : 'FAQ en Markdown (src/content/faqs/) + resto en src/data/siteContent.json',
+    };
+  }
+  return stack;
 }
 
 export function getSectionsCatalog(locale: Locale): Omit<SectionConfig, 'enabled'>[] {

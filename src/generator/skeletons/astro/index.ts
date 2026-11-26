@@ -81,15 +81,31 @@ export default defineConfig({${siteAndBase}${adapterLine}${envSchema}
     .map((m) => `\n    <script>import '.${m}';</script>`)
     .join('');
 
+  // Con Markdown, las FAQ salen de src/content/faqs/*.md (Astro las convierte a HTML al compilar)
+  const markdownImport = ctx.markdown ? "\nimport { getCollection } from 'astro:content';" : '';
+  const siteContentDecl = ctx.markdown
+    ? `// ${isIt ? 'Le FAQ stanno in src/content/faqs/*.md, ordinate per nome del file.' : 'Las FAQ están en src/content/faqs/*.md, ordenadas por nombre de archivo.'}
+const faqEntries = (await getCollection('faqs')).sort((a, b) => a.id.localeCompare(b.id));
+const siteContent: SiteContent = {
+  ...content,
+  faqs: faqEntries.map((entry) => ({
+    id: entry.id,
+    question: entry.data.question,
+    answer: entry.body ?? '',
+    answerHtml: entry.rendered?.html,
+  })),
+};`
+    : 'const siteContent: SiteContent = content;';
+
   const indexAstro = `---
 import '../index.css';
 import config from '../data/siteConfig.json';
 import content from '../data/siteContent.json';
 import { Site } from '../site/Site';
-import type { SiteConfig, SiteContent } from '../site/types';
+import type { SiteConfig, SiteContent } from '../site/types';${markdownImport}
 
 // ${isIt ? 'Il contenuto viene verificato contro SiteContent dal compilatore (npm run check).' : 'El compilador comprueba el contenido contra SiteContent (npm run check).'}
-const siteContent: SiteContent = content;
+${siteContentDecl}
 const siteConfig = config as SiteConfig;
 ---
 

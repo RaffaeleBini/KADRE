@@ -51,7 +51,8 @@ export interface SiteContent {
   testimonialsHeading: string;
   testimonials: { id: string; quote: string; author: string; role: string; organization: string }[];
   faqHeading: string;
-  faqs: { id: string; question: string; answer: string }[];
+  /** answerHtml: respuesta ya convertida desde Markdown (la genera Astro en la compilación) */
+  faqs: { id: string; question: string; answer: string; answerHtml?: string }[];
   contactHeading: string;
   contactSubheading: string;
   contactEmail: string;

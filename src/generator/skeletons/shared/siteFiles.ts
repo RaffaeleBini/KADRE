@@ -62,7 +62,8 @@ export function siteDataFiles(ctx: GenContext): GeneratedFile[] {
       description: isIt
         ? 'Contenuti disaccoppiati modificabili senza toccare i componenti.'
         : 'Contenidos desacoplados editables sin modificar componentes.',
-      content: JSON.stringify(exportedContent, null, 2),
+      // con Markdown las FAQ viven en src/content/faqs/, no aquí
+      content: JSON.stringify(ctx.markdown ? { ...exportedContent, faqs: [] } : exportedContent, null, 2),
     },
     {
       path: 'src/data/siteConfig.json',

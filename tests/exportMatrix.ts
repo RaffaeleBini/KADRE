@@ -48,6 +48,8 @@ export interface ExportCombo {
   analytics?: boolean;
   /** con la integración de formulario de contacto con envío real */
   contact?: boolean;
+  /** FAQ en Markdown (solo stacks Astro) */
+  markdown?: boolean;
 }
 
 /** Coppie (stack, piattaforma) che il configuratore offre. */
@@ -69,6 +71,7 @@ function makeId(c: Omit<ExportCombo, 'id'>): string {
     c.allSections ? 'allsec' : 'defsec',
     ...(c.analytics ? ['analytics'] : []),
     ...(c.contact ? ['contact'] : []),
+    ...(c.markdown ? ['markdown'] : []),
   ].join('__');
 }
 
@@ -128,6 +131,23 @@ export function structuralCombos(): ExportCombo[] {
     };
     combos.push({ ...base, id: makeId(base) });
   });
+  // Markdown: solo stacks Astro, en la primera plataforma de cada uno (+ Cloudflare, que compila distinto)
+  offeredStackPlatforms().forEach(({ stackId, platform }, k) => {
+    if (STACK_PROFILES[stackId].skeleton !== 'astro') return;
+    if (platform !== STACK_PROFILES[stackId].platforms[0] && platform !== 'cloudflare') return;
+    const base = {
+      locale: LOCALES[k % LOCALES.length],
+      stackId,
+      platform,
+      templateIndex: (i + k + 2) % nTemplates,
+      projectType: PROJECT_TYPES[(i + k + 2) % PROJECT_TYPES.length],
+      styleIndex: (i + k + 2) % nStyles,
+      colorIndex: (i + k + 2) % nColors,
+      allSections: true,
+      markdown: true,
+    };
+    combos.push({ ...base, id: makeId(base) });
+  });
   return combos;
 }
 
@@ -164,11 +184,12 @@ export function snapshotCombos(): ExportCombo[] {
       all.find((c) => c.stackId === stackId && c.platform === platform && c.locale === locale)!;
     return [pick(platforms[0], 'es'), pick(platforms[platforms.length - 1], 'it')];
   }).concat(all.filter((c) => c.analytics && ['static-vite-react', 'astro-hybrid'].includes(c.stackId)))
-    .concat(all.filter((c) => c.contact && c.platform !== 'netlify' && c.platform !== 'cloudflare'));
+    .concat(all.filter((c) => c.contact && c.platform !== 'netlify' && c.platform !== 'cloudflare'))
+    .concat(all.filter((c) => c.markdown && c.platform !== 'cloudflare'));
 }
 
 /** Risposte del passo Discovery coerenti con lo stack (come le produrrebbe l'utente). */
-function answersFor(stackId: StackId, projectType: ProjectType, integrations: IntegrationOption[] = []): DiscoveryAnswers {
+function answersFor(stackId: StackId, projectType: ProjectType, integrations: IntegrationOption[] = [], markdown = false): DiscoveryAnswers {
   const profile = STACK_PROFILES[stackId];
   return {
     ...DEFAULT_DISCOVERY_ANSWERS,
@@ -176,6 +197,7 @@ function answersFor(stackId: StackId, projectType: ProjectType, integrations: In
     architectureMode: profile.backend ? 'light-api' : 'frontend-only',
     databaseNeed: profile.database ? 'sql-relational' : 'none',
     integrations,
+    ...(markdown ? { databaseNeed: 'markdown-cms' as const, renderingStrategy: profile.rendering } : {}),
   };
 }
 
@@ -191,7 +213,7 @@ export function buildInput(c: ExportCombo): CodeGenerationInput {
     answers: answersFor(c.stackId, c.projectType, [
       ...(c.analytics ? (['analytics'] as const) : []),
       ...(c.contact ? (['contact-form'] as const) : []),
-    ]),
+    ], c.markdown),
     stack,
     template,
     sections,

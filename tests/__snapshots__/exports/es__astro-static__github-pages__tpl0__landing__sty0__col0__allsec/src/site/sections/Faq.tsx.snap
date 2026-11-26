@@ -24,9 +24,18 @@ export function Faq({ content }: { content: SiteContent }) {
                 </span>
               </button>
               {isOpen ? (
-                <p className="mt-3 text-sm leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
-                  {faq.answer}
-                </p>
+                faq.answerHtml ? (
+                  // HTML generado por Astro desde un .md del propio repositorio (contenido del autor)
+                  <div
+                    className="mt-3 text-sm leading-relaxed [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&>*+*]:mt-2 [&_ul]:list-disc [&_ul]:pl-5"
+                    style={{ color: 'var(--color-text-muted)' }}
+                    dangerouslySetInnerHTML={{ __html: faq.answerHtml }}
+                  />
+                ) : (
+                  <p className="mt-3 text-sm leading-relaxed" style={{ color: 'var(--color-text-muted)' }}>
+                    {faq.answer}
+                  </p>
+                )
               ) : null}
             </div>
           );

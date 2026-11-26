@@ -38,6 +38,8 @@ export interface GenContext extends CodeGenerationInput {
   hasDatabase: boolean;
   /** scheletro scelto dalla matrice in base allo stack */
   skeleton: SkeletonId;
+  /** FAQ en archivos Markdown (content collections de Astro) en lugar de siteContent.json */
+  markdown: boolean;
 }
 
 /**
