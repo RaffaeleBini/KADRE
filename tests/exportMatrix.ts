@@ -44,6 +44,8 @@ export interface ExportCombo {
   styleIndex: number;
   colorIndex: number;
   allSections: boolean;
+  /** con la integración de analytics activada */
+  analytics?: boolean;
 }
 
 /** Coppie (stack, piattaforma) che il configuratore offre. */
@@ -63,6 +65,7 @@ function makeId(c: Omit<ExportCombo, 'id'>): string {
     `sty${c.styleIndex}`,
     `col${c.colorIndex}`,
     c.allSections ? 'allsec' : 'defsec',
+    ...(c.analytics ? ['analytics'] : []),
   ].join('__');
 }
 
@@ -89,6 +92,22 @@ export function structuralCombos(): ExportCombo[] {
       i++;
     }
   }
+  // Integrazioni: una variante per stack (prima piattaforma), alternando la lingua.
+  // Sono in coda così gli id e gli snapshot delle combinazioni base restano stabili.
+  (Object.keys(STACK_PROFILES) as StackId[]).forEach((stackId, k) => {
+    const base = {
+      locale: LOCALES[k % LOCALES.length],
+      stackId,
+      platform: STACK_PROFILES[stackId].platforms[0],
+      templateIndex: (i + k) % nTemplates,
+      projectType: PROJECT_TYPES[(i + k) % PROJECT_TYPES.length],
+      styleIndex: (i + k) % nStyles,
+      colorIndex: (i + k) % nColors,
+      allSections: false,
+      analytics: true,
+    };
+    combos.push({ ...base, id: makeId(base) });
+  });
   return combos;
 }
 
@@ -124,17 +143,18 @@ export function snapshotCombos(): ExportCombo[] {
     const pick = (platform: DeployPlatform, locale: Locale) =>
       all.find((c) => c.stackId === stackId && c.platform === platform && c.locale === locale)!;
     return [pick(platforms[0], 'es'), pick(platforms[platforms.length - 1], 'it')];
-  });
+  }).concat(all.filter((c) => c.analytics && ['static-vite-react', 'astro-hybrid'].includes(c.stackId)));
 }
 
 /** Risposte del passo Discovery coerenti con lo stack (come le produrrebbe l'utente). */
-function answersFor(stackId: StackId, projectType: ProjectType): DiscoveryAnswers {
+function answersFor(stackId: StackId, projectType: ProjectType, analytics = false): DiscoveryAnswers {
   const profile = STACK_PROFILES[stackId];
   return {
     ...DEFAULT_DISCOVERY_ANSWERS,
     projectType,
     architectureMode: profile.backend ? 'light-api' : 'frontend-only',
     databaseNeed: profile.database ? 'sql-relational' : 'none',
+    integrations: analytics ? ['analytics'] : [],
   };
 }
 
@@ -147,7 +167,7 @@ export function buildInput(c: ExportCombo): CodeGenerationInput {
   );
   return {
     locale: c.locale,
-    answers: answersFor(c.stackId, c.projectType),
+    answers: answersFor(c.stackId, c.projectType, c.analytics),
     stack,
     template,
     sections,

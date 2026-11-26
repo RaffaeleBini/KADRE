@@ -96,10 +96,11 @@ export default function App() {
 }
 `;
 
+  const clientImportLines = assembled.clientImports.map((m) => `\nimport '${m}';`).join('');
   const mainTsx = `import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import './index.css';
+import './index.css';${clientImportLines}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

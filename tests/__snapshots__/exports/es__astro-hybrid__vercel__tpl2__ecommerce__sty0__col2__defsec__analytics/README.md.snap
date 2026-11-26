@@ -1,0 +1,56 @@
+# Taller Nord
+
+Instrumentos y mobiliario técnico
+
+## Arquitectura técnica seleccionada
+
+- **Stack**: Astro híbrido (página estática + endpoint de servidor)
+- **Frontend**: Astro 7 + React 19 (componentes hidratados)
+- **Backend**: Endpoints de Astro: /api/contact y /api/health
+- **Base de datos**: Ninguna
+- **Plantilla**: Estudio y Arquitectura
+- **Estilo gráfico**: Industrial Técnico · Pizarra Profunda y Azul Precisión
+
+## Ejecución local
+
+```bash
+npm install
+npm run dev
+```
+
+## Exportar a GitHub paso a paso
+
+1. Crea un repositorio vacío llamado `taller-nord` en https://github.com/new (sin README ni .gitignore).
+2. Ejecuta los siguientes comandos dentro de esta carpeta:
+
+```bash
+git init
+git add .
+git commit -m "Versión inicial de Taller Nord"
+git branch -M main
+git remote add origin https://github.com/kadre-test/taller-nord.git
+git push -u origin main
+```
+
+También puedes ejecutar el script automatizado incluido:
+
+```bash
+chmod +x exportar-github.sh
+./exportar-github.sh
+```
+
+## Despliegue (vercel)
+
+1. Accede a tu cuenta de **VERCEL** y elige **Import Git Repository**.
+2. Selecciona `kadre-test/taller-nord`: Astro se detecta automáticamente (compilación `npm run build`) y el adaptador publica la página y el endpoint `/api/contact`.
+
+## Estadísticas de visitas (Cloudflare Web Analytics)
+
+El sitio está preparado para Cloudflare Web Analytics: gratuito, sin cookies y válido en cualquier hosting.
+
+1. En Cloudflare abre **Analytics & Logs** → **Web Analytics** → **Add a site** (hace falta una cuenta gratuita; no es necesario mover el dominio a Cloudflare).
+2. Elige la configuración manual (**JS snippet**) y copia el valor `token` del fragmento.
+3. Pégalo en `src/data/analytics.json`, en el campo `cloudflareToken`.
+4. Vuelve a publicar el sitio. Mientras el token esté vacío no se carga ningún script.
+
+El token no es un secreto: de todos modos aparece en el HTML público.

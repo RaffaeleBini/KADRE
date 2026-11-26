@@ -163,7 +163,7 @@ const INTEGRATIONS: Record<IntegrationOption, Availability> = {
     },
   },
   payments: { status: 'planned', reason: INTEGRATION_SOON },
-  analytics: { status: 'planned', reason: INTEGRATION_SOON },
+  analytics: AVAILABLE,
   i18n: { status: 'planned', reason: INTEGRATION_SOON },
   auth: { status: 'planned', reason: INTEGRATION_SOON },
 };

@@ -60,6 +60,12 @@ describe('invarianti su tutte le combinazioni strutturali', () => {
         expect(f.content, f.path).not.toMatch(/\bundefined\b|\[object Object\]/);
       }
 
+      // l'innesto analytics c'è se e solo se richiesto, ed è collegato all'entry point
+      const entry = skeletonFor(combo.stackId) === 'astro' ? 'src/pages/index.astro' : 'src/main.tsx';
+      expect(byPath.has('src/analytics.ts'), 'src/analytics.ts').toBe(!!combo.analytics);
+      expect(byPath.has('src/data/analytics.json'), 'analytics.json').toBe(!!combo.analytics);
+      expect(/analytics'/.test(byPath.get(entry)!), `${entry} importa analytics`).toBe(!!combo.analytics);
+
       // coerenza backend: server presente se e solo se lo script dev lo avvia
       const pkg = JSON.parse(byPath.get('package.json')!);
       const hasServer = byPath.has('server/index.ts');

@@ -235,8 +235,8 @@ export function getDiscoveryOptions(locale: Locale): {
         {
           value: 'analytics',
           title: 'Analitica rispettosa',
-          description: 'Eventi essenziali di conversione e metriche senza script invasivi.',
-          technicalHint: 'Leggero · Conforme GDPR',
+          description: 'Visite e pagine viste con Cloudflare Web Analytics: gratuito e senza cookie.',
+          technicalHint: 'Un solo script · Token da incollare dopo l’export',
         },
         {
           value: 'i18n',
@@ -384,8 +384,8 @@ export function getDiscoveryOptions(locale: Locale): {
       {
         value: 'analytics',
         title: 'Analítica respetuosa',
-        description: 'Eventos básicos de conversión y métricas de uso sin scripts invasivos.',
-        technicalHint: 'Ligero · Compatible con RGPD',
+        description: 'Visitas y páginas vistas con Cloudflare Web Analytics: gratuito y sin cookies.',
+        technicalHint: 'Un solo script · Token para pegar tras exportar',
       },
       {
         value: 'i18n',

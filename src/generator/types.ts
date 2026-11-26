@@ -60,6 +60,8 @@ export interface AssembledProject {
   tsInclude: string[];
   /** adapter Astro dichiarato da un innesto (solo siti Astro con server) */
   astroAdapter?: AstroAdapter;
+  /** moduli di src/ da importare nell'entry point del browser (es. './analytics') */
+  clientImports: string[];
 }
 
 /** Come registrare un adapter in astro.config.mjs. */
@@ -86,5 +88,9 @@ export interface GeneratorModule {
   gitignore?: string[];
   /** righe aggiunte in coda a .env.example */
   envExample?(ctx: GenContext): string;
+  /** moduli di src/ eseguiti nel browser all'avvio, importati dall'entry point dello scheletro */
+  clientImports?: string[];
+  /** sezione Markdown aggiunta in coda al README */
+  readme?(ctx: GenContext): string;
   files?(ctx: GenContext): GeneratedFile[];
 }

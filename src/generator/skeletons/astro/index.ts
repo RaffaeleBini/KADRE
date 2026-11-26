@@ -69,6 +69,11 @@ export default defineConfig({${siteAndBase}${adapterLine}
     2
   );
 
+  // Astro agrupa estos scripts como módulos del navegador (src/pages → ../)
+  const clientScripts = assembled.clientImports
+    .map((m) => `\n    <script>import '.${m}';</script>`)
+    .join('');
+
   const indexAstro = `---
 import '../index.css';
 import config from '../data/siteConfig.json';
@@ -90,7 +95,7 @@ const siteConfig = config as SiteConfig;
     <meta name="description" content="${head.description}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="${head.fontsHref}" rel="stylesheet" />
+    <link href="${head.fontsHref}" rel="stylesheet" />${clientScripts}
   </head>
   <body>
     <!-- ${isIt ? 'HTML generato in build; client:load rende interattivi FAQ e modulo.' : 'HTML generado al compilar; client:load hace interactivos las FAQ y el formulario.'} -->

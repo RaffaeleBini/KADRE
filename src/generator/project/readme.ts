@@ -1,9 +1,10 @@
 import { GeneratedFile } from '../../types/builder';
-import { GenContext } from '../types';
+import { GenContext, GeneratorModule } from '../types';
 
-export function readmeFile(ctx: GenContext): GeneratedFile {
+export function readmeFile(ctx: GenContext, modules: GeneratorModule[] = []): GeneratedFile {
   const { isIt, content, stack, template, graphicStyle, colorPattern, repoSlug, branch, ghUser, scriptFilename, github } = ctx;
   // Astro con server: l'adapter decide il formato; Vercel/Netlify riconoscono Astro, Cloudflare usa un Worker
+  const moduleSections = modules.map((m) => m.readme?.(ctx) ?? '').join('');
   const astroServer = ctx.skeleton === 'astro' && ctx.hasBackend;
   return {
       path: 'README.md',
@@ -66,7 +67,7 @@ ${
     ? `1. Accedi al tuo account **${github.deployPlatform.toUpperCase()}** e scegli **Import Git Repository**.\n2. Seleziona \`${ghUser}/${repoSlug}\`: Astro viene riconosciuto in automatico (build \`npm run build\`), e l’adapter pubblica la pagina e l’endpoint \`/api/contact\`.`
     : `1. Accedi al tuo account **${github.deployPlatform.toUpperCase()}** e scegli **Import Git Repository**.\n2. Seleziona \`${ghUser}/${repoSlug}\`.\n3. Comando di build: \`npm run build\` · Cartella di output: \`dist\`.`
 }
-`
+${moduleSections}`
         : `# ${content.brandName}
 
 ${content.tagline}
@@ -121,6 +122,6 @@ ${
     ? `1. Accede a tu cuenta de **${github.deployPlatform.toUpperCase()}** y elige **Import Git Repository**.\n2. Selecciona \`${ghUser}/${repoSlug}\`: Astro se detecta automáticamente (compilación \`npm run build\`) y el adaptador publica la página y el endpoint \`/api/contact\`.`
     : `1. Accede a tu cuenta de **${github.deployPlatform.toUpperCase()}** y elige **Import Git Repository**.\n2. Selecciona \`${ghUser}/${repoSlug}\`.\n3. Comando de compilación: \`npm run build\` · Directorio de salida: \`dist\`.`
 }
-`,
+${moduleSections}`,
   };
 }

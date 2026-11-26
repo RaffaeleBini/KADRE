@@ -7,6 +7,7 @@
  */
 import { GeneratedFile } from '../types/builder';
 import { buildContext } from './context';
+import { analytics } from './modules/analytics';
 import { backendExpress } from './modules/backendExpress';
 import {
   astroAdapterCloudflare,
@@ -40,6 +41,7 @@ export const MODULES: GeneratorModule[] = [
   astroAdapterNetlify,
   astroAdapterCloudflare,
   astroAdapterNode,
+  analytics,
 ];
 
 function assemblePackageJson(ctx: GenContext, skeleton: Skeleton, modules: GeneratorModule[]): string {
@@ -75,6 +77,7 @@ export function generateRepositoryFiles(input: CodeGenerationInput): GeneratedFi
     packageJson: assemblePackageJson(ctx, skeleton, modules),
     tsInclude: [...skeleton.tsInclude, ...modules.flatMap((m) => m.tsInclude ?? [])],
     astroAdapter: modules.find((m) => m.astroAdapter)?.astroAdapter,
+    clientImports: modules.flatMap((m) => m.clientImports ?? []),
   };
 
   return [
@@ -84,6 +87,6 @@ export function generateRepositoryFiles(input: CodeGenerationInput): GeneratedFi
     gitignoreFile(ctx, modules),
     envExampleFile(ctx, modules),
     exportScriptFile(ctx),
-    readmeFile(ctx),
+    readmeFile(ctx, modules),
   ];
 }
