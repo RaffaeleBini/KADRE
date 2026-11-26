@@ -1,0 +1,47 @@
+# Cuaderno Técnico
+
+Ensayos sobre diseño de sistemas y software
+
+## Arquitectura técnica seleccionada
+
+- **Stack**: React + Express + esquema PostgreSQL
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Node.js + Express: /api/contact y /api/health
+- **Base de datos**: PostgreSQL: db/schema.sql + DATABASE_URL
+- **Plantilla**: Corporativa Industrial B2B
+- **Estilo gráfico**: Minimalista Moderno · Marfil Editorial y Borgoña
+
+## Ejecución local
+
+```bash
+npm install
+npm run dev
+```
+
+## Exportar a GitHub paso a paso
+
+1. Crea un repositorio vacío llamado `cuaderno-tecnico` en https://github.com/new (sin README ni .gitignore).
+2. Ejecuta los siguientes comandos dentro de esta carpeta:
+
+```bash
+git init
+git add .
+git commit -m "Versión inicial de Cuaderno Técnico"
+git branch -M main
+git remote add origin https://github.com/kadre-test/cuaderno-tecnico.git
+git push -u origin main
+```
+
+También puedes ejecutar el script automatizado incluido:
+
+```bash
+chmod +x exportar-github.sh
+./exportar-github.sh
+```
+
+## Despliegue (node-server)
+
+1. En un hosting Node (Render, Railway…) crea un servicio web conectado a `kadre-test/cuaderno-tecnico`.
+2. Comando de compilación: `npm install && npm run build` · Comando de arranque: `npm start`.
+3. El servidor escucha en el puerto de la variable `PORT` (la definen los proveedores).
+4. Añade la variable `DATABASE_URL` con la cadena de conexión PostgreSQL (p. ej. Neon) y ejecuta `db/schema.sql` en la base de datos.

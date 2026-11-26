@@ -12,7 +12,6 @@ import {
 import { Locale, TRANSLATIONS } from '../i18n/translations';
 import {
   ColorPatternPreset,
-  DeployPlatform,
   DiscoveryAnswers,
   GithubExportConfig,
   GraphicStylePreset,
@@ -25,7 +24,9 @@ import {
   downloadRepositoryZip,
   generateRepositoryFiles,
   getExportScriptFilename,
+  sanitizeRepoSlug,
 } from '../generator';
+import { ALL_PLATFORMS, platformAvailability, reasonText } from '../generator/matrix';
 
 interface ExportStepProps {
   locale: Locale;
@@ -41,7 +42,6 @@ interface ExportStepProps {
   onBack: () => void;
 }
 
-const PLATFORM_IDS: DeployPlatform[] = ['github-pages', 'vercel', 'netlify', 'cloudflare'];
 
 export function ExportStep({
   locale,
@@ -85,12 +85,8 @@ export function ExportStep({
     generatedFiles.find((f) => f.path === selectedFilePath) ?? generatedFiles[0];
 
   const cleanUser = (githubConfig.username || t.ghUserPlaceholder).trim();
-  const cleanRepo =
-    (githubConfig.repoName || content.brandName)
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-_]+/g, '-')
-      .replace(/^-+|-+$/g, '') || (locale === 'it' ? 'mio-sito-web' : 'mi-web-automatizada');
+  // stessa regola del generatore: lo slug mostrato qui è quello che finisce nel README e nello script
+  const cleanRepo = sanitizeRepoSlug(githubConfig.repoName || content.brandName, locale);
   const branch = (githubConfig.branch || 'main').trim();
 
   const commitMessage =
@@ -275,17 +271,22 @@ npm run dev`;
                 {t.deployPlatformLabel}
               </span>
               <div className="grid gap-2 sm:grid-cols-2">
-                {PLATFORM_IDS.map((platId) => {
+                {ALL_PLATFORMS.map((platId) => {
                   const plat = t.platforms[platId];
                   const active = githubConfig.deployPlatform === platId;
+                  const availability = platformAvailability(stack.id, platId);
+                  const unavailable = availability.status !== 'available';
                   return (
                     <button
                       key={platId}
                       type="button"
+                      disabled={unavailable}
+                      aria-disabled={unavailable}
+                      title={reasonText(availability, locale) ?? undefined}
                       onClick={() =>
                         onUpdateGithubConfig({ ...githubConfig, deployPlatform: platId })
                       }
-                      className={`text-left p-2.5 border transition-colors cursor-pointer ${
+                      className={`text-left p-2.5 border transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-50 ${
                         active
                           ? 'border-[#9A7400] bg-[#FEFCE8] dark:border-[#F5C400] dark:bg-[#F5C400]/10'
                           : 'border-[#D0D5DF] bg-[#F8F9FB] dark:border-[#262B36] dark:bg-[#151820]'
@@ -295,7 +296,7 @@ npm run dev`;
                         {plat.label}
                       </div>
                       <div className="text-[11px] text-[#4B5565] dark:text-[#9BA4B5]">
-                        {plat.note}
+                        {unavailable ? reasonText(availability, locale) : plat.note}
                       </div>
                     </button>
                   );
@@ -526,7 +527,22 @@ npm run dev`;
               </button>
 
               <div className="pl-9 text-xs leading-relaxed text-[#4B5565] dark:text-[#9BA4B5] space-y-2">
-                {githubConfig.deployPlatform === 'github-pages' && !stack.includesBackend ? (
+                {githubConfig.deployPlatform === 'node-server' ? (
+                  <>
+                    <p>
+                      {t.step4Node1}{' '}
+                      <code className="font-mono text-[#111318] dark:text-[#F4F6F9]">
+                        {cleanUser}/{cleanRepo}
+                      </code>{' '}
+                      ({t.step4Other2Branch} <code className="font-mono">{branch}</code>).
+                    </p>
+                    <p>
+                      {t.step4Node2Build} <code className="font-mono">npm install && npm run build</code>{' '}
+                      {t.step4Node2Start} <code className="font-mono">npm start</code>.
+                      {stack.includesDatabase ? t.step4Other3Db : ''}
+                    </p>
+                  </>
+                ) : githubConfig.deployPlatform === 'github-pages' && !stack.includesBackend ? (
                   <>
                     <p>{t.step4Pages1}</p>
                     <p>{t.step4Pages2}</p>

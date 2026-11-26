@@ -17,6 +17,8 @@ import {
   getTemplates,
   localizeSections,
 } from './data/presets';
+import { slugify } from './generator';
+import { defaultPlatform, normalizeAnswers, platformAvailability } from './generator/matrix';
 import { Locale, TRANSLATIONS } from './i18n/translations';
 import {
   ColorPatternPreset,
@@ -101,7 +103,8 @@ export default function App() {
   );
 
   const [answers, setAnswers] = useState<DiscoveryAnswers>(
-    initialDraft?.answers ?? DEFAULT_DISCOVERY_ANSWERS
+    // le bozze salvate prima della Fase 4 possono contenere opzioni oggi "in arrivo"
+    initialDraft?.answers ? normalizeAnswers(initialDraft.answers) : DEFAULT_DISCOVERY_ANSWERS
   );
   const [manualStackId, setManualStackId] = useState<string | null>(
     initialDraft?.manualStackId ?? null
@@ -221,6 +224,14 @@ export default function App() {
     return allStacks.find((s) => s.id === manualStackId) ?? recommendedStack;
   }, [manualStackId, recommendedStack, allStacks]);
 
+  // Se lo stack cambia e la piattaforma scelta non lo supporta (es. server Express
+  // su GitHub Pages), passa alla prima piattaforma compatibile.
+  useEffect(() => {
+    if (platformAvailability(selectedStack.id, githubConfig.deployPlatform).status !== 'available') {
+      setGithubConfig((prev) => ({ ...prev, deployPlatform: defaultPlatform(selectedStack.id) }));
+    }
+  }, [selectedStack.id, githubConfig.deployPlatform]);
+
   const selectedTemplate = useMemo(
     () => templates.find((t) => t.id === templateId) ?? templates[0],
     [templates, templateId]
@@ -266,7 +277,9 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function handleUpdateAnswers(next: DiscoveryAnswers) {
+  function handleUpdateAnswers(proposed: DiscoveryAnswers) {
+    // es. passando a "solo frontend" il database SQL non è più possibile: torna a "nessuno"
+    const next = normalizeAnswers(proposed);
     const projectTypeChanged = next.projectType !== answers.projectType;
     setAnswers(next);
 
@@ -281,10 +294,7 @@ export default function App() {
         setContent(starter);
         setGithubConfig((prev) => ({
           ...prev,
-          repoName: starter.brandName
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, ''),
+          repoName: slugify(starter.brandName),
         }));
       }
     }

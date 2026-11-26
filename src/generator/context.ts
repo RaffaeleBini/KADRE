@@ -2,13 +2,19 @@ import { Locale } from '../i18n/translations';
 import { SiteContent } from '../types/builder';
 import { CodeGenerationInput, GenContext } from './types';
 
-export function sanitizeRepoSlug(raw: string, locale: Locale): string {
-  const cleaned = raw
+/** Testo → slug per URL e nomi di repo: "Café Técnico" → "cafe-tecnico" (accenti tolti, non persi). */
+export function slugify(raw: string): string {
+  return raw
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9-_]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return cleaned || (locale === 'it' ? 'mio-sito-web' : 'mi-web-automatizada');
+}
+
+export function sanitizeRepoSlug(raw: string, locale: Locale): string {
+  return slugify(raw) || (locale === 'it' ? 'mio-sito-web' : 'mi-web-automatizada');
 }
 
 export function getExportScriptFilename(locale: Locale): string {

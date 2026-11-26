@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
+import { slugify } from '../generator/context';
 import { buildSiteConfig, siteCssVars } from '../generator/skeletons/vite-react/siteConfig';
 import { Locale, TRANSLATIONS } from '../i18n/translations';
 import { Site } from '../site-template/vite-react/site/Site';
@@ -79,10 +80,7 @@ export function LiveSitePreview({
     [graphicStyle, colorPattern]
   );
 
-  const displaySlug = (previewSlug || content.brandName)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
+  const displaySlug = slugify(previewSlug || content.brandName);
 
   /** I link interni (#features…) scorrono dentro l'anteprima invece di cambiare la pagina di KADRE. */
   function handleClickCapture(e: React.MouseEvent<HTMLDivElement>) {

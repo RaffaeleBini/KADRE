@@ -1,3 +1,4 @@
+import { recommendStackId } from '../generator/matrix';
 import { Locale } from '../i18n/translations';
 import {
   ColorPatternPreset,
@@ -79,8 +80,8 @@ export const DEFAULT_DISCOVERY_ANSWERS: DiscoveryAnswers = {
   projectType: 'landing',
   architectureMode: 'frontend-only',
   databaseNeed: 'none',
-  renderingStrategy: 'static-ssg',
-  integrations: ['contact-form'],
+  renderingStrategy: 'spa-dynamic',
+  integrations: [],
 };
 
 export interface QuestionOption<T extends string> {
@@ -155,8 +156,8 @@ export function getDiscoveryOptions(locale: Locale): {
           value: 'light-api',
           title: 'Frontend + API server leggera',
           description:
-            'Aggiunge endpoint lato server per gestire moduli di contatto, webhook, invio email o integrazioni sicure.',
-          technicalHint: 'Node.js / Express o Serverless Functions',
+            'Aggiunge un server Express con endpoint propri: oggi /api/contact riceve e valida il modulo di contatto.',
+          technicalHint: 'Node.js + Express',
         },
         {
           value: 'full-backend',
@@ -186,14 +187,7 @@ export function getDiscoveryOptions(locale: Locale): {
           title: 'Database relazionale (SQL)',
           description:
             'Archivia contatti, ordini, utenti o inventario con integrità referenziale e query strutturate.',
-          technicalHint: 'PostgreSQL o SQLite con schema SQL',
-        },
-        {
-          value: 'nosql-realtime',
-          title: 'Database documentale / tempo reale',
-          description:
-            'Pensato per dati flessibili, collaborazione istantanea o sincronizzazione multi-dispositivo.',
-          technicalHint: 'Collezioni JSON · Scalabilità orizzontale',
+          technicalHint: 'PostgreSQL con schema SQL iniziale',
         },
       ],
       renderingStrategy: [
@@ -311,8 +305,8 @@ export function getDiscoveryOptions(locale: Locale): {
         value: 'light-api',
         title: 'Frontend + API ligera de servidor',
         description:
-          'Añade endpoints de servidor para procesar formularios, webhooks, envíos de correo o integraciones seguras.',
-        technicalHint: 'Node.js / Express o Serverless Functions',
+          'Añade un servidor Express con endpoints propios: hoy /api/contact recibe y valida el formulario de contacto.',
+        technicalHint: 'Node.js + Express',
       },
       {
         value: 'full-backend',
@@ -342,14 +336,7 @@ export function getDiscoveryOptions(locale: Locale): {
         title: 'Base de datos relacional (SQL)',
         description:
           'Almacena contactos, pedidos, usuarios o inventario con integridad referencial y consultas complejas.',
-        technicalHint: 'PostgreSQL o SQLite con esquema SQL',
-      },
-      {
-        value: 'nosql-realtime',
-        title: 'Base de datos documental / tiempo real',
-        description:
-          'Pensada para datos flexibles, colaboración instantánea o sincronización multi-dispositivo.',
-        technicalHint: 'Colecciones JSON · Escalado horizontal',
+        technicalHint: 'PostgreSQL con esquema SQL inicial',
       },
     ],
     renderingStrategy: [
@@ -411,88 +398,68 @@ export function getDiscoveryOptions(locale: Locale): {
 }
 
 export function getAllStacks(locale: Locale): StackRecommendation[] {
+  // Testi allineati a ciò che il generatore produce davvero (vedi src/generator/matrix.ts).
   if (locale === 'it') {
     return [
       {
         id: 'static-vite-react',
-        name: 'React + Vite + Tailwind (Statico SSG)',
-        category: 'Frontend Statico ad Alte Prestazioni',
+        name: 'React + Vite + Tailwind (SPA statica)',
+        category: 'Sito statico, senza server',
         summary:
-          'Compilazione ultraveloce in file statici con React 19, TypeScript e Tailwind CSS. Zero gestione server e deploy diretto su GitHub Pages.',
+          'Una pagina React compilata in file statici (HTML, CSS, JS). Nessun server da mantenere: si pubblica su GitHub Pages, Vercel, Netlify o Cloudflare Pages.',
         frontend: 'React 19 + TypeScript + Vite',
-        backend: 'Non necessario (100% client)',
-        database: 'File JSON versionati in Git',
-        styling: 'Tailwind CSS v4 + Token CSS',
+        backend: 'Nessuno',
+        database: 'Contenuti in src/data/siteContent.json',
+        styling: 'Tailwind CSS v4 + variabili CSS',
         deployTargets: ['GitHub Pages', 'Vercel', 'Netlify', 'Cloudflare Pages'],
         includesBackend: false,
         includesDatabase: false,
         rationale: [
-          'Azzera i costi di server e garantisce tempi di caricamento inferiori a 1 secondo.',
-          'Contenuti separati in src/data/siteContent.json per aggiornare testi senza toccare il layout.',
-          'Workflow GitHub Actions preconfigurato per pubblicare automaticamente ad ogni git push.',
+          'Nessun costo né manutenzione di server: solo file statici.',
+          'Testi e struttura in file JSON separati: si aggiornano senza toccare i componenti.',
+          'Per GitHub Pages include il workflow che pubblica a ogni push.',
         ],
         estimatedBuildTime: '~12 s',
         complexity: 'Bassa',
       },
       {
-        id: 'spa-interactive-studio',
-        name: 'React SPA + Livello Dati Modulare',
-        category: 'Applicazione Web Dinamica (Frontend)',
-        summary:
-          'Architettura SPA ottimizzata per cataloghi interattivi, filtri in tempo reale ed esperienze ricche nel browser senza complessità server.',
-        frontend: 'React 19 + TypeScript + Vite',
-        backend: 'Integrazione esterna via API / Webhook',
-        database: 'Catalogo JSON strutturato / Headless CMS',
-        styling: 'Tailwind CSS v4 + Design System',
-        deployTargets: ['Vercel', 'Netlify', 'GitHub Pages', 'Cloudflare Pages'],
-        includesBackend: false,
-        includesDatabase: false,
-        rationale: [
-          'Transizioni immediate tra le sezioni e filtri locali senza ricaricare la pagina.',
-          'Struttura pronta per collegare qualsiasi CMS esterno o gateway di pagamento.',
-          'Deploy gratuito e immediato dal tuo repository GitHub.',
-        ],
-        estimatedBuildTime: '~16 s',
-        complexity: 'Bassa',
-      },
-      {
         id: 'hybrid-node-api',
-        name: 'React + Express API (Full-Stack Leggero)',
-        category: 'Frontend + Server API Node.js',
+        name: 'React + server Express (API leggera)',
+        category: 'Frontend + server Node.js',
         summary:
-          'Unisce un’interfaccia React moderna a un server Express in TypeScript per gestire moduli di contatto, invii e logica sicura lato server.',
+          'La stessa pagina React servita da un server Express in TypeScript, con l’endpoint /api/contact che riceve i messaggi del modulo di contatto.',
         frontend: 'React 19 + TypeScript + Vite',
-        backend: 'Node.js + Express (API REST su /api)',
-        database: 'Archiviazione leggera / Variabili d’ambiente',
-        styling: 'Tailwind CSS v4 + Token CSS',
-        deployTargets: ['Vercel', 'Render', 'Railway', 'Cloud Run'],
+        backend: 'Node.js + Express: /api/contact e /api/health',
+        database: 'Nessuno',
+        styling: 'Tailwind CSS v4 + variabili CSS',
+        deployTargets: ['Server Node (Render, Railway…)'],
         includesBackend: true,
         includesDatabase: false,
         rationale: [
-          'Protegge le chiavi private ed elabora i moduli di contatto sul server (/api/contact).',
-          'Un unico repository GitHub contiene sia il frontend che l’API.',
-          'Pronto per crescere verso integrazioni esterne o pagamenti senza riscrivere la base.',
+          'Il modulo di contatto invia davvero al server, che valida e registra il messaggio (l’invio email arriverà con un modulo dedicato).',
+          'Un unico repository e un unico processo contengono frontend e API.',
+          'Serve un hosting Node sempre attivo: non è compatibile con GitHub Pages né con hosting solo statici.',
         ],
         estimatedBuildTime: '~24 s',
         complexity: 'Media',
       },
       {
         id: 'fullstack-sql-platform',
-        name: 'React + Express + Schema SQL (Full-Stack Completo)',
-        category: 'Piattaforma Full-Stack con Database',
+        name: 'React + Express + schema PostgreSQL',
+        category: 'Frontend + server Node.js + database',
         summary:
-          'Soluzione completa per la produzione con interfaccia React, API REST Express e schema relazionale SQL pronto per PostgreSQL o SQLite.',
+          'Come lo stack con Express, più uno schema PostgreSQL iniziale (db/schema.sql), la libreria pg e la variabile DATABASE_URL.',
         frontend: 'React 19 + TypeScript + Vite',
-        backend: 'Node.js + Express + Rotte API strutturate',
-        database: 'PostgreSQL / SQLite (db/schema.sql incluso)',
-        styling: 'Tailwind CSS v4 + Token CSS',
-        deployTargets: ['Vercel + Neon/Supabase', 'Railway', 'Render', 'Cloud Run'],
+        backend: 'Node.js + Express: /api/contact e /api/health',
+        database: 'PostgreSQL: db/schema.sql + DATABASE_URL',
+        styling: 'Tailwind CSS v4 + variabili CSS',
+        deployTargets: ['Server Node + PostgreSQL (es. Neon)'],
         includesBackend: true,
         includesDatabase: true,
         rationale: [
-          'Include schema SQL normalizzato per contatti, utenti e catalogo persistente.',
-          'Separa in modo pulito presentazione, logica API e livello di persistenza.',
-          'Pronto per autenticazione reale, pagamenti e scalabilità in produzione.',
+          'Schema SQL di partenza per contatti, catalogo e (con autenticazione) utenti.',
+          'Connessione configurabile con DATABASE_URL, senza segreti nel codice.',
+          'Le rotte che leggono e scrivono nel database vanno aggiunte: lo schema è il punto di partenza, non un’app completa.',
         ],
         estimatedBuildTime: '~32 s',
         complexity: 'Avanzata',
@@ -503,84 +470,63 @@ export function getAllStacks(locale: Locale): StackRecommendation[] {
   return [
     {
       id: 'static-vite-react',
-      name: 'React + Vite + Tailwind (Estático SSG)',
-      category: 'Frontend Estático de Alto Rendimiento',
+      name: 'React + Vite + Tailwind (SPA estática)',
+      category: 'Sitio estático, sin servidor',
       summary:
-        'Compilación ultrarrápida a archivos estáticos con React 19, TypeScript y Tailwind CSS. Cero mantenimiento de servidor y despliegue directo en GitHub Pages.',
+        'Una página React compilada a archivos estáticos (HTML, CSS, JS). Sin servidor que mantener: se publica en GitHub Pages, Vercel, Netlify o Cloudflare Pages.',
       frontend: 'React 19 + TypeScript + Vite',
-      backend: 'No requerido (100% cliente)',
-      database: 'Archivos JSON versionados en Git',
-      styling: 'Tailwind CSS v4 + Tokens CSS',
+      backend: 'Ninguno',
+      database: 'Contenidos en src/data/siteContent.json',
+      styling: 'Tailwind CSS v4 + variables CSS',
       deployTargets: ['GitHub Pages', 'Vercel', 'Netlify', 'Cloudflare Pages'],
       includesBackend: false,
       includesDatabase: false,
       rationale: [
-        'Elimina costes de servidor y garantiza tiempos de carga por debajo de 1 segundo.',
-        'Contenido separado en src/data/siteContent.json para actualizar textos sin romper diseño.',
-        'Flujo de GitHub Actions preconfigurado para publicar automáticamente con cada git push.',
+        'Sin costes ni mantenimiento de servidor: solo archivos estáticos.',
+        'Textos y estructura en archivos JSON separados: se actualizan sin tocar los componentes.',
+        'Para GitHub Pages incluye el flujo que publica con cada push.',
       ],
       estimatedBuildTime: '~12 s',
       complexity: 'Baja',
     },
     {
-      id: 'spa-interactive-studio',
-      name: 'React SPA + Capa de Datos Modular',
-      category: 'Aplicación Web Dinámica (Frontend)',
-      summary:
-        'Arquitectura SPA optimizada para catálogos interactivos, filtros en tiempo real y experiencias ricas en navegador sin fricción operativa.',
-      frontend: 'React 19 + TypeScript + Vite',
-      backend: 'Integración externa vía API / Webhooks',
-      database: 'Catálogo estructurado JSON / Headless CMS',
-      styling: 'Tailwind CSS v4 + Sistema de Diseño',
-      deployTargets: ['Vercel', 'Netlify', 'GitHub Pages', 'Cloudflare Pages'],
-      includesBackend: false,
-      includesDatabase: false,
-      rationale: [
-        'Transiciones inmediatas entre secciones y filtros locales sin recargar la página.',
-        'Estructura preparada para conectar cualquier CMS externo o API de pagos.',
-        'Despliegue gratuito e instantáneo desde tu repositorio de GitHub.',
-      ],
-      estimatedBuildTime: '~16 s',
-      complexity: 'Baja',
-    },
-    {
       id: 'hybrid-node-api',
-      name: 'React + Express API (Full-Stack Ligero)',
-      category: 'Frontend + Servidor API Node.js',
+      name: 'React + servidor Express (API ligera)',
+      category: 'Frontend + servidor Node.js',
       summary:
-        'Combina una interfaz React moderna con un servidor Express en TypeScript para gestionar formularios, envíos y lógica segura en servidor.',
+        'La misma página React servida por un servidor Express en TypeScript, con el endpoint /api/contact que recibe los mensajes del formulario de contacto.',
       frontend: 'React 19 + TypeScript + Vite',
-      backend: 'Node.js + Express (API REST en /api)',
-      database: 'Almacenamiento ligero / Variables de entorno',
-      styling: 'Tailwind CSS v4 + Tokens CSS',
-      deployTargets: ['Vercel', 'Render', 'Railway', 'Cloud Run'],
+      backend: 'Node.js + Express: /api/contact y /api/health',
+      database: 'Ninguna',
+      styling: 'Tailwind CSS v4 + variables CSS',
+      deployTargets: ['Servidor Node (Render, Railway…)'],
       includesBackend: true,
       includesDatabase: false,
       rationale: [
-        'Protege claves privadas y procesa formularios de contacto desde el servidor (/api/contact).',
-        'Un único repositorio de GitHub contiene tanto el frontend como la API.',
-        'Listo para crecer hacia integraciones externas o pagos sin rehacer la base.',
+        'El formulario de contacto envía de verdad al servidor, que valida y registra el mensaje (el envío de email llegará con un módulo propio).',
+        'Un único repositorio y un único proceso contienen frontend y API.',
+        'Necesita un hosting Node siempre activo: no es compatible con GitHub Pages ni con hostings solo estáticos.',
       ],
       estimatedBuildTime: '~24 s',
       complexity: 'Media',
     },
     {
       id: 'fullstack-sql-platform',
-      name: 'React + Express + Esquema SQL (Full-Stack Completo)',
-      category: 'Plataforma Full-Stack con Base de Datos',
+      name: 'React + Express + esquema PostgreSQL',
+      category: 'Frontend + servidor Node.js + base de datos',
       summary:
-        'Solución completa de producción con interfaz React, API REST en Express y esquema relacional SQL listo para PostgreSQL o SQLite.',
+        'Como el stack con Express, más un esquema PostgreSQL inicial (db/schema.sql), la librería pg y la variable DATABASE_URL.',
       frontend: 'React 19 + TypeScript + Vite',
-      backend: 'Node.js + Express + Rutas API estructuradas',
-      database: 'PostgreSQL / SQLite (db/schema.sql incluido)',
-      styling: 'Tailwind CSS v4 + Tokens CSS',
-      deployTargets: ['Vercel + Neon/Supabase', 'Railway', 'Render', 'Cloud Run'],
+      backend: 'Node.js + Express: /api/contact y /api/health',
+      database: 'PostgreSQL: db/schema.sql + DATABASE_URL',
+      styling: 'Tailwind CSS v4 + variables CSS',
+      deployTargets: ['Servidor Node + PostgreSQL (p. ej. Neon)'],
       includesBackend: true,
       includesDatabase: true,
       rationale: [
-        'Incluye esquema SQL normalizado para leads, usuarios y catálogo persistente.',
-        'Separa limpiamente capas de presentación, API de negocio y persistencia.',
-        'Preparado para autenticación real, pagos y escalado en producción.',
+        'Esquema SQL de partida para contactos, catálogo y (con autenticación) usuarios.',
+        'Conexión configurable con DATABASE_URL, sin secretos en el código.',
+        'Las rutas que leen y escriben en la base de datos hay que añadirlas: el esquema es el punto de partida, no una aplicación completa.',
       ],
       estimatedBuildTime: '~32 s',
       complexity: 'Avanzada',
@@ -592,30 +538,8 @@ export function computeStackRecommendation(
   answers: DiscoveryAnswers,
   locale: Locale = 'es'
 ): StackRecommendation {
-  const stacks = getAllStacks(locale);
-  const needsDatabase =
-    answers.databaseNeed === 'sql-relational' || answers.databaseNeed === 'nosql-realtime';
-  const needsFullBackend =
-    answers.architectureMode === 'full-backend' ||
-    answers.integrations.includes('auth') ||
-    answers.integrations.includes('payments');
-  const needsLightBackend =
-    answers.architectureMode === 'light-api' || answers.renderingStrategy === 'hybrid-ssr';
-
-  if (needsDatabase || (needsFullBackend && answers.databaseNeed !== 'none')) {
-    return stacks[3];
-  }
-  if (needsFullBackend || needsLightBackend) {
-    return stacks[2];
-  }
-  if (
-    answers.renderingStrategy === 'spa-dynamic' ||
-    answers.projectType === 'saas' ||
-    answers.projectType === 'ecommerce'
-  ) {
-    return stacks[1];
-  }
-  return stacks[0];
+  const id = recommendStackId(answers);
+  return getAllStacks(locale).find((s) => s.id === id)!;
 }
 
 export function getSectionsCatalog(locale: Locale): Omit<SectionConfig, 'enabled'>[] {

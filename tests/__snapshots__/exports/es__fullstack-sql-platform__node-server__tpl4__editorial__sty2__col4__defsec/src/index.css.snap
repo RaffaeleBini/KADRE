@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+:root {
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --color-bg: #F7F5F0;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #EFECE4;
+  --color-text: #191715;
+  --color-text-muted: #5B564E;
+  --color-accent: #8C2D2D;
+  --color-accent-text: #FFFFFF;
+  --color-border: #DDD7CC;
+  --radius-card: 10px;
+  --radius-btn: 8px;
+  --border-w: 1px;
+  --heading-tracking: -0.02em;
+  --space-section: 5rem;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}

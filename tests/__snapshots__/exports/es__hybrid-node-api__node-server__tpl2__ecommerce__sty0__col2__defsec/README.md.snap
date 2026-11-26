@@ -1,0 +1,46 @@
+# Taller Nord
+
+Instrumentos y mobiliario técnico
+
+## Arquitectura técnica seleccionada
+
+- **Stack**: React + servidor Express (API ligera)
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Node.js + Express: /api/contact y /api/health
+- **Base de datos**: Ninguna
+- **Plantilla**: Estudio y Arquitectura
+- **Estilo gráfico**: Industrial Técnico · Pizarra Profunda y Azul Precisión
+
+## Ejecución local
+
+```bash
+npm install
+npm run dev
+```
+
+## Exportar a GitHub paso a paso
+
+1. Crea un repositorio vacío llamado `taller-nord` en https://github.com/new (sin README ni .gitignore).
+2. Ejecuta los siguientes comandos dentro de esta carpeta:
+
+```bash
+git init
+git add .
+git commit -m "Versión inicial de Taller Nord"
+git branch -M main
+git remote add origin https://github.com/kadre-test/taller-nord.git
+git push -u origin main
+```
+
+También puedes ejecutar el script automatizado incluido:
+
+```bash
+chmod +x exportar-github.sh
+./exportar-github.sh
+```
+
+## Despliegue (node-server)
+
+1. En un hosting Node (Render, Railway…) crea un servicio web conectado a `kadre-test/taller-nord`.
+2. Comando de compilación: `npm install && npm run build` · Comando de arranque: `npm start`.
+3. El servidor escucha en el puerto de la variable `PORT` (la definen los proveedores).

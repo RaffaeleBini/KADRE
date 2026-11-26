@@ -75,6 +75,8 @@ export interface AppTranslations {
     hideAlternatives: string;
     showAlternatives: string;
     optimalTag: string;
+    plannedBadge: string;
+    incompatibleBadge: string;
     continueTemplatesBtn: string;
   };
   template: {
@@ -204,6 +206,7 @@ export interface AppTranslations {
       vercel: { label: string; note: string };
       netlify: { label: string; note: string };
       cloudflare: { label: string; note: string };
+      'node-server': { label: string; note: string };
     };
     packagingBtn: string;
     downloadZipBtn: (repo: string) => string;
@@ -235,6 +238,9 @@ export interface AppTranslations {
     step4Other3Build: string;
     step4Other3Out: string;
     step4Other3Db: string;
+    step4Node1: string;
+    step4Node2Build: string;
+    step4Node2Start: string;
     copy: string;
     copied: string;
     copyFile: string;
@@ -378,6 +384,8 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
       hideAlternatives: 'Ocultar otros stacks disponibles',
       showAlternatives: '¿Prefieres elegir otro stack manualmente?',
       optimalTag: 'Óptimo',
+      plannedBadge: 'Próximamente',
+      incompatibleBadge: 'No disponible',
       continueTemplatesBtn: 'Continuar a plantillas',
     },
     template: {
@@ -512,6 +520,7 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
         vercel: { label: 'Vercel', note: 'Despliegue instantáneo con vista previa' },
         netlify: { label: 'Netlify', note: 'CDN global y formularios integrados' },
         cloudflare: { label: 'Cloudflare Pages', note: 'Red Edge sin límite de ancho de banda' },
+        'node-server': { label: 'Servidor Node', note: 'Render, Railway u otro hosting Node' },
       },
       packagingBtn: 'Empaquetando proyecto...',
       downloadZipBtn: (repo) => `Descargar paquete ZIP (${repo})`,
@@ -547,6 +556,9 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
       step4Other3Build: '3. Comando de compilación:',
       step4Other3Out: 'Carpeta de salida:',
       step4Other3Db: ' Añade también la variable DATABASE_URL en la configuración de entorno.',
+      step4Node1: '1. En tu hosting Node (Render, Railway…) crea un servicio web conectado al repositorio',
+      step4Node2Build: '2. Comando de compilación:',
+      step4Node2Start: '· Comando de arranque:',
       copy: 'Copiar',
       copied: 'Copiado',
       copyFile: 'Copiar archivo',
@@ -689,6 +701,8 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
       hideAlternatives: 'Nascondi altri stack disponibili',
       showAlternatives: 'Preferisci scegliere un altro stack manualmente?',
       optimalTag: 'Ottimale',
+      plannedBadge: 'In arrivo',
+      incompatibleBadge: 'Non disponibile',
       continueTemplatesBtn: 'Continua ai modelli',
     },
     template: {
@@ -823,6 +837,7 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
         vercel: { label: 'Vercel', note: 'Deploy istantaneo con anteprima' },
         netlify: { label: 'Netlify', note: 'CDN globale e moduli integrati' },
         cloudflare: { label: 'Cloudflare Pages', note: 'Rete Edge senza limiti di banda' },
+        'node-server': { label: 'Server Node', note: 'Render, Railway o altro hosting Node' },
       },
       packagingBtn: 'Creazione pacchetto in corso...',
       downloadZipBtn: (repo) => `Scarica pacchetto ZIP (${repo})`,
@@ -858,6 +873,9 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
       step4Other3Build: '3. Comando di build:',
       step4Other3Out: 'Cartella di output:',
       step4Other3Db: ' Aggiungi anche la variabile DATABASE_URL nelle impostazioni di ambiente.',
+      step4Node1: '1. Sul tuo hosting Node (Render, Railway…) crea un servizio web collegato al repository',
+      step4Node2Build: '2. Comando di build:',
+      step4Node2Start: '· Comando di avvio:',
       copy: 'Copia',
       copied: 'Copiato',
       copyFile: 'Copia file',

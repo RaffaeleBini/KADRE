@@ -10,10 +10,10 @@
  *
  * Per ogni combinazione: genera i file → li scrive in una cartella di lavoro →
  * `tsc --noEmit` (tsconfig strict generato) → `vite build` → `bash -n` sullo script
- * di esportazione. `npm install` si esegue una sola volta per ogni package.json
+ * di esportazione → per gli stack con server, avvio reale con `npm start`. `npm install` si esegue una sola volta per ogni package.json
  * distinto: le cartelle in .cache/verify-exports/ si riusano tra un'esecuzione e l'altra.
  */
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -28,7 +28,7 @@ const KEEP = new Set(['node_modules', 'package-lock.json', 'package.json']);
 const full = process.env.VERIFY_FULL === '1';
 const filter = process.env.VERIFY_FILTER;
 
-type Step = 'install' | 'typecheck' | 'build' | 'script';
+type Step = 'install' | 'typecheck' | 'build' | 'script' | 'server';
 
 interface Result {
   id: string;
@@ -70,7 +70,58 @@ function cleanGenerated(dir: string) {
   }
 }
 
-function verify(combo: ExportCombo): Result {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * Prova di avvio per gli stack con server: `npm start` come farebbe un hosting
+ * Node, poi /api/health, la home page servita dalla build e /api/contact.
+ */
+async function smokeServer(dir: string, port: number): Promise<string | null> {
+  const child = spawn('npm', ['start'], {
+    cwd: dir,
+    env: { ...process.env, PORT: String(port) },
+    detached: true, // gruppo di processi proprio: si chiude anche il figlio di npm
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let log = '';
+  child.stdout?.on('data', (d) => (log += d));
+  child.stderr?.on('data', (d) => (log += d));
+  const base = `http://127.0.0.1:${port}`;
+  try {
+    let up = false;
+    for (let i = 0; i < 60 && !up; i++) {
+      await sleep(250);
+      up = await fetch(`${base}/api/health`).then((r) => r.ok, () => false);
+    }
+    if (!up) return `il server non risponde su /api/health\n${firstLines(log)}`;
+
+    const home = await fetch(`${base}/`);
+    const html = await home.text();
+    if (!home.ok || !html.includes('id="root"')) return `GET / → ${home.status}, la build non viene servita`;
+
+    const post = (body: object) =>
+      fetch(`${base}/api/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    const ok = await post({ name: 'Test', email: 'test@example.com', message: 'hola' });
+    if (ok.status !== 201) return `POST /api/contact valido → ${ok.status} (atteso 201)`;
+    const bad = await post({ message: 'senza nome' });
+    if (bad.status !== 400) return `POST /api/contact incompleto → ${bad.status} (atteso 400)`;
+    return null;
+  } finally {
+    try {
+      process.kill(-child.pid!, 'SIGTERM');
+    } catch {
+      // già terminato
+    }
+  }
+}
+
+let nextPort = 4600;
+
+async function verify(combo: ExportCombo): Promise<Result> {
   const t0 = Date.now();
   const files = generate(combo);
   const failures: Result['failures'] = [];
@@ -115,17 +166,22 @@ function verify(combo: ExportCombo): Result {
     if (!sh.ok) failures.push({ step: 'script', error: firstLines(sh.out) });
   }
 
+  if (files.some((f) => f.path === 'server/index.ts') && build.ok) {
+    const error = await smokeServer(dir, nextPort++);
+    if (error) failures.push({ step: 'server', error });
+  }
+
   return done();
 }
 
-function main() {
+async function main() {
   let combos = full ? fullCombos() : structuralCombos();
   if (filter) combos = combos.filter((c) => c.id.includes(filter));
   console.log(`Verifica di ${combos.length} combinazioni${full ? ' (--full)' : ''}${filter ? ` [filtro: ${filter}]` : ''}\n`);
 
   const results: Result[] = [];
   for (const [i, combo] of combos.entries()) {
-    const r = verify(combo);
+    const r = await verify(combo);
     results.push(r);
     const tag = r.ok ? 'OK  ' : `FAIL (${r.failures.map((f) => f.step).join('+')})`;
     console.log(`${String(i + 1).padStart(3)}/${combos.length}  ${tag}  ${combo.id}  ${(r.ms / 1000).toFixed(1)}s`);
@@ -136,7 +192,7 @@ function main() {
   fs.writeFileSync(REPORT, JSON.stringify(results, null, 2));
 
   console.log(`\nRisultato: ${results.length - failed.length}/${results.length} OK`);
-  const steps: Step[] = ['install', 'typecheck', 'build', 'script'];
+  const steps: Step[] = ['install', 'typecheck', 'build', 'script', 'server'];
   for (const step of steps) {
     const n = results.filter((r) => r.failures.some((f) => f.step === step)).length;
     if (n) console.log(`  ${step}: ${n} falliti`);
@@ -162,6 +218,6 @@ function main() {
 }
 
 // Gira dentro Vitest perché il generatore usa import.meta.glob (funzione di Vite).
-test('i siti esportati si installano, superano tsc e compilano', () => {
-  expect(main()).toEqual([]);
+test('i siti esportati si installano, superano tsc, compilano e (con server) partono', async () => {
+  expect(await main()).toEqual([]);
 });

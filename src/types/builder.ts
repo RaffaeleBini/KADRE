@@ -10,7 +10,7 @@ export type ProjectType =
 
 export type ArchitectureMode = 'frontend-only' | 'light-api' | 'full-backend';
 
-export type DatabaseNeed = 'none' | 'markdown-cms' | 'sql-relational' | 'nosql-realtime';
+export type DatabaseNeed = 'none' | 'markdown-cms' | 'sql-relational';
 
 export type RenderingStrategy = 'static-ssg' | 'spa-dynamic' | 'hybrid-ssr';
 
@@ -187,7 +187,7 @@ export interface SiteContent {
   footerNote: string;
 }
 
-export type DeployPlatform = 'github-pages' | 'vercel' | 'netlify' | 'cloudflare';
+export type DeployPlatform = 'github-pages' | 'vercel' | 'netlify' | 'cloudflare' | 'node-server';
 
 export interface GithubExportConfig {
   username: string;

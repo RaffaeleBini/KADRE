@@ -1,0 +1,47 @@
+# Italia Precisione Industriale
+
+Automazione e manifattura avanzata
+
+## Architettura tecnica selezionata
+
+- **Stack**: React + Express + schema PostgreSQL
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Node.js + Express: /api/contact e /api/health
+- **Database**: PostgreSQL: db/schema.sql + DATABASE_URL
+- **Modello**: Editoriale e Documentazione
+- **Stile grafico**: Architettonico Solido · Bianco Puro e Blu Ingegneria
+
+## Avvio in locale
+
+```bash
+npm install
+npm run dev
+```
+
+## Esportazione su GitHub passo dopo passo
+
+1. Crea un repository vuoto chiamato `italia-precisione-industriale` su https://github.com/new (senza README né .gitignore).
+2. Esegui questi comandi dentro la cartella del progetto:
+
+```bash
+git init
+git add .
+git commit -m "Versione iniziale di Italia Precisione Industriale"
+git branch -M main
+git remote add origin https://github.com/kadre-test/italia-precisione-industriale.git
+git push -u origin main
+```
+
+In alternativa puoi avviare lo script automatizzato incluso:
+
+```bash
+chmod +x esporta-github.sh
+./esporta-github.sh
+```
+
+## Pubblicazione (node-server)
+
+1. Su un hosting Node (Render, Railway…) crea un servizio web collegato a `kadre-test/italia-precisione-industriale`.
+2. Comando di build: `npm install && npm run build` · Comando di avvio: `npm start`.
+3. Il server ascolta sulla porta indicata dalla variabile `PORT` (la impostano i provider).
+4. Aggiungi la variabile `DATABASE_URL` con la stringa di connessione PostgreSQL (es. Neon) ed esegui `db/schema.sql` sul database.

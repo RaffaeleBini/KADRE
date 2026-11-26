@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, Cpu, Database, Globe, Server } from 'lucide-react';
 import { getAllStacks, getDiscoveryOptions } from '../data/presets';
+import { Availability, discoveryAvailability, PLANNED_STACKS, reasonText } from '../generator/matrix';
 import { Locale, TRANSLATIONS } from '../i18n/translations';
 import {
   DiscoveryAnswers,
@@ -16,6 +17,20 @@ interface DiscoveryStepProps {
   onUpdateAnswers: (next: DiscoveryAnswers) => void;
   onSelectManualStack: (stackId: string | null) => void;
   onNext: () => void;
+}
+
+/** Etichetta + motivo per le opzioni non disponibili (dalla matrice di compatibilità). */
+function AvailabilityNote({ availability, locale }: { availability: Availability; locale: Locale }) {
+  if (availability.status === 'available') return null;
+  const t = TRANSLATIONS[locale].discovery;
+  return (
+    <div className="flex items-start gap-2 pt-1 text-[11px] leading-relaxed text-[#4B5565] dark:text-[#9BA4B5]">
+      <span className="shrink-0 border border-[#9BA4B5] px-1.5 py-px font-mono text-[10px] uppercase tracking-wide dark:border-[#4B5565]">
+        {availability.status === 'planned' ? t.plannedBadge : t.incompatibleBadge}
+      </span>
+      <span>{reasonText(availability, locale)}</span>
+    </div>
+  );
 }
 
 export function DiscoveryStep({
@@ -137,15 +152,19 @@ export function DiscoveryStep({
               <div className="space-y-3">
                 {options.architectureMode.map((opt) => {
                   const selected = answers.architectureMode === opt.value;
+                  const availability = discoveryAvailability.architectureMode(opt.value, answers);
+                  const unavailable = availability.status !== 'available';
                   return (
                     <button
                       key={opt.value}
                       type="button"
+                      disabled={unavailable}
+                      aria-disabled={unavailable}
                       onClick={() => {
                         onSelectManualStack(null);
                         onUpdateAnswers({ ...answers, architectureMode: opt.value });
                       }}
-                      className={`w-full text-left p-4 border transition-colors cursor-pointer space-y-1.5 ${
+                      className={`w-full text-left p-4 border transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 space-y-1.5 ${
                         selected
                           ? 'border-[#9A7400] bg-[#FEFCE8] dark:border-[#F5C400] dark:bg-[#F5C400]/10'
                           : 'border-[#D0D5DF] bg-[#F8F9FB] hover:border-[#9BA4B5] dark:border-[#262B36] dark:bg-[#151820] dark:hover:border-[#4B5565]'
@@ -162,6 +181,7 @@ export function DiscoveryStep({
                       <p className="text-xs leading-relaxed text-[#4B5565] dark:text-[#9BA4B5]">
                         {opt.description}
                       </p>
+                      <AvailabilityNote availability={availability} locale={locale} />
                     </button>
                   );
                 })}
@@ -172,15 +192,19 @@ export function DiscoveryStep({
               <div className="grid gap-3 sm:grid-cols-2">
                 {options.databaseNeed.map((opt) => {
                   const selected = answers.databaseNeed === opt.value;
+                  const availability = discoveryAvailability.databaseNeed(opt.value, answers);
+                  const unavailable = availability.status !== 'available';
                   return (
                     <button
                       key={opt.value}
                       type="button"
+                      disabled={unavailable}
+                      aria-disabled={unavailable}
                       onClick={() => {
                         onSelectManualStack(null);
                         onUpdateAnswers({ ...answers, databaseNeed: opt.value });
                       }}
-                      className={`text-left p-4 border transition-colors cursor-pointer space-y-2 ${
+                      className={`text-left p-4 border transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 space-y-2 ${
                         selected
                           ? 'border-[#9A7400] bg-[#FEFCE8] dark:border-[#F5C400] dark:bg-[#F5C400]/10'
                           : 'border-[#D0D5DF] bg-[#F8F9FB] hover:border-[#9BA4B5] dark:border-[#262B36] dark:bg-[#151820] dark:hover:border-[#4B5565]'
@@ -200,6 +224,7 @@ export function DiscoveryStep({
                       <p className="font-mono text-[11px] text-[#9A7400] dark:text-[#F5C400]">
                         {opt.technicalHint}
                       </p>
+                      <AvailabilityNote availability={availability} locale={locale} />
                     </button>
                   );
                 })}
@@ -210,15 +235,19 @@ export function DiscoveryStep({
               <div className="space-y-3">
                 {options.renderingStrategy.map((opt) => {
                   const selected = answers.renderingStrategy === opt.value;
+                  const availability = discoveryAvailability.renderingStrategy(opt.value, answers);
+                  const unavailable = availability.status !== 'available';
                   return (
                     <button
                       key={opt.value}
                       type="button"
+                      disabled={unavailable}
+                      aria-disabled={unavailable}
                       onClick={() => {
                         onSelectManualStack(null);
                         onUpdateAnswers({ ...answers, renderingStrategy: opt.value });
                       }}
-                      className={`w-full text-left p-4 border transition-colors cursor-pointer space-y-1.5 ${
+                      className={`w-full text-left p-4 border transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 space-y-1.5 ${
                         selected
                           ? 'border-[#9A7400] bg-[#FEFCE8] dark:border-[#F5C400] dark:bg-[#F5C400]/10'
                           : 'border-[#D0D5DF] bg-[#F8F9FB] hover:border-[#9BA4B5] dark:border-[#262B36] dark:bg-[#151820] dark:hover:border-[#4B5565]'
@@ -235,6 +264,7 @@ export function DiscoveryStep({
                       <p className="text-xs leading-relaxed text-[#4B5565] dark:text-[#9BA4B5]">
                         {opt.description}
                       </p>
+                      <AvailabilityNote availability={availability} locale={locale} />
                     </button>
                   );
                 })}
@@ -245,12 +275,16 @@ export function DiscoveryStep({
               <div className="grid gap-3 sm:grid-cols-2">
                 {options.integrations.map((opt) => {
                   const selected = answers.integrations.includes(opt.value);
+                  const availability = discoveryAvailability.integration(opt.value, answers);
+                  const unavailable = availability.status !== 'available';
                   return (
                     <button
                       key={opt.value}
                       type="button"
+                      disabled={unavailable}
+                      aria-disabled={unavailable}
                       onClick={() => toggleIntegration(opt.value)}
-                      className={`text-left p-4 border transition-colors cursor-pointer space-y-2 ${
+                      className={`text-left p-4 border transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-60 space-y-2 ${
                         selected
                           ? 'border-[#9A7400] bg-[#FEFCE8] dark:border-[#F5C400] dark:bg-[#F5C400]/10'
                           : 'border-[#D0D5DF] bg-[#F8F9FB] hover:border-[#9BA4B5] dark:border-[#262B36] dark:bg-[#151820] dark:hover:border-[#4B5565]'
@@ -276,6 +310,7 @@ export function DiscoveryStep({
                       <p className="font-mono text-[11px] text-[#9A7400] dark:text-[#F5C400]">
                         {opt.technicalHint}
                       </p>
+                      <AvailabilityNote availability={availability} locale={locale} />
                     </button>
                   );
                 })}
@@ -428,6 +463,21 @@ export function DiscoveryStep({
                       </button>
                     );
                   })}
+                  {PLANNED_STACKS.map((planned) => (
+                    <div
+                      key={planned.id}
+                      aria-disabled="true"
+                      className="w-full px-3 py-2.5 border border-dashed border-[#D0D5DF] text-xs text-[#4B5565] opacity-70 space-y-1 dark:border-[#262B36] dark:text-[#9BA4B5]"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-medium">{planned.name[locale]}</span>
+                        <span className="font-mono text-[10px] uppercase tracking-wide shrink-0">
+                          {t.plannedBadge}
+                        </span>
+                      </div>
+                      <p className="text-[11px] leading-relaxed">{planned.reason[locale]}</p>
+                    </div>
+                  ))}
                 </div>
               ) : null}
 

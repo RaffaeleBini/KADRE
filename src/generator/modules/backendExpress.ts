@@ -7,11 +7,12 @@ export const backendExpress: GeneratorModule = {
   dependencies: {
     express: '^4.21.2',
     dotenv: '^17.2.3',
+    // `npm start` esegue il server con tsx: deve esserci anche in produzione
+    tsx: '^4.19.3',
   },
   devDependencies: {
     '@types/express': '^4.17.21',
     '@types/node': '^22.14.0',
-    tsx: '^4.19.3',
   },
   scripts: {
     dev: 'tsx server/index.ts',
