@@ -1,0 +1,17 @@
+import type { APIRoute } from 'astro';
+
+// Se ejecuta en el servidor en cada petición (no se genera al compilar).
+export const prerender = false;
+
+export const POST: APIRoute = async ({ request }) => {
+  const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
+  const name = typeof body?.name === 'string' ? body.name.trim() : '';
+  const email = typeof body?.email === 'string' ? body.email.trim() : '';
+  if (!name || !email) {
+    return Response.json({ error: 'Nombre y correo son obligatorios.' }, { status: 400 });
+  }
+  const message = typeof body?.message === 'string' ? body.message : '';
+  // Aquí se conecta el envío real (email, CRM…). Por ahora el mensaje queda en los logs.
+  console.info('[Contacto recibido]', { name, email, length: message.length });
+  return Response.json({ received: true }, { status: 201 });
+};

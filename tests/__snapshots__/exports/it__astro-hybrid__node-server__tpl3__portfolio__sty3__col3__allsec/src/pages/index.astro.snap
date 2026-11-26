@@ -1,0 +1,28 @@
+---
+import '../index.css';
+import config from '../data/siteConfig.json';
+import content from '../data/siteContent.json';
+import { Site } from '../site/Site';
+import type { SiteConfig, SiteContent } from '../site/types';
+
+// Il contenuto viene verificato contro SiteContent dal compilatore (npm run check).
+const siteContent: SiteContent = content;
+const siteConfig = config as SiteConfig;
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Studio Bini & Associati — Architettura contemporanea e spazi culturali</title>
+    <meta name="description" content="Progettiamo padiglioni culturali, studi creativi e residenze sostenibili con approccio costruttivo onesto e rigore strutturale." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- HTML generato in build; client:load rende interattivi FAQ e modulo. -->
+    <Site client:load content={siteContent} config={siteConfig} />
+  </body>
+</html>

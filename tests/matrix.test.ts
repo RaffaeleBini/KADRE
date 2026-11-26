@@ -56,9 +56,14 @@ describe('matrice di compatibilità', () => {
     }
   });
 
-  it('nessuna piattaforma offerta a uno stack con server serve solo file statici', () => {
+  it('gli stack con server non finiscono mai su un hosting solo statico', () => {
     for (const { stackId, platform } of offeredStackPlatforms()) {
-      if (STACK_PROFILES[stackId].backend) expect(platform).toBe('node-server');
+      const p = STACK_PROFILES[stackId];
+      if (p.backend) expect(platform).not.toBe('github-pages');
+      // Express è un processo sempre acceso: solo un hosting Node può eseguirlo
+      if (p.backend && p.skeleton === 'vite-react') expect(platform).toBe('node-server');
+      // node-server ha senso solo se c'è qualcosa da eseguire
+      if (platform === 'node-server') expect(p.backend).toBe(true);
     }
   });
 

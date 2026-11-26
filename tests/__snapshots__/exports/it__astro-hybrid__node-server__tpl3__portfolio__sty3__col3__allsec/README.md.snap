@@ -1,0 +1,46 @@
+# Studio Bini & Associati
+
+Architettura contemporanea e spazi culturali
+
+## Architettura tecnica selezionata
+
+- **Stack**: Astro ibrido (pagina statica + endpoint server)
+- **Frontend**: Astro 7 + React 19 (componenti idratati)
+- **Backend**: Endpoint Astro: /api/contact e /api/health
+- **Database**: Nessuno
+- **Modello**: Catalogo Tecnico e Commercio
+- **Stile grafico**: Architettonico Solido · Carta Tecnica e Grafite
+
+## Avvio in locale
+
+```bash
+npm install
+npm run dev
+```
+
+## Esportazione su GitHub passo dopo passo
+
+1. Crea un repository vuoto chiamato `studio-bini-associati` su https://github.com/new (senza README né .gitignore).
+2. Esegui questi comandi dentro la cartella del progetto:
+
+```bash
+git init
+git add .
+git commit -m "Versione iniziale di Studio Bini & Associati"
+git branch -M main
+git remote add origin https://github.com/kadre-test/studio-bini-associati.git
+git push -u origin main
+```
+
+In alternativa puoi avviare lo script automatizzato incluso:
+
+```bash
+chmod +x esporta-github.sh
+./esporta-github.sh
+```
+
+## Pubblicazione (node-server)
+
+1. Su un hosting Node (Render, Railway…) crea un servizio web collegato a `kadre-test/studio-bini-associati`.
+2. Comando di build: `npm install && npm run build` · Comando di avvio: `npm start`.
+3. Il server ascolta sulla porta indicata dalla variabile `PORT` (la impostano i provider).

@@ -58,6 +58,14 @@ export interface Skeleton {
 export interface AssembledProject {
   packageJson: string;
   tsInclude: string[];
+  /** adapter Astro dichiarato da un innesto (solo siti Astro con server) */
+  astroAdapter?: AstroAdapter;
+}
+
+/** Come registrare un adapter in astro.config.mjs. */
+export interface AstroAdapter {
+  importLine: string;
+  call: string;
 }
 
 /**
@@ -72,6 +80,10 @@ export interface GeneratorModule {
   /** se presente, sostituisce gli script dello scheletro */
   scripts?: Record<string, string>;
   tsInclude?: string[];
+  /** adapter Astro portato da questo innesto */
+  astroAdapter?: AstroAdapter;
+  /** voci aggiunte a .gitignore (es. cartelle generate dall'adapter) */
+  gitignore?: string[];
   /** righe aggiunte in coda a .env.example */
   envExample?(ctx: GenContext): string;
   files?(ctx: GenContext): GeneratedFile[];

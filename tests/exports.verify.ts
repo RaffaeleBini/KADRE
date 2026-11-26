@@ -97,7 +97,9 @@ async function smokeServer(dir: string, port: number): Promise<string | null> {
 
     const home = await fetch(`${base}/`);
     const html = await home.text();
-    if (!home.ok || !html.includes('id="root"')) return `GET / → ${home.status}, la build non viene servita`;
+    // SPA: <div id="root"> vuoto; Astro: HTML prerenderizzato con <main id="top">
+    if (!home.ok || !(html.includes('id="root"') || html.includes('id="top"')))
+      return `GET / → ${home.status}, la pagina non viene servita`;
 
     const post = (body: object) =>
       fetch(`${base}/api/contact`, {
@@ -170,7 +172,8 @@ async function verify(combo: ExportCombo): Promise<Result> {
     if (!sh.ok) failures.push({ step: 'script', error: firstLines(sh.out) });
   }
 
-  if (files.some((f) => f.path === 'server/index.ts') && build.ok) {
+  // prova di avvio per ogni progetto avviabile con `npm start` (Express o Astro + adapter Node)
+  if (scripts.start && build.ok) {
     const error = await smokeServer(dir, nextPort++);
     if (error) failures.push({ step: 'server', error });
   }

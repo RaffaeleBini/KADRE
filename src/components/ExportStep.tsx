@@ -572,11 +572,21 @@ npm run dev`;
                       </code>{' '}
                       ({t.step4Other2Branch} <code className="font-mono">{branch}</code>).
                     </p>
-                    <p>
-                      {t.step4Other3Build} <code className="font-mono">npm run build</code> ·{' '}
-                      {t.step4Other3Out} <code className="font-mono">dist</code>.
-                      {stack.includesDatabase ? t.step4Other3Db : ''}
-                    </p>
+                    {stack.includesBackend && githubConfig.deployPlatform === 'cloudflare' ? (
+                      // Astro ibrido su Cloudflare: l'adapter produce un Worker, pubblicato con wrangler
+                      <p>
+                        {t.step4WorkersBuild} <code className="font-mono">npm run build</code> ·{' '}
+                        {t.step4WorkersDeploy} <code className="font-mono">npx wrangler deploy</code>.
+                      </p>
+                    ) : stack.includesBackend ? (
+                      <p>{t.step4AstroAuto}</p>
+                    ) : (
+                      <p>
+                        {t.step4Other3Build} <code className="font-mono">npm run build</code> ·{' '}
+                        {t.step4Other3Out} <code className="font-mono">dist</code>.
+                        {stack.includesDatabase ? t.step4Other3Db : ''}
+                      </p>
+                    )}
                   </>
                 )}
               </div>

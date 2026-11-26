@@ -8,6 +8,13 @@
 import { GeneratedFile } from '../types/builder';
 import { buildContext } from './context';
 import { backendExpress } from './modules/backendExpress';
+import {
+  astroAdapterCloudflare,
+  astroAdapterNetlify,
+  astroAdapterNode,
+  astroAdapterVercel,
+  astroEndpoints,
+} from './modules/astroServer';
 import { databasePostgres } from './modules/databasePostgres';
 import { deployWorkflowFile } from './project/deployWorkflow';
 import { envExampleFile } from './project/envExample';
@@ -25,7 +32,15 @@ const SKELETONS: Record<SkeletonId, Skeleton> = {
 };
 
 /** Innesti registrati, nell'ordine in cui contribuiscono a dipendenze e file. */
-export const MODULES: GeneratorModule[] = [backendExpress, databasePostgres];
+export const MODULES: GeneratorModule[] = [
+  backendExpress,
+  databasePostgres,
+  astroEndpoints,
+  astroAdapterVercel,
+  astroAdapterNetlify,
+  astroAdapterCloudflare,
+  astroAdapterNode,
+];
 
 function assemblePackageJson(ctx: GenContext, skeleton: Skeleton, modules: GeneratorModule[]): string {
   const dependencies = { ...skeleton.dependencies };
@@ -59,13 +74,14 @@ export function generateRepositoryFiles(input: CodeGenerationInput): GeneratedFi
   const assembled = {
     packageJson: assemblePackageJson(ctx, skeleton, modules),
     tsInclude: [...skeleton.tsInclude, ...modules.flatMap((m) => m.tsInclude ?? [])],
+    astroAdapter: modules.find((m) => m.astroAdapter)?.astroAdapter,
   };
 
   return [
     ...skeleton.files(ctx, assembled),
     ...modules.flatMap((m) => m.files?.(ctx) ?? []),
     deployWorkflowFile(ctx),
-    gitignoreFile(ctx),
+    gitignoreFile(ctx, modules),
     envExampleFile(ctx, modules),
     exportScriptFile(ctx),
     readmeFile(ctx),

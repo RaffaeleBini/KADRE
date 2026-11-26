@@ -3,6 +3,8 @@ import { GenContext } from '../types';
 
 export function readmeFile(ctx: GenContext): GeneratedFile {
   const { isIt, content, stack, template, graphicStyle, colorPattern, repoSlug, branch, ghUser, scriptFilename, github } = ctx;
+  // Astro con server: l'adapter decide il formato; Vercel/Netlify riconoscono Astro, Cloudflare usa un Worker
+  const astroServer = ctx.skeleton === 'astro' && ctx.hasBackend;
   return {
       path: 'README.md',
       language: 'markdown',
@@ -58,6 +60,10 @@ ${
     ? `1. Su un hosting Node (Render, Railway…) crea un servizio web collegato a \`${ghUser}/${repoSlug}\`.\n2. Comando di build: \`npm install && npm run build\` · Comando di avvio: \`npm start\`.\n3. Il server ascolta sulla porta indicata dalla variabile \`PORT\` (la impostano i provider).${stack.includesDatabase ? '\n4. Aggiungi la variabile \`DATABASE_URL\` con la stringa di connessione PostgreSQL (es. Neon) ed esegui \`db/schema.sql\` sul database.' : ''}`
     : github.deployPlatform === 'github-pages'
     ? `1. Apri il repository su GitHub → **Settings** → **Pages**.\n2. In **Build and deployment / Source**, seleziona **GitHub Actions**.\n3. Il workflow \`.github/workflows/deploy.yml\` pubblicherà automaticamente il sito su \`https://${ghUser}.github.io/${repoSlug}/\`.`
+    : astroServer && github.deployPlatform === 'cloudflare'
+    ? `1. Su Cloudflare apri **Workers & Pages** → **Create** → **Import a repository** e scegli \`${ghUser}/${repoSlug}\`.\n2. Comando di build: \`npm run build\` · Comando di deploy: \`npx wrangler deploy\`.\n3. In alternativa, dal tuo computer: \`npm run deploy\` (richiede \`npx wrangler login\`).`
+    : astroServer
+    ? `1. Accedi al tuo account **${github.deployPlatform.toUpperCase()}** e scegli **Import Git Repository**.\n2. Seleziona \`${ghUser}/${repoSlug}\`: Astro viene riconosciuto in automatico (build \`npm run build\`), e l’adapter pubblica la pagina e l’endpoint \`/api/contact\`.`
     : `1. Accedi al tuo account **${github.deployPlatform.toUpperCase()}** e scegli **Import Git Repository**.\n2. Seleziona \`${ghUser}/${repoSlug}\`.\n3. Comando di build: \`npm run build\` · Cartella di output: \`dist\`.`
 }
 `
@@ -109,6 +115,10 @@ ${
     ? `1. En un hosting Node (Render, Railway…) crea un servicio web conectado a \`${ghUser}/${repoSlug}\`.\n2. Comando de compilación: \`npm install && npm run build\` · Comando de arranque: \`npm start\`.\n3. El servidor escucha en el puerto de la variable \`PORT\` (la definen los proveedores).${stack.includesDatabase ? '\n4. Añade la variable \`DATABASE_URL\` con la cadena de conexión PostgreSQL (p. ej. Neon) y ejecuta \`db/schema.sql\` en la base de datos.' : ''}`
     : github.deployPlatform === 'github-pages'
     ? `1. Abre tu repositorio en GitHub → **Settings** → **Pages**.\n2. En **Build and deployment / Source**, selecciona **GitHub Actions**.\n3. El flujo \`.github/workflows/deploy.yml\` publicará automáticamente tu web en \`https://${ghUser}.github.io/${repoSlug}/\`.`
+    : astroServer && github.deployPlatform === 'cloudflare'
+    ? `1. En Cloudflare abre **Workers & Pages** → **Create** → **Import a repository** y elige \`${ghUser}/${repoSlug}\`.\n2. Comando de compilación: \`npm run build\` · Comando de despliegue: \`npx wrangler deploy\`.\n3. También desde tu equipo: \`npm run deploy\` (requiere \`npx wrangler login\`).`
+    : astroServer
+    ? `1. Accede a tu cuenta de **${github.deployPlatform.toUpperCase()}** y elige **Import Git Repository**.\n2. Selecciona \`${ghUser}/${repoSlug}\`: Astro se detecta automáticamente (compilación \`npm run build\`) y el adaptador publica la página y el endpoint \`/api/contact\`.`
     : `1. Accede a tu cuenta de **${github.deployPlatform.toUpperCase()}** y elige **Import Git Repository**.\n2. Selecciona \`${ghUser}/${repoSlug}\`.\n3. Comando de compilación: \`npm run build\` · Directorio de salida: \`dist\`.`
 }
 `,

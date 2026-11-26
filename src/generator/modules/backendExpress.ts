@@ -3,7 +3,7 @@ import { GeneratorModule } from '../types';
 /** Server Express con /api/contact e servizio della build in produzione. */
 export const backendExpress: GeneratorModule = {
   id: 'backend-express',
-  enabled: (ctx) => ctx.hasBackend,
+  enabled: (ctx) => ctx.hasBackend && ctx.skeleton === 'vite-react',
   dependencies: {
     express: '^4.21.2',
     dotenv: '^17.2.3',

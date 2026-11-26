@@ -43,11 +43,16 @@ function astroFiles(ctx: GenContext, assembled: AssembledProject): GeneratedFile
     ? `\n  site: 'https://${ghUser}.github.io',\n  base: '/${repoSlug}',`
     : '';
 
+  // Con server: l'adapter della piattaforma esegue gli endpoint con prerender = false
+  const adapter = assembled.astroAdapter;
+  const adapterImport = adapter ? `\n${adapter.importLine}` : '';
+  const adapterLine = adapter ? `\n  adapter: ${adapter.call},` : '';
+
   const astroConfig = `import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
-import tailwindcss from '@tailwindcss/vite';
+import tailwindcss from '@tailwindcss/vite';${adapterImport}
 
-export default defineConfig({${siteAndBase}
+export default defineConfig({${siteAndBase}${adapterLine}
   integrations: [react()],
   vite: { plugins: [tailwindcss()] },
 });
