@@ -6,7 +6,7 @@ import { Hero } from './sections/Hero';
 import { Metrics } from './sections/Metrics';
 import { Pricing } from './sections/Pricing';
 import { Testimonials } from './sections/Testimonials';
-import { SectionType, SiteConfig, SiteContent } from './types';
+import type { SectionType, SiteConfig, SiteContent } from './types';
 
 /**
  * Sito a una pagina. Il layout risponde alla larghezza di questo contenitore

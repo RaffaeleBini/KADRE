@@ -80,7 +80,7 @@ export const DEFAULT_DISCOVERY_ANSWERS: DiscoveryAnswers = {
   projectType: 'landing',
   architectureMode: 'frontend-only',
   databaseNeed: 'none',
-  renderingStrategy: 'spa-dynamic',
+  renderingStrategy: 'static-ssg',
   integrations: [],
 };
 
@@ -423,6 +423,27 @@ export function getAllStacks(locale: Locale): StackRecommendation[] {
         complexity: 'Bassa',
       },
       {
+        id: 'astro-static',
+        name: 'Astro + React + Tailwind (statico SSG)',
+        category: 'Sito statico con HTML generato in build',
+        summary:
+          'La pagina viene scritta come HTML completo durante la build (migliore SEO e primo caricamento); React aggiunge solo l’interattività di FAQ e modulo. Si pubblica su GitHub Pages, Vercel, Netlify o Cloudflare Pages.',
+        frontend: 'Astro 7 + React 19 (componenti idratati)',
+        backend: 'Nessuno',
+        database: 'Contenuti in src/data/siteContent.json',
+        styling: 'Tailwind CSS v4 + variabili CSS',
+        deployTargets: ['GitHub Pages', 'Vercel', 'Netlify', 'Cloudflare Pages'],
+        includesBackend: false,
+        includesDatabase: false,
+        rationale: [
+          'L’HTML arriva completo: motori di ricerca e anteprime social leggono i contenuti senza eseguire JavaScript.',
+          'Gli stessi componenti dell’anteprima di KADRE: ciò che vedi è ciò che pubblichi.',
+          'Nessun server: file statici in dist/, con il workflow per GitHub Pages incluso.',
+        ],
+        estimatedBuildTime: '~15 s',
+        complexity: 'Bassa',
+      },
+      {
         id: 'hybrid-node-api',
         name: 'React + server Express (API leggera)',
         category: 'Frontend + server Node.js',
@@ -487,6 +508,27 @@ export function getAllStacks(locale: Locale): StackRecommendation[] {
         'Para GitHub Pages incluye el flujo que publica con cada push.',
       ],
       estimatedBuildTime: '~12 s',
+      complexity: 'Baja',
+    },
+    {
+      id: 'astro-static',
+      name: 'Astro + React + Tailwind (estático SSG)',
+      category: 'Sitio estático con HTML generado al compilar',
+      summary:
+        'La página se escribe como HTML completo durante la compilación (mejor SEO y primera carga); React solo añade la interactividad de las FAQ y el formulario. Se publica en GitHub Pages, Vercel, Netlify o Cloudflare Pages.',
+      frontend: 'Astro 7 + React 19 (componentes hidratados)',
+      backend: 'Ninguno',
+      database: 'Contenidos en src/data/siteContent.json',
+      styling: 'Tailwind CSS v4 + variables CSS',
+      deployTargets: ['GitHub Pages', 'Vercel', 'Netlify', 'Cloudflare Pages'],
+      includesBackend: false,
+      includesDatabase: false,
+      rationale: [
+        'El HTML llega completo: buscadores y vistas previas sociales leen el contenido sin ejecutar JavaScript.',
+        'Los mismos componentes que la vista previa de KADRE: lo que ves es lo que publicas.',
+        'Sin servidor: archivos estáticos en dist/, con el flujo de GitHub Pages incluido.',
+      ],
+      estimatedBuildTime: '~15 s',
       complexity: 'Baja',
     },
     {

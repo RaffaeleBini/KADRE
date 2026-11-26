@@ -34,23 +34,32 @@ export function reasonText(a: Availability, locale: Locale): string | null {
 
 // ── Stack realmente generati ────────────────────────────────────────────────
 
-export type StackId = 'static-vite-react' | 'hybrid-node-api' | 'fullstack-sql-platform';
+export type StackId = 'static-vite-react' | 'hybrid-node-api' | 'fullstack-sql-platform' | 'astro-static';
+
+export type SkeletonId = 'vite-react' | 'astro';
 
 interface StackProfile {
+  skeleton: SkeletonId;
+  rendering: RenderingStrategy;
   backend: boolean;
   database: boolean;
   platforms: DeployPlatform[];
 }
 
+const STATIC_HOSTS: DeployPlatform[] = ['github-pages', 'vercel', 'netlify', 'cloudflare'];
+
+// L'ordine conta per i test: le combinazioni verificate seguono quest'ordine
+// (aggiungere i nuovi stack in fondo lascia stabili gli snapshot esistenti).
 export const STACK_PROFILES: Record<StackId, StackProfile> = {
-  'static-vite-react': {
-    backend: false,
-    database: false,
-    platforms: ['github-pages', 'vercel', 'netlify', 'cloudflare'],
-  },
-  'hybrid-node-api': { backend: true, database: false, platforms: ['node-server'] },
-  'fullstack-sql-platform': { backend: true, database: true, platforms: ['node-server'] },
+  'static-vite-react': { skeleton: 'vite-react', rendering: 'spa-dynamic', backend: false, database: false, platforms: STATIC_HOSTS },
+  'hybrid-node-api': { skeleton: 'vite-react', rendering: 'spa-dynamic', backend: true, database: false, platforms: ['node-server'] },
+  'fullstack-sql-platform': { skeleton: 'vite-react', rendering: 'spa-dynamic', backend: true, database: true, platforms: ['node-server'] },
+  'astro-static': { skeleton: 'astro', rendering: 'static-ssg', backend: false, database: false, platforms: STATIC_HOSTS },
 };
+
+export function skeletonFor(stackId: string): SkeletonId {
+  return STACK_PROFILES[stackId as StackId]?.skeleton ?? 'vite-react';
+}
 
 export const ALL_PLATFORMS: DeployPlatform[] = [
   'github-pages',
@@ -63,14 +72,6 @@ export const ALL_PLATFORMS: DeployPlatform[] = [
 /** Stack previsti (Fase 5), mostrati come "in arrivo" nell'elenco delle alternative. */
 export const PLANNED_STACKS: { id: string; name: Msg; reason: Msg }[] = [
   {
-    id: 'astro-static',
-    name: { es: 'Astro (estático SSG real)', it: 'Astro (statico SSG reale)' },
-    reason: {
-      es: 'HTML generado en la compilación, ideal para SEO.',
-      it: 'HTML generato in compilazione, ideale per la SEO.',
-    },
-  },
-  {
     id: 'astro-hybrid',
     name: { es: 'Astro híbrido (páginas + endpoints de servidor)', it: 'Astro ibrido (pagine + endpoint server)' },
     reason: {
@@ -82,15 +83,23 @@ export const PLANNED_STACKS: { id: string; name: Msg; reason: Msg }[] = [
 
 // ── Opzioni del passo Discovery ─────────────────────────────────────────────
 
-const ASTRO_SOON: Msg = {
-  es: 'Llegará con Astro. Hoy KADRE genera una SPA (React + Vite).',
-  it: 'Arriverà con Astro. Oggi KADRE genera una SPA (React + Vite).',
+const HYBRID_SOON: Msg = {
+  es: 'Llegará con Astro híbrido (páginas + endpoints de servidor).',
+  it: 'Arriverà con Astro ibrido (pagine + endpoint server).',
+};
+
+const SSG_NEEDS_STATIC: Availability = {
+  status: 'incompatible',
+  reason: {
+    es: 'Con servidor, hoy KADRE genera una SPA con Express. La versión estática con servidor llegará con Astro híbrido.',
+    it: 'Con server, oggi KADRE genera una SPA con Express. La versione statica con server arriverà con Astro ibrido.',
+  },
 };
 
 const RENDERING: Record<RenderingStrategy, Availability> = {
   'spa-dynamic': AVAILABLE,
-  'static-ssg': { status: 'planned', reason: ASTRO_SOON },
-  'hybrid-ssr': { status: 'planned', reason: ASTRO_SOON },
+  'static-ssg': AVAILABLE,
+  'hybrid-ssr': { status: 'planned', reason: HYBRID_SOON },
 };
 
 const DATABASE: Record<DatabaseNeed, Availability> = {
@@ -152,7 +161,11 @@ export const discoveryAvailability = {
     if (v === 'sql-relational' && answers?.architectureMode === 'frontend-only') return SQL_NEEDS_SERVER;
     return AVAILABLE;
   },
-  renderingStrategy: (v: RenderingStrategy, _answers?: DiscoveryAnswers) => RENDERING[v],
+  renderingStrategy: (v: RenderingStrategy, answers?: DiscoveryAnswers) => {
+    if (RENDERING[v].status !== 'available') return RENDERING[v];
+    if (v === 'static-ssg' && answers && answers.architectureMode !== 'frontend-only') return SSG_NEEDS_STATIC;
+    return AVAILABLE;
+  },
   integration: (v: IntegrationOption, _answers?: DiscoveryAnswers) => INTEGRATIONS[v],
 };
 
@@ -190,6 +203,7 @@ export function recommendStackId(answers: DiscoveryAnswers): StackId {
   const a = normalizeAnswers(answers);
   if (a.databaseNeed === 'sql-relational') return 'fullstack-sql-platform';
   if (a.architectureMode !== 'frontend-only') return 'hybrid-node-api';
+  if (a.renderingStrategy === 'static-ssg') return 'astro-static';
   return 'static-vite-react';
 }
 
@@ -205,7 +219,11 @@ export function normalizeAnswers(answers: DiscoveryAnswers): DiscoveryAnswers {
   const withArch = { ...answers, architectureMode };
   return {
     ...withArch,
-    renderingStrategy: ok(RENDERING[answers.renderingStrategy]) ? answers.renderingStrategy : 'spa-dynamic',
+    renderingStrategy:
+      answers.renderingStrategy in RENDERING &&
+      ok(discoveryAvailability.renderingStrategy(answers.renderingStrategy, withArch))
+        ? answers.renderingStrategy
+        : 'spa-dynamic',
     databaseNeed:
       answers.databaseNeed in DATABASE && ok(discoveryAvailability.databaseNeed(answers.databaseNeed, withArch))
         ? answers.databaseNeed

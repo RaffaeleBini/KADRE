@@ -1,5 +1,5 @@
 import { SiteImage } from '../SiteImage';
-import { SiteContent } from '../types';
+import type { SiteContent } from '../types';
 import { cardStyle, SectionHeading } from './SectionHeading';
 
 export function Catalog({ content }: { content: SiteContent }) {

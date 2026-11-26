@@ -1,4 +1,5 @@
 import { Locale } from '../i18n/translations';
+import type { SkeletonId } from './matrix';
 import {
   ColorPatternPreset,
   DiscoveryAnswers,
@@ -35,11 +36,13 @@ export interface GenContext extends CodeGenerationInput {
   exportedContent: SiteContent;
   hasBackend: boolean;
   hasDatabase: boolean;
+  /** scheletro scelto dalla matrice in base allo stack */
+  skeleton: SkeletonId;
 }
 
 /**
  * Uno "scheletro" è la base del progetto generato (framework + struttura).
- * Oggi esiste solo vite-react; Astro arriverà in Fase 5.
+ * Oggi: vite-react (SPA) e astro (statico SSG), scelti dalla matrice.
  */
 export interface Skeleton {
   id: string;

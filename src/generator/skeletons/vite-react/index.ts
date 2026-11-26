@@ -1,6 +1,6 @@
 import { GeneratedFile } from '../../../types/builder';
 import { AssembledProject, GenContext, Skeleton } from '../../types';
-import { buildSiteConfig, siteCssVars } from './siteConfig';
+import { indexCssFile, pageHead, siteComponentFiles, siteDataFiles } from '../shared/siteFiles';
 
 /** Scheletro React + Vite + Tailwind: SPA a una pagina con sezioni. */
 export const viteReactSkeleton: Skeleton = {
@@ -28,19 +28,19 @@ export const viteReactSkeleton: Skeleton = {
 };
 
 function viteReactFiles(ctx: GenContext, assembled: AssembledProject): GeneratedFile[] {
-  const { isIt, locale, content, graphicStyle, colorPattern, github, stack, repoSlug, exportedContent, template, sections } = ctx;
-  const packageJson = assembled.packageJson;
+  const { isIt, locale, github, stack, repoSlug } = ctx;
+  const head = pageHead(ctx);
 
   const indexHtml = `<!doctype html>
 <html lang="${locale}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${content.brandName} — ${content.tagline}</title>
-    <meta name="description" content="${content.heroSubheadline.replace(/"/g, '&quot;')}" />
+    <title>${head.title}</title>
+    <meta name="description" content="${head.description}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=${graphicStyle.googleFontsQuery}&display=swap" rel="stylesheet" />
+    <link href="${head.fontsHref}" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>
@@ -80,25 +80,6 @@ export default defineConfig({
     null,
     2
   );
-
-  const cssVars = Object.entries(siteCssVars(graphicStyle, colorPattern))
-    .map(([name, value]) => `  ${name}: ${value};`)
-    .join('\n');
-
-  const indexCss = `@import "tailwindcss";
-
-:root {
-${cssVars}
-}
-
-html {
-  scroll-behavior: smooth;
-  background-color: var(--color-bg);
-  color: var(--color-text);
-}
-`;
-
-  const siteConfig = buildSiteConfig({ locale, template, sections, hasBackendApi: ctx.hasBackend });
 
   const appTsx = `import config from './data/siteConfig.json';
 import content from './data/siteContent.json';
@@ -142,7 +123,7 @@ createRoot(document.getElementById('root')!).render(
       description: isIt
         ? 'Dipendenze e script configurati per lo stack scelto.'
         : 'Dependencias y scripts configurados para el stack elegido.',
-      content: packageJson,
+      content: assembled.packageJson,
     },
     {
       path: 'vite.config.ts',
@@ -164,30 +145,8 @@ createRoot(document.getElementById('root')!).render(
       description: isIt ? 'Punto di ingresso React.' : 'Punto de entrada React.',
       content: mainTsx,
     },
-    {
-      path: 'src/index.css',
-      language: 'css',
-      description: isIt
-        ? 'Token di colore, tipografia e geometria dello stile scelto.'
-        : 'Tokens de color, tipografía y geometría del estilo gráfico elegido.',
-      content: indexCss,
-    },
-    {
-      path: 'src/data/siteContent.json',
-      language: 'json',
-      description: isIt
-        ? 'Contenuti disaccoppiati modificabili senza toccare i componenti.'
-        : 'Contenidos desacoplados editables sin modificar componentes.',
-      content: JSON.stringify(exportedContent, null, 2),
-    },
-    {
-      path: 'src/data/siteConfig.json',
-      language: 'json',
-      description: isIt
-        ? 'Struttura del sito: ordine delle sezioni, layout e testi dell’interfaccia.'
-        : 'Estructura del sitio: orden de secciones, diseño y textos de la interfaz.',
-      content: JSON.stringify(siteConfig, null, 2),
-    },
+    indexCssFile(ctx),
+    ...siteDataFiles(ctx),
     {
       path: 'src/App.tsx',
       language: 'typescript',
@@ -196,32 +155,6 @@ createRoot(document.getElementById('root')!).render(
         : 'Punto de unión entre los datos JSON y los componentes del sitio.',
       content: appTsx,
     },
-    ...siteComponentFiles(isIt),
+    ...siteComponentFiles(ctx),
   ];
-}
-
-/**
- * Componenti del sito: file .tsx veri in src/site-template/vite-react/site/,
- * copiati tali e quali. Sono gli stessi che l'anteprima di KADRE renderizza.
- */
-const SITE_SOURCES = import.meta.glob('../../../site-template/vite-react/site/**/*.{ts,tsx}', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-}) as Record<string, string>;
-
-function siteComponentFiles(isIt: boolean): GeneratedFile[] {
-  return Object.keys(SITE_SOURCES)
-    .sort()
-    .map((key) => {
-      const relative = key.split('/site-template/vite-react/')[1];
-      return {
-        path: `src/${relative}`,
-        language: 'typescript' as const,
-        description: isIt
-          ? 'Componente del sito, identico a quello mostrato nell’anteprima di KADRE.'
-          : 'Componente del sitio, idéntico al que muestra la vista previa de KADRE.',
-        content: SITE_SOURCES[key],
-      };
-    });
 }

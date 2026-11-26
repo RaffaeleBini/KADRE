@@ -154,10 +154,14 @@ async function verify(combo: ExportCombo): Promise<Result> {
   const bin = (name: string) => path.join(dir, 'node_modules', '.bin', name);
 
   // i passi sono indipendenti: li eseguo tutti per avere il quadro completo
-  const tsc = run(bin('tsc'), ['--noEmit', '-p', 'tsconfig.json'], dir);
-  if (!tsc.ok) failures.push({ step: 'typecheck', error: firstLines(tsc.out) });
+  // Astro: `astro check` controlla anche i file .astro; altrimenti tsc sul tsconfig strict
+  const scripts = JSON.parse(pkg.content).scripts ?? {};
+  const tsc = scripts.check
+    ? run('npm', ['run', 'check'], dir)
+    : run(bin('tsc'), ['--noEmit', '-p', 'tsconfig.json'], dir);
+  if (!tsc.ok) failures.push({ step: 'typecheck', error: firstLines(tsc.out.replace(/\x1b\[[0-9;]*m/g, ''), 20) });
 
-  const build = run(bin('vite'), ['build', '--logLevel', 'error'], dir);
+  const build = run('npm', ['run', 'build'], dir);
   if (!build.ok) failures.push({ step: 'build', error: firstLines(build.out) });
 
   const script = files.find((f) => f.path.endsWith('.sh'));

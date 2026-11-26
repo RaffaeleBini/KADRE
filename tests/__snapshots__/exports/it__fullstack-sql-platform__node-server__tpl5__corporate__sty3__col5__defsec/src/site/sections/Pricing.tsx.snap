@@ -1,4 +1,4 @@
-import { SiteContent } from '../types';
+import type { SiteContent } from '../types';
 import { SectionHeading } from './SectionHeading';
 
 export function Pricing({ content }: { content: SiteContent }) {

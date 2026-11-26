@@ -14,8 +14,15 @@ import { envExampleFile } from './project/envExample';
 import { exportScriptFile } from './project/exportScript';
 import { gitignoreFile } from './project/gitignore';
 import { readmeFile } from './project/readme';
+import { astroSkeleton } from './skeletons/astro';
 import { viteReactSkeleton } from './skeletons/vite-react';
+import type { SkeletonId } from './matrix';
 import { CodeGenerationInput, GenContext, GeneratorModule, Skeleton } from './types';
+
+const SKELETONS: Record<SkeletonId, Skeleton> = {
+  'vite-react': viteReactSkeleton,
+  astro: astroSkeleton,
+};
 
 /** Innesti registrati, nell'ordine in cui contribuiscono a dipendenze e file. */
 export const MODULES: GeneratorModule[] = [backendExpress, databasePostgres];
@@ -46,7 +53,7 @@ function assemblePackageJson(ctx: GenContext, skeleton: Skeleton, modules: Gener
 
 export function generateRepositoryFiles(input: CodeGenerationInput): GeneratedFile[] {
   const ctx = buildContext(input);
-  const skeleton = viteReactSkeleton;
+  const skeleton = SKELETONS[ctx.skeleton];
   const modules = MODULES.filter((m) => m.enabled(ctx));
 
   const assembled = {

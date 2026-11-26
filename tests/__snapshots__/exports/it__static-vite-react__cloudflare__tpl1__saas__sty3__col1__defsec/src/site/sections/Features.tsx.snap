@@ -1,4 +1,4 @@
-import { SiteContent } from '../types';
+import type { SiteContent } from '../types';
 import { cardStyle, SectionHeading } from './SectionHeading';
 
 export function Features({ content }: { content: SiteContent }) {

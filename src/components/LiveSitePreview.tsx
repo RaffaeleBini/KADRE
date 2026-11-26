@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import { slugify } from '../generator/context';
-import { buildSiteConfig, siteCssVars } from '../generator/skeletons/vite-react/siteConfig';
+import { buildSiteConfig, siteCssVars } from '../generator/skeletons/shared/siteConfig';
 import { Locale, TRANSLATIONS } from '../i18n/translations';
-import { Site } from '../site-template/vite-react/site/Site';
+import { Site } from '../site-template/site/Site';
 import {
   ColorPatternPreset,
   GraphicStylePreset,
@@ -50,7 +50,7 @@ function useElementSize<T extends HTMLElement>() {
 
 /**
  * Anteprima del sito: renderizza gli STESSI componenti che vengono esportati
- * (src/site-template/vite-react/site), con le stesse variabili CSS e la stessa
+ * (src/site-template/site), con le stesse variabili CSS e la stessa
  * configurazione. Ciò che si vede qui è ciò che si scarica.
  */
 export function LiveSitePreview({

@@ -1,5 +1,5 @@
-import { FormEvent, useState } from 'react';
-import { SiteContent, SiteUi } from '../types';
+import { useState, type FormEvent } from 'react';
+import type { SiteContent, SiteUi } from '../types';
 import { cardStyle } from './SectionHeading';
 
 type Status = 'idle' | 'sending' | 'sent' | 'error';

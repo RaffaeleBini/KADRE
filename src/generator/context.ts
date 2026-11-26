@@ -1,5 +1,6 @@
 import { Locale } from '../i18n/translations';
 import { SiteContent } from '../types/builder';
+import { skeletonFor } from './matrix';
 import { CodeGenerationInput, GenContext } from './types';
 
 /** Testo → slug per URL e nomi di repo: "Café Técnico" → "cafe-tecnico" (accenti tolti, non persi). */
@@ -49,5 +50,6 @@ export function buildContext(input: CodeGenerationInput): GenContext {
     exportedContent: toExportedContent(content, isIt),
     hasBackend: stack.includesBackend,
     hasDatabase: stack.includesDatabase,
+    skeleton: skeletonFor(stack.id),
   };
 }

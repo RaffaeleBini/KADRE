@@ -31,18 +31,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ${isIt ? 'Scarica codice' : 'Descargar código'}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: ${isIt ? 'Configura Node.js' : 'Configurar Node.js'}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
-          cache: npm
+          node-version: 24
+      # ${isIt ? 'npm install (non npm ci): il progetto esportato non include package-lock.json' : 'npm install (no npm ci): el proyecto exportado no incluye package-lock.json'}
       - name: ${isIt ? 'Installa dipendenze' : 'Instalar dependencias'}
-        run: npm ci
+        run: npm install
       - name: ${isIt ? 'Compila applicazione' : 'Compilar aplicación'}
         run: npm run build
       - name: ${isIt ? 'Carica artefatto statico' : 'Subir artefacto estático'}
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./dist
 
@@ -55,7 +55,7 @@ jobs:
     steps:
       - name: ${isIt ? 'Pubblica su GitHub Pages' : 'Publicar en GitHub Pages'}
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 `;
   }
 
@@ -72,14 +72,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ${isIt ? 'Scarica codice' : 'Descargar código'}
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: ${isIt ? 'Configura Node.js' : 'Configurar Node.js'}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: 20
-          cache: npm
+          node-version: 24
+      # ${isIt ? 'npm install (non npm ci): il progetto esportato non include package-lock.json' : 'npm install (no npm ci): el proyecto exportado no incluye package-lock.json'}
       - name: ${isIt ? 'Installa dipendenze' : 'Instalar dependencias'}
-        run: npm ci
+        run: npm install
       - name: ${isIt ? 'Verifica TypeScript e build' : 'Verificar TypeScript y compilación'}
         run: npm run build
 `;

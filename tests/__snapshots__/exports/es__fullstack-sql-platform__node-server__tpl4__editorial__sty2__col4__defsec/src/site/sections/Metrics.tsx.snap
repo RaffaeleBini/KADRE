@@ -1,4 +1,4 @@
-import { SiteContent } from '../types';
+import type { SiteContent } from '../types';
 
 export function Metrics({ content }: { content: SiteContent }) {
   return (

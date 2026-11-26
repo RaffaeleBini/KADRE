@@ -89,6 +89,7 @@ describe('matrice di compatibilità', () => {
       const p = STACK_PROFILES[recommendStackId(a)];
       expect(p.database).toBe(n.databaseNeed === 'sql-relational');
       expect(p.backend).toBe(n.architectureMode !== 'frontend-only');
+      expect(p.rendering).toBe(n.renderingStrategy);
     }
   });
 });

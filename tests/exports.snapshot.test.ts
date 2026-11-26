@@ -9,6 +9,7 @@
  */
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { skeletonFor } from '../src/generator/matrix';
 import { generate, snapshotCombos, structuralCombos } from './exportMatrix';
 
 const SNAP_DIR = path.join(__dirname, '__snapshots__', 'exports');
@@ -44,8 +45,13 @@ describe('invarianti su tutte le combinazioni strutturali', () => {
         expect(() => JSON.parse(f.content), f.path).not.toThrow();
       }
 
-      // file di base sempre presenti
-      for (const required of ['index.html', 'package.json', 'src/App.tsx', 'src/main.tsx', 'README.md']) {
+      // file di base sempre presenti (comuni + specifici dello scheletro)
+      const skeletonFiles =
+        skeletonFor(combo.stackId) === 'astro'
+          ? ['astro.config.mjs', 'src/pages/index.astro']
+          : ['index.html', 'vite.config.ts', 'src/App.tsx', 'src/main.tsx'];
+      const common = ['package.json', 'tsconfig.json', 'README.md', 'src/index.css', 'src/site/Site.tsx'];
+      for (const required of [...common, ...skeletonFiles]) {
         expect(byPath.has(required), required).toBe(true);
       }
 
