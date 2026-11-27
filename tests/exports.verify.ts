@@ -90,12 +90,13 @@ async function smokeServer(
   payments: boolean,
   database: boolean,
   /** idioma principal si el sitio es en dos idiomas */
-  i18n: 'es' | 'it' | null
+  i18n: 'es' | 'it' | null,
+  auth: boolean
 ): Promise<string | null> {
   const child = spawn('npm', ['start'], {
     cwd: dir,
     // sin claves de Resend: el servidor debe reconocer que no está configurado
-    env: { ...process.env, PORT: String(port), RESEND_API_KEY: '', CONTACT_TO_EMAIL: '', STRIPE_SECRET_KEY: '', DATABASE_URL: '' },
+    env: { ...process.env, PORT: String(port), RESEND_API_KEY: '', CONTACT_TO_EMAIL: '', STRIPE_SECRET_KEY: '', DATABASE_URL: '', SESSION_SECRET: '' },
     detached: true, // gruppo di processi proprio: si chiude anche il figlio di npm
     stdio: ['ignore', 'pipe', 'pipe'],
   });
@@ -135,6 +136,17 @@ async function smokeServer(
     if (ok.status !== expected) return `POST /api/contact valido → ${ok.status} (atteso ${expected})`;
     const bad = await post({ message: 'senza nome' });
     if (bad.status !== 400) return `POST /api/contact incompleto → ${bad.status} (atteso 400)`;
+    if (auth) {
+      // sin SESSION_SECRET el acceso no está configurado: 503, nunca una sesión inventada
+      const login = await fetch(`${base}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'a@b.co', password: 'x' }),
+      });
+      if (login.status !== 503) return `POST /api/auth/login sin SESSION_SECRET → ${login.status} (esperado 503)`;
+      const messages = await fetch(`${base}/api/admin/messages`);
+      if (messages.status !== 503) return `GET /api/admin/messages sin SESSION_SECRET → ${messages.status} (esperado 503)`;
+    }
     if (database) {
       const catalog = await fetch(`${base}/api/catalog`);
       if (catalog.status !== 503) return `GET /api/catalog senza DATABASE_URL → ${catalog.status} (atteso 503)`;
@@ -207,9 +219,18 @@ async function smokeDatabase(
   port: number,
   databaseUrl: string,
   realEmail: boolean,
-  catalogCount: number
+  catalogCount: number,
+  auth: boolean
 ): Promise<string | null> {
-  const env = { ...process.env, PORT: String(port), DATABASE_URL: databaseUrl, RESEND_API_KEY: '', CONTACT_TO_EMAIL: '' };
+  const SESSION_SECRET = 'a'.repeat(16) + 'b'.repeat(16) + '0123456789';
+  const env = {
+    ...process.env,
+    PORT: String(port),
+    DATABASE_URL: databaseUrl,
+    RESEND_API_KEY: '',
+    CONTACT_TO_EMAIL: '',
+    SESSION_SECRET: auth ? SESSION_SECRET : '',
+  };
   for (const round of [1, 2]) {
     const init = run('npm', ['run', 'db:init'], dir, { DATABASE_URL: databaseUrl });
     if (!init.ok) return `db:init (ejecución ${round}) falló\n${firstLines(init.out)}`;
@@ -254,6 +275,11 @@ async function smokeDatabase(
     }
     // la petición inválida y el bot no deben haber guardado nada
     if ((await count()) !== 1) return `se guardaron ${await count()} filas (esperado 1: ni el inválido ni el bot)`;
+
+    if (auth) {
+      const error = await checkAuth(dir, base, databaseUrl, client);
+      if (error) return error;
+    }
 
     // sin tabla (¿falta db:init?) el endpoint debe fallar con 502, no con 200 ni colgarse
     await client.query('DROP TABLE catalog_items');
@@ -302,6 +328,71 @@ function checkI18nBuild(dir: string, combo: ExportCombo): string | null {
   // desde /<otro>/ una ruta ./assets/ apuntaría a /<otro>/assets/ (404): deben ser rutas desde la raíz
   if (html.includes('src="./assets/')) return `/${alt}/index.html conserva rutas relativas ./assets/ (se romperían)`;
   if (!html.includes('/assets/')) return `/${alt}/index.html no referencia /assets/`;
+  return null;
+}
+
+/**
+ * Área de administración con PostgreSQL real: crea el administrador con el script, inicia sesión,
+ * lee los mensajes con la cookie y comprueba los rechazos (credenciales, cookie manipulada, rol
+ * revocado, límite de intentos). Va después de enviar un mensaje de contacto (ya hay 1 guardado).
+ */
+async function checkAuth(dir: string, base: string, databaseUrl: string, client: pg.Client): Promise<string | null> {
+  const email = 'admin@example.com';
+  const password = 'clave-larga-de-prueba';
+  const created = run('npm', ['run', 'admin:create', '--', email], dir, { DATABASE_URL: databaseUrl, ADMIN_PASSWORD: password });
+  if (!created.ok) return `admin:create falló\n${firstLines(created.out)}`;
+  const stored = (await client.query('SELECT password_hash, role FROM users WHERE email = $1', [email])).rows[0];
+  if (!stored || stored.role !== 'admin' || !String(stored.password_hash).startsWith('scrypt$') || stored.password_hash.includes(password))
+    return 'el administrador no se guardó con hash scrypt y rol admin';
+
+  const json = { 'Content-Type': 'application/json' };
+  const login = (body: object, headers: Record<string, string> = json) =>
+    fetch(`${base}/api/auth/login`, { method: 'POST', headers, body: JSON.stringify(body) });
+
+  if ((await fetch(`${base}/api/admin/messages`)).status !== 401) return '/api/admin/messages sin cookie debería ser 401';
+  if ((await fetch(`${base}/api/auth/me`)).status !== 401) return '/api/auth/me sin cookie debería ser 401';
+  if ((await login({ email, password }, { 'Content-Type': 'text/plain' })).status !== 415) return 'login sin JSON debería ser 415';
+  if ((await login({ email })).status !== 400) return 'login incompleto debería ser 400';
+  if ((await login({ email, password: 'incorrecta-123' })).status !== 401) return 'contraseña incorrecta debería ser 401';
+  if ((await login({ email: 'nadie@example.com', password })).status !== 401) return 'usuario inexistente debería ser 401';
+
+  const ok = await login({ email: email.toUpperCase(), password });
+  if (ok.status !== 200) return `login correcto → ${ok.status} (esperado 200; el correo no distingue mayúsculas)`;
+  const setCookie = ok.headers.get('set-cookie') ?? '';
+  if (!/HttpOnly/i.test(setCookie) || !/SameSite=Lax/i.test(setCookie)) return `la cookie de sesión no es HttpOnly + SameSite=Lax: ${setCookie}`;
+  if (/Secure/i.test(setCookie)) return 'la cookie es Secure sobre http (el navegador la descartaría)';
+  const cookie = setCookie.split(';')[0];
+
+  const me = await fetch(`${base}/api/auth/me`, { headers: { Cookie: cookie } });
+  if (me.status !== 200 || ((await me.json()) as { email: string }).email !== email) return '/api/auth/me con cookie debería devolver el administrador';
+  const list = await fetch(`${base}/api/admin/messages`, { headers: { Cookie: cookie } });
+  const data = (await list.json().catch(() => null)) as { messages?: { name: string; email: string }[] } | null;
+  if (list.status !== 200 || data?.messages?.length !== 1 || data.messages[0].email !== 'test@example.com')
+    return `/api/admin/messages con cookie → ${list.status}, mensajes: ${JSON.stringify(data)}`;
+  if (list.headers.get('cache-control') !== 'no-store') return '/api/admin/messages debería enviar Cache-Control: no-store';
+
+  // cookie manipulada: se cambia un carácter de la firma
+  const tampered = cookie.slice(0, -2) + (cookie.endsWith('A') ? 'B' : 'A') + cookie.slice(-1);
+  if ((await fetch(`${base}/api/admin/messages`, { headers: { Cookie: tampered } })).status !== 401) return 'una cookie manipulada debería dar 401';
+
+  // al quitar el rol, la sesión ya emitida deja de valer (el servidor revalida en cada petición)
+  await client.query("UPDATE users SET role = 'member' WHERE email = $1", [email]);
+  if ((await fetch(`${base}/api/admin/messages`, { headers: { Cookie: cookie } })).status !== 401) return 'sin rol admin la sesión debería dar 401';
+  if ((await login({ email, password })).status !== 401) return 'sin rol admin el login debería dar 401';
+  await client.query("UPDATE users SET role = 'admin' WHERE email = $1", [email]);
+
+  const out = await fetch(`${base}/api/auth/logout`, { method: 'POST', headers: { Cookie: cookie } });
+  if (!/Max-Age=0/i.test(out.headers.get('set-cookie') ?? '')) return 'logout no borra la cookie';
+
+  // la página /admin se sirve (el servidor devuelve la SPA y el cliente decide qué pintar)
+  const page = await fetch(`${base}/admin`);
+  if (!page.ok || !(await page.text()).includes('id="root"')) return 'GET /admin no sirve la aplicación';
+
+  // límite de intentos: tras 10 fallos, 429 (incluso con la contraseña correcta)
+  let last = 0;
+  for (let i = 0; i < 12; i++) last = (await login({ email, password: 'incorrecta-' + i })).status;
+  if (last !== 429) return `tras 12 intentos fallidos el login responde ${last} (esperado 429)`;
+  if ((await login({ email, password })).status !== 429) return 'con el límite activo, ni la contraseña correcta debería entrar';
   return null;
 }
 
@@ -370,14 +461,15 @@ async function verify(combo: ExportCombo, testPg: TestPostgres | null): Promise<
       !!combo.contact,
       !!combo.payments,
       database,
-      combo.i18n ? combo.locale : null
+      combo.i18n ? combo.locale : null,
+      !!combo.auth
     );
     if (error) failures.push({ step: 'server', error });
 
     if (database && testPg) {
       const content = JSON.parse(fs.readFileSync(path.join(dir, 'src/data/siteContent.json'), 'utf8'));
       const url = await testPg.createDatabase(`db${nextPort}`);
-      const dbError = await smokeDatabase(dir, nextPort++, url, !!combo.contact, content.catalogItems.length);
+      const dbError = await smokeDatabase(dir, nextPort++, url, !!combo.contact, content.catalogItems.length, !!combo.auth);
       if (dbError) failures.push({ step: 'database', error: dbError });
     }
   }

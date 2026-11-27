@@ -63,5 +63,10 @@ export function buildContext(input: CodeGenerationInput): GenContext {
       input.answers.databaseNeed !== 'markdown-cms' &&
       input.answers.integrations.includes('i18n'),
     altLocale: isIt ? 'es' : 'it',
+    auth:
+      stack.includesBackend &&
+      stack.includesDatabase &&
+      skeleton === 'vite-react' &&
+      input.answers.integrations.includes('auth'),
   };
 }

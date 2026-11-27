@@ -159,6 +159,22 @@ const SPA_NO_I18N: Availability = {
   },
 };
 
+const AUTH_NEEDS_SQL: Availability = {
+  status: 'incompatible',
+  reason: {
+    es: 'El área de administración guarda el acceso en la base de datos: elige antes «Base de datos relacional (SQL)» con «Frontend + API ligera».',
+    it: 'L’area di amministrazione tiene l’accesso nel database: scegli prima «Database relazionale (SQL)» con «Frontend + API server leggera».',
+  },
+};
+
+const NO_DB_WITH_AUTH: Availability = {
+  status: 'incompatible',
+  reason: {
+    es: 'El área de administración necesita la base de datos SQL: quita antes el acceso de administración.',
+    it: 'L’area di amministrazione richiede il database SQL: togli prima l’accesso di amministrazione.',
+  },
+};
+
 const RENDERING: Record<RenderingStrategy, Availability> = {
   'spa-dynamic': AVAILABLE,
   'static-ssg': AVAILABLE,
@@ -185,8 +201,8 @@ const ARCHITECTURE: Record<ArchitectureMode, Availability> = {
   'full-backend': {
     status: 'planned',
     reason: {
-      es: 'Llegará con el módulo de autenticación. Hoy generaría lo mismo que «API ligera».',
-      it: 'Arriverà con il modulo di autenticazione. Oggi genererebbe lo stesso di «API leggera».',
+      es: 'Hoy generaría lo mismo que «API ligera»: usa esa.',
+      it: 'Oggi genererebbe lo stesso di «API leggera»: usa quella.',
     },
   },
 };
@@ -201,7 +217,7 @@ const INTEGRATIONS: Record<IntegrationOption, Availability> = {
   payments: AVAILABLE,
   analytics: AVAILABLE,
   i18n: AVAILABLE,
-  auth: { status: 'planned', reason: INTEGRATION_SOON },
+  auth: AVAILABLE,
 };
 
 /** Disponibilità di ogni opzione del passo Discovery, date le altre risposte. */
@@ -213,6 +229,7 @@ export const discoveryAvailability = {
     if (v === 'sql-relational' && answers?.integrations.includes('i18n')) return I18N_NO_SQL;
     if (v === 'markdown-cms' && answers?.renderingStrategy === 'spa-dynamic') return MARKDOWN_NEEDS_ASTRO;
     if (v === 'markdown-cms' && answers?.integrations.includes('i18n')) return I18N_NO_MARKDOWN;
+    if (v !== 'sql-relational' && answers?.integrations.includes('auth')) return NO_DB_WITH_AUTH;
     return AVAILABLE;
   },
   renderingStrategy: (v: RenderingStrategy, answers?: DiscoveryAnswers) => {
@@ -232,6 +249,8 @@ export const discoveryAvailability = {
       if (answers.databaseNeed === 'sql-relational') return I18N_NO_SQL;
       if (answers.renderingStrategy === 'spa-dynamic') return I18N_NEEDS_ASTRO;
     }
+    // el acceso de administración lee y escribe en PostgreSQL: solo con la base de datos SQL
+    if (v === 'auth' && answers && answers.databaseNeed !== 'sql-relational') return AUTH_NEEDS_SQL;
     return INTEGRATIONS[v];
   },
 };
@@ -314,6 +333,7 @@ export function normalizeAnswers(answers: DiscoveryAnswers): DiscoveryAnswers {
     integrations: answers.integrations.filter(
       (i) =>
         ok(INTEGRATIONS[i]) &&
+        !(i === 'auth' && databaseNeed !== 'sql-relational') &&
         !(
           i === 'i18n' &&
           (renderingStrategy === 'spa-dynamic' || databaseNeed === 'markdown-cms' || databaseNeed === 'sql-relational')

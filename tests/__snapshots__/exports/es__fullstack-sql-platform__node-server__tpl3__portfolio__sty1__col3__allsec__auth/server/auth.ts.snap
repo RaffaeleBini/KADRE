@@ -1,0 +1,153 @@
+import crypto from 'node:crypto';
+import { promisify } from 'node:util';
+import type { Express, Request, Response } from 'express';
+import { findUser, listContacts, type UserRow } from './db';
+
+const scrypt = promisify(crypto.scrypt) as (password: string, salt: Buffer, keylen: number) => Promise<Buffer>;
+
+const COOKIE = 'session';
+const SESSION_SECONDS = 60 * 60 * 8;
+const MAX_FAILURES = 10;
+const WINDOW_MS = 15 * 60 * 1000;
+
+/** Hash con sal aleatoria (scrypt). Formato: scrypt$sal$hash, en hexadecimal. */
+export async function hashPassword(password: string): Promise<string> {
+  const salt = crypto.randomBytes(16);
+  const key = await scrypt(password, salt, 64);
+  return 'scrypt$' + salt.toString('hex') + '$' + key.toString('hex');
+}
+
+async function verifyPassword(password: string, stored: string): Promise<boolean> {
+  const [scheme, saltHex, keyHex] = stored.split('$');
+  if (scheme !== 'scrypt' || !saltHex || !keyHex) return false;
+  const expected = Buffer.from(keyHex, 'hex');
+  const actual = await scrypt(password, Buffer.from(saltHex, 'hex'), expected.length);
+  return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
+}
+
+// Con un correo inexistente se verifica igualmente una contraseña: así la respuesta no revela si el usuario existe.
+const DUMMY_HASH = 'scrypt$' + '00'.repeat(16) + '$' + '00'.repeat(64);
+
+const sign = (secret: string, body: string) => crypto.createHmac('sha256', secret).update(body).digest('base64url');
+
+function createToken(secret: string, uid: number): string {
+  const body = Buffer.from(JSON.stringify({ uid, exp: Math.floor(Date.now() / 1000) + SESSION_SECONDS })).toString('base64url');
+  return body + '.' + sign(secret, body);
+}
+
+/** Id de usuario si el token es auténtico y no ha caducado; si no, null. */
+function readToken(secret: string, token: string): number | null {
+  const [body, signature] = token.split('.');
+  if (!body || !signature) return null;
+  const given = Buffer.from(signature);
+  const expected = Buffer.from(sign(secret, body));
+  if (given.length !== expected.length || !crypto.timingSafeEqual(given, expected)) return null;
+  try {
+    const data = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as { uid?: unknown; exp?: unknown };
+    if (typeof data.uid !== 'number' || typeof data.exp !== 'number') return null;
+    return data.exp > Math.floor(Date.now() / 1000) ? data.uid : null;
+  } catch {
+    return null;
+  }
+}
+
+function cookieValue(req: Request, name: string): string {
+  for (const part of (req.headers.cookie ?? '').split(';')) {
+    const i = part.indexOf('=');
+    if (i > 0 && part.slice(0, i).trim() === name) return part.slice(i + 1).trim();
+  }
+  return '';
+}
+
+function setSessionCookie(req: Request, res: Response, value: string, maxAge: number) {
+  const secure = req.secure || req.get('x-forwarded-proto') === 'https';
+  res.setHeader('Set-Cookie', COOKIE + '=' + value + '; HttpOnly; SameSite=Lax; Path=/; Max-Age=' + maxAge + (secure ? '; Secure' : ''));
+}
+
+// Límite de intentos fallidos por IP, en memoria (se reinicia al arrancar).
+const failures = new Map<string, { count: number; resetAt: number }>();
+
+function isLimited(ip: string): boolean {
+  const entry = failures.get(ip);
+  if (!entry) return false;
+  if (entry.resetAt < Date.now()) {
+    failures.delete(ip);
+    return false;
+  }
+  return entry.count >= MAX_FAILURES;
+}
+
+function registerFailure(ip: string) {
+  const now = Date.now();
+  if (failures.size > 1000) for (const [key, entry] of failures) if (entry.resetAt < now) failures.delete(key);
+  const entry = failures.get(ip);
+  if (!entry || entry.resetAt < now) failures.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+  else entry.count++;
+}
+
+type Admin = { ok: true; user: UserRow } | { ok: false; status: number; error: string };
+
+/** Administrador de la sesión: vuelve a comprobar el usuario en la base de datos en cada petición, así quitar el rol revoca también las sesiones ya emitidas. */
+async function currentAdmin(req: Request): Promise<Admin> {
+  const secret = process.env.SESSION_SECRET;
+  if (!secret || secret.length < 32) return { ok: false, status: 503, error: 'Acceso no configurado (ver README).' };
+  const uid = readToken(secret, cookieValue(req, COOKIE));
+  if (uid === null) return { ok: false, status: 401, error: 'Sesión no válida.' };
+  const found = await findUser(process.env, { id: uid });
+  if (!found.ok) return { ok: false, status: found.reason === 'unconfigured' ? 503 : 502, error: 'Base de datos no disponible.' };
+  if (!found.user || found.user.role !== 'admin') return { ok: false, status: 401, error: 'Sesión no válida.' };
+  return { ok: true, user: found.user };
+}
+
+export function registerAuthRoutes(app: Express) {
+  // Detrás del proxy del hosting (1 salto) la IP real llega en X-Forwarded-For.
+  app.set('trust proxy', 1);
+  app.use(['/api/auth', '/api/admin'], (_req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store');
+    next();
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    const secret = process.env.SESSION_SECRET;
+    if (!secret || secret.length < 32) return res.status(503).json({ error: 'Acceso no configurado (ver README).' });
+    // Solo JSON: un formulario de otro sitio no puede enviarlo sin preflight CORS (defensa CSRF).
+    if (!req.is('application/json')) return res.status(415).json({ error: 'Se requiere application/json.' });
+    const ip = req.ip ?? 'unknown';
+    if (isLimited(ip)) return res.status(429).json({ error: 'Demasiados intentos: inténtalo de nuevo en unos minutos.' });
+
+    const { email, password } = (req.body ?? {}) as { email?: unknown; password?: unknown };
+    if (typeof email !== 'string' || typeof password !== 'string' || !email || !password || email.length > 255 || password.length > 200) {
+      return res.status(400).json({ error: 'Correo y contraseña son obligatorios.' });
+    }
+    const found = await findUser(process.env, { email: email.trim().toLowerCase() });
+    if (!found.ok) return res.status(found.reason === 'unconfigured' ? 503 : 502).json({ error: 'Base de datos no disponible.' });
+
+    const valid = await verifyPassword(password, found.user?.passwordHash ?? DUMMY_HASH);
+    if (!found.user || !valid || found.user.role !== 'admin') {
+      registerFailure(ip);
+      return res.status(401).json({ error: 'Credenciales no válidas.' });
+    }
+    failures.delete(ip);
+    setSessionCookie(req, res, createToken(secret, found.user.id), SESSION_SECONDS);
+    return res.json({ ok: true, email: found.user.email });
+  });
+
+  app.post('/api/auth/logout', (req, res) => {
+    setSessionCookie(req, res, '', 0);
+    res.json({ ok: true });
+  });
+
+  app.get('/api/auth/me', async (req, res) => {
+    const admin = await currentAdmin(req);
+    if (!admin.ok) return res.status(admin.status).json({ error: admin.error });
+    return res.json({ email: admin.user.email });
+  });
+
+  app.get('/api/admin/messages', async (req, res) => {
+    const admin = await currentAdmin(req);
+    if (!admin.ok) return res.status(admin.status).json({ error: admin.error });
+    const result = await listContacts(process.env);
+    if (!result.ok) return res.status(result.reason === 'unconfigured' ? 503 : 502).json({ error: 'Lectura de los mensajes fallida.' });
+    return res.json({ messages: result.messages });
+  });
+}

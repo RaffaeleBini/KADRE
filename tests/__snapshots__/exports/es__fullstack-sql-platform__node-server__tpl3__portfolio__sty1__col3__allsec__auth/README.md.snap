@@ -1,0 +1,70 @@
+# Estudio Bini & Asociados
+
+Arquitectura contemporánea y espacios culturales
+
+## Arquitectura técnica seleccionada
+
+- **Stack**: React + Express + esquema PostgreSQL
+- **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Node.js + Express: /api/contact, /api/catalog y /api/health
+- **Base de datos**: PostgreSQL (pg): db/schema.sql + npm run db:init + DATABASE_URL
+- **Plantilla**: Catálogo Técnico y Comercio
+- **Estilo gráfico**: Editorial Suizo · Papel Técnico y Grafito
+
+## Ejecución local
+
+```bash
+npm install
+npm run dev
+```
+
+## Exportar a GitHub paso a paso
+
+1. Crea un repositorio vacío llamado `estudio-bini-asociados` en https://github.com/new (sin README ni .gitignore).
+2. Ejecuta los siguientes comandos dentro de esta carpeta:
+
+```bash
+git init
+git add .
+git commit -m "Versión inicial de Estudio Bini & Asociados"
+git branch -M main
+git remote add origin https://github.com/kadre-test/estudio-bini-asociados.git
+git push -u origin main
+```
+
+También puedes ejecutar el script automatizado incluido:
+
+```bash
+chmod +x exportar-github.sh
+./exportar-github.sh
+```
+
+## Despliegue (node-server)
+
+1. En un hosting Node (Render, Railway…) crea un servicio web conectado a `kadre-test/estudio-bini-asociados`.
+2. Comando de compilación: `npm install && npm run build` · Comando de arranque: `npm start`.
+3. El servidor escucha en el puerto de la variable `PORT` (la definen los proveedores).
+4. Añade la variable `DATABASE_URL` con la cadena de conexión PostgreSQL (p. ej. Neon) y ejecuta `npm run db:init` (ver la sección Base de datos PostgreSQL).
+
+## Base de datos PostgreSQL
+
+El servidor guarda los mensajes del formulario de contacto en `contact_submissions` y expone `GET /api/catalog`, un endpoint de ejemplo que lee `catalog_items`. El sitio aún no usa `/api/catalog`: muestra el catálogo de `src/data/siteContent.json`; el endpoint sirve de modelo para tus consultas. Mientras `DATABASE_URL` no esté definida las dos rutas responden **503** y el formulario muestra un error: no finge haber guardado.
+
+1. Crea una base de datos PostgreSQL. Para empezar basta el plan gratuito de **Neon** (https://neon.com: 1 GB por proyecto y 100 horas de cómputo al mes; los límites pueden cambiar). Copia la cadena de conexión, que termina en `?sslmode=require`.
+2. Copia `.env.example` a `.env` y pega la cadena en `DATABASE_URL`. En el hosting añádela en las variables de entorno: es un secreto, no va en el código ni en GitHub.
+3. Ejecuta `npm run db:init`: aplica `db/schema.sql` y carga el catálogo del sitio. Se puede repetir sin duplicar nada.
+4. Arranca el servidor y envía un mensaje desde el formulario: lo verás en la tabla `contact_submissions` (desde el panel SQL de Neon o con `psql`).
+
+No incluidos: migraciones versionadas, lectura de los mensajes desde el sitio y límite de peticiones en las rutas.
+
+## Área de administración (/admin)
+
+`/admin` muestra los mensajes del formulario de contacto guardados en la base de datos, tras iniciar sesión. Hay **un solo administrador** y no hay registro. Mientras `SESSION_SECRET` no esté definida el inicio de sesión responde **503**.
+
+1. Define `SESSION_SECRET` (al menos 32 caracteres aleatorios, ver `.env.example`) en `.env` y en las variables de entorno del hosting. Es un secreto: quien lo conozca puede falsificar sesiones.
+2. Asegúrate de haber ejecutado `npm run db:init` y crea el administrador: `npm run admin:create -- tu@correo.com`. La contraseña (mínimo 10 caracteres) se escribe en el terminal y no se muestra. Volviendo a ejecutar el comando se cambia la contraseña.
+3. Abre `/admin` y entra.
+
+Cómo está protegida: contraseña con `scrypt` (sal aleatoria), sesión en una cookie `HttpOnly; SameSite=Lax` (`Secure` en HTTPS) firmada con HMAC-SHA256 y válida 8 horas, usuario revalidado en la base de datos en cada petición, solo JSON en las rutas de login (defensa CSRF), 10 intentos fallidos cada 15 minutos por IP (en memoria: se reinicia al arrancar; tras el proxy del hosting se usa la IP real con `trust proxy` a 1 salto). Usa HTTPS en producción.
+
+No incluidos: recuperar contraseña, varios administradores o roles, autenticación en dos pasos, registro de accesos, borrar mensajes desde el panel.

@@ -228,9 +228,10 @@ export function getDiscoveryOptions(locale: Locale): {
         },
         {
           value: 'auth',
-          title: 'Accesso utenti',
-          description: 'Schema pronto per registrazione, login e aree riservate.',
-          technicalHint: 'Rotte protette e sessioni',
+          title: 'Area di amministrazione',
+          description:
+            'Pagina /admin con login per leggere i messaggi del modulo di contatto salvati nel database. Un solo amministratore, senza registrazione.',
+          technicalHint: 'Richiede database SQL · Sessione con cookie firmato · Niente reset password',
         },
         {
           value: 'analytics',
@@ -378,9 +379,10 @@ export function getDiscoveryOptions(locale: Locale): {
       },
       {
         value: 'auth',
-        title: 'Acceso de usuarios',
-        description: 'Esquema preparado para registro, inicio de sesión y áreas privadas.',
-        technicalHint: 'Rutas protegidas y sesiones',
+        title: 'Área de administración',
+        description:
+          'Página /admin con inicio de sesión para leer los mensajes del formulario de contacto guardados en la base de datos. Un solo administrador, sin registro.',
+        technicalHint: 'Requiere base de datos SQL · Sesión con cookie firmada · Sin recuperar contraseña',
       },
       {
         value: 'analytics',
@@ -626,6 +628,13 @@ export function computeStackRecommendation(
 ): StackRecommendation {
   const id = recommendStackId(answers);
   let stack = getAllStacks(locale).find((s) => s.id === id)!;
+  // área de administración: la ficha del stack lo dice
+  if (answers.integrations.includes('auth') && stack.id === 'fullstack-sql-platform') {
+    stack = {
+      ...stack,
+      backend: `${stack.backend}${locale === 'it' ? ' · login amministratore (/admin, /api/auth/*)' : ' · acceso de administrador (/admin, /api/auth/*)'}`,
+    };
+  }
   // dos idiomas: la ficha del stack lo dice (el segundo idioma es el otro de ES/IT)
   if (answers.integrations.includes('i18n') && stack.id.startsWith('astro-')) {
     stack = {

@@ -125,7 +125,7 @@ app.post('/api/checkout', async (req, res) => {
       content: `import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import 'dotenv/config';${checkout ? "\nimport config from '../src/data/siteConfig.json';\nimport { createCheckoutSession, type PlanPrices } from './stripeCheckout';" : ''}${realEmail ? "\nimport { parseContact, sendContactEmail } from './contactEmail';" : ''}${db ? "\nimport { listCatalog, saveContact } from './db';" : ''}
+import 'dotenv/config';${checkout ? "\nimport config from '../src/data/siteConfig.json';\nimport { createCheckoutSession, type PlanPrices } from './stripeCheckout';" : ''}${realEmail ? "\nimport { parseContact, sendContactEmail } from './contactEmail';" : ''}${db ? "\nimport { listCatalog, saveContact } from './db';" : ''}${ctx.auth ? "\nimport { registerAuthRoutes } from './auth';" : ''}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -137,7 +137,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
 
-${contactRoute}${catalogRoute}${checkoutRoute}
+${ctx.auth ? 'registerAuthRoutes(app);\n\n' : ''}${contactRoute}${catalogRoute}${checkoutRoute}
 
 if (process.env.NODE_ENV === 'production') {
   const distDir = path.resolve(__dirname, '../dist');

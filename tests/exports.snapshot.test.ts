@@ -119,6 +119,19 @@ describe('invarianti su tutte le combinazioni strutturali', () => {
         expect(idsOf(`src/data/siteContent.${alt}.json`)).toEqual(idsOf('src/data/siteContent.json'));
       }
 
+      // área de administración: auth.ts, createAdmin.ts, Admin.tsx, script y SESSION_SECRET solo con auth
+      for (const f of ['server/auth.ts', 'server/createAdmin.ts', 'src/admin/Admin.tsx']) expect(byPath.has(f), f).toBe(!!combo.auth);
+      expect(Boolean(JSON.parse(byPath.get('package.json')!).scripts['admin:create']), 'script admin:create').toBe(!!combo.auth);
+      expect(byPath.get('.env.example')!.includes('SESSION_SECRET='), 'SESSION_SECRET en .env.example').toBe(!!combo.auth);
+      expect(byPath.get('src/App.tsx')?.includes("import('./admin/Admin')") ?? false, 'App.tsx carga Admin').toBe(!!combo.auth);
+      if (combo.auth) {
+        expect(byPath.get('server/index.ts')).toContain('registerAuthRoutes(app)');
+        // la tabla users del esquema existe, y el servidor mantiene los scripts de Express y db:init
+        expect(byPath.get('db/schema.sql')).toContain('CREATE TABLE IF NOT EXISTS users');
+        const scripts = JSON.parse(byPath.get('package.json')!).scripts;
+        expect(Object.keys(scripts)).toEqual(['dev', 'build', 'start', 'db:init', 'admin:create']);
+      }
+
       // coerenza backend: server presente se e solo se lo script dev lo avvia
       const pkg = JSON.parse(byPath.get('package.json')!);
       const hasServer = byPath.has('server/index.ts');

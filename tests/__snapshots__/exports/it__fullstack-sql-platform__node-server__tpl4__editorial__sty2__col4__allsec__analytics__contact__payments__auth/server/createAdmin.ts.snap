@@ -1,0 +1,54 @@
+/**
+ * Crea l’amministratore (o ne cambia la password):
+ *
+ *   npm run admin:create -- tu@email.com
+ *
+ * La password si chiede da terminale (non compare né resta nella cronologia). In automatico si può passare con ADMIN_PASSWORD.
+ */
+import 'dotenv/config';
+import readline from 'node:readline';
+import { hashPassword } from './auth';
+import { closeDb, saveAdmin } from './db';
+
+function askPassword(question: string): Promise<string> {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: Boolean(process.stdin.isTTY) });
+    // Oscura quello che si digita (readline non ha un’opzione pubblica per farlo).
+    const muted = rl as unknown as { _writeToOutput: (text: string) => void };
+    const original = muted._writeToOutput.bind(rl);
+    muted._writeToOutput = (text) => {
+      if (text.startsWith(question)) original(text);
+    };
+    rl.question(question, (answer) => {
+      rl.close();
+      process.stdout.write('\n');
+      resolve(answer);
+    });
+  });
+}
+
+async function main() {
+  const email = (process.argv[2] ?? '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    console.error('Uso: npm run admin:create -- tu@email.com');
+    process.exit(1);
+  }
+  const password = process.env.ADMIN_PASSWORD ?? (await askPassword('Password (min. 10 caratteri): '));
+  if (password.length < 10 || password.length > 200) {
+    console.error('La password deve avere tra 10 e 200 caratteri.');
+    process.exit(1);
+  }
+  const result = await saveAdmin(process.env, email, await hashPassword(password));
+  await closeDb();
+  if (result === 'unconfigured') {
+    console.error('Manca DATABASE_URL: configurala in .env ed esegui prima npm run db:init.');
+    process.exit(1);
+  }
+  if (result === 'failed') {
+    console.error('Non è stato possibile salvare l’amministratore (hai eseguito npm run db:init?).');
+    process.exit(1);
+  }
+  console.log('Amministratore pronto:', email);
+}
+
+main();

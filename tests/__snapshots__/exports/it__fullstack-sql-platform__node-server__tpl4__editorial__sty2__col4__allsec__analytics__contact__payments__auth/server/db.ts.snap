@@ -1,0 +1,145 @@
+import pg from 'pg';
+
+type Env = Record<string, string | undefined>;
+
+let pool: pg.Pool | undefined;
+
+/** Pool condiviso. null se DATABASE_URL non è impostata. */
+function getPool(env: Env): pg.Pool | null {
+  const url = env.DATABASE_URL;
+  if (!url) return null;
+  if (!pool) {
+    // Timeout breve: con il database spento si risponde 502 invece di restare appesi.
+    pool = new pg.Pool({ connectionString: url, max: 5, connectionTimeoutMillis: 5000 });
+    pool.on('error', (err) => console.error('[db]', err.message));
+  }
+  return pool;
+}
+
+export interface ContactRecord {
+  name: string;
+  email: string;
+  message: string;
+}
+
+export type SaveResult = 'saved' | 'unconfigured' | 'failed';
+
+/** Salva un messaggio in contact_submissions. Le lunghezze rispettano le colonne dello schema. */
+export async function saveContact(env: Env, data: ContactRecord): Promise<SaveResult> {
+  const db = getPool(env);
+  if (!db) return 'unconfigured';
+  try {
+    await db.query(
+      'INSERT INTO contact_submissions (full_name, email, message) VALUES ($1, $2, $3)',
+      [data.name.slice(0, 160), data.email.slice(0, 255), data.message.slice(0, 5000)]
+    );
+    return 'saved';
+  } catch (err) {
+    console.error('[db] salvataggio del contatto non riuscito:', (err as Error).message);
+    return 'failed';
+  }
+}
+
+export interface CatalogRow {
+  slug: string;
+  title: string;
+  category: string;
+  priceLabel: string | null;
+  description: string | null;
+  imagePath: string | null;
+}
+
+export type CatalogResult =
+  | { ok: true; items: CatalogRow[] }
+  | { ok: false; reason: 'unconfigured' | 'failed' };
+
+/** Legge le voci pubblicate del catalogo. */
+export async function listCatalog(env: Env): Promise<CatalogResult> {
+  const db = getPool(env);
+  if (!db) return { ok: false, reason: 'unconfigured' };
+  try {
+    const { rows } = await db.query<CatalogRow>(
+      'SELECT slug, title, category, price_label AS "priceLabel", description, image_path AS "imagePath" FROM catalog_items WHERE published ORDER BY id'
+    );
+    return { ok: true, items: rows };
+  } catch (err) {
+    console.error('[db] lettura del catalogo non riuscita (hai eseguito npm run db:init?):', (err as Error).message);
+    return { ok: false, reason: 'failed' };
+  }
+}
+
+export interface UserRow {
+  id: number;
+  email: string;
+  passwordHash: string;
+  role: string;
+}
+
+export type UserResult = { ok: true; user: UserRow | null } | { ok: false; reason: 'unconfigured' | 'failed' };
+
+/** Cerca un utente per email o per id. Le query sono fisse: nessun dato dell’utente finisce nell’SQL. */
+export async function findUser(env: Env, by: { email: string } | { id: number }): Promise<UserResult> {
+  const db = getPool(env);
+  if (!db) return { ok: false, reason: 'unconfigured' };
+  const where = 'id' in by ? 'id = $1' : 'email = $1';
+  try {
+    const { rows } = await db.query<UserRow>(
+      'SELECT id, email, password_hash AS "passwordHash", role FROM users WHERE ' + where + ' LIMIT 1',
+      ['id' in by ? by.id : by.email]
+    );
+    return { ok: true, user: rows[0] ?? null };
+  } catch (err) {
+    console.error('[db] lettura utente non riuscita (hai eseguito npm run db:init?):', (err as Error).message);
+    return { ok: false, reason: 'failed' };
+  }
+}
+
+/** Crea l’amministratore o ne aggiorna la password (npm run admin:create). */
+export async function saveAdmin(env: Env, email: string, passwordHash: string): Promise<SaveResult> {
+  const db = getPool(env);
+  if (!db) return 'unconfigured';
+  try {
+    await db.query(
+      "INSERT INTO users (email, password_hash, role) VALUES ($1, $2, 'admin') ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = 'admin'",
+      [email, passwordHash]
+    );
+    return 'saved';
+  } catch (err) {
+    console.error('[db] salvataggio amministratore non riuscito:', (err as Error).message);
+    return 'failed';
+  }
+}
+
+export interface ContactRow {
+  id: number;
+  name: string;
+  email: string;
+  message: string | null;
+  createdAt: string;
+}
+
+export type ContactsResult =
+  | { ok: true; messages: ContactRow[] }
+  | { ok: false; reason: 'unconfigured' | 'failed' };
+
+/** Ultimi messaggi ricevuti dal modulo di contatto (i più recenti prima). */
+export async function listContacts(env: Env, limit = 200): Promise<ContactsResult> {
+  const db = getPool(env);
+  if (!db) return { ok: false, reason: 'unconfigured' };
+  try {
+    const { rows } = await db.query<ContactRow>(
+      'SELECT id, full_name AS name, email, message, created_at AS "createdAt" FROM contact_submissions ORDER BY created_at DESC, id DESC LIMIT $1',
+      [limit]
+    );
+    return { ok: true, messages: rows };
+  } catch (err) {
+    console.error('[db] lettura dei messaggi non riuscita:', (err as Error).message);
+    return { ok: false, reason: 'failed' };
+  }
+}
+
+/** Chiude il pool (serve agli script che devono terminare). */
+export async function closeDb(): Promise<void> {
+  await pool?.end();
+  pool = undefined;
+}

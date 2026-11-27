@@ -1,0 +1,151 @@
+import { useEffect, useState, type FormEvent } from 'react';
+
+interface Message {
+  id: number;
+  name: string;
+  email: string;
+  message: string | null;
+  createdAt: string;
+}
+
+type State =
+  | { kind: 'loading' }
+  | { kind: 'login'; error?: string }
+  | { kind: 'panel'; email: string; messages: Message[]; error?: string };
+
+const T = {
+  title: 'Area di amministrazione',
+  email: 'Email',
+  password: 'Password',
+  enter: 'Entra',
+  entering: 'Accesso…',
+  logout: 'Esci',
+  back: '← Torna al sito',
+  messages: 'Messaggi ricevuti',
+  empty: 'Ancora nessun messaggio.',
+  date: 'Data',
+  name: 'Nome',
+  message: 'Messaggio',
+  badLogin: 'Credenziali non valide.',
+  tooMany: 'Troppi tentativi: riprova tra qualche minuto.',
+  notConfigured: 'Accesso non configurato sul server (vedi README).',
+  failed: 'Non è stato possibile completare l’operazione. Riprova.',
+};
+
+const field = 'w-full px-4 py-3 text-sm bg-transparent border';
+const border = { borderColor: 'var(--color-border)', borderRadius: 'var(--radius-btn)' };
+
+export default function Admin() {
+  const [state, setState] = useState<State>({ kind: 'loading' });
+  const [form, setForm] = useState({ email: '', password: '' });
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    // Pagina privata: non va indicizzata.
+    document.title = T.title;
+    const robots = document.createElement('meta');
+    robots.name = 'robots';
+    robots.content = 'noindex';
+    document.head.appendChild(robots);
+    return () => robots.remove();
+  }, []);
+
+  async function loadPanel(email: string) {
+    const res = await fetch('/api/admin/messages');
+    // Si legge sempre il corpo: una risposta non consumata tiene occupata la connessione.
+    const data = (await res.json().catch(() => null)) as { messages?: Message[] } | null;
+    if (res.status === 401) return setState({ kind: 'login' });
+    if (!res.ok || !data?.messages) return setState({ kind: 'panel', email, messages: [], error: T.failed });
+    setState({ kind: 'panel', email, messages: data.messages });
+  }
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(async (res) => {
+        const data = (await res.json().catch(() => null)) as { email?: string } | null;
+        if (res.ok && data?.email) return loadPanel(data.email);
+        setState(res.status === 503 ? { kind: 'login', error: T.notConfigured } : { kind: 'login' });
+      })
+      .catch(() => setState({ kind: 'login', error: T.failed }));
+  }, []);
+
+  async function login(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = (await res.json().catch(() => null)) as { email?: string } | null;
+      if (res.ok && data?.email) {
+        setForm({ email: '', password: '' });
+        return await loadPanel(data.email);
+      }
+      const error = res.status === 401 ? T.badLogin : res.status === 429 ? T.tooMany : res.status === 503 ? T.notConfigured : T.failed;
+      setState({ kind: 'login', error });
+    } catch {
+      setState({ kind: 'login', error: T.failed });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function logout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+      .then((res) => res.text())
+      .catch(() => {});
+    setState({ kind: 'login' });
+  }
+
+  return (
+    <div className="min-h-screen px-6 py-10" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)', fontFamily: 'var(--font-body)' }}>
+      <div className="mx-auto max-w-4xl space-y-8">
+        <header className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold" style={{ fontFamily: 'var(--font-display)' }}>{T.title}</h1>
+          <a href="/" className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{T.back}</a>
+        </header>
+
+        {state.kind === 'login' ? (
+          <form onSubmit={login} className="max-w-sm space-y-4 p-6 border" style={{ ...border, backgroundColor: 'var(--color-surface)' }}>
+            <input type="email" required autoComplete="username" aria-label={T.email} placeholder={T.email} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={field} style={border} />
+            <input type="password" required autoComplete="current-password" aria-label={T.password} placeholder={T.password} value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} className={field} style={border} />
+            <button type="submit" disabled={busy} className="px-5 py-3 text-sm font-semibold disabled:opacity-60" style={{ backgroundColor: 'var(--color-accent)', color: 'var(--color-accent-text)', borderRadius: 'var(--radius-btn)' }}>
+              {busy ? T.entering : T.enter}
+            </button>
+            {state.error ? <p role="alert" className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{state.error}</p> : null}
+          </form>
+        ) : null}
+
+        {state.kind === 'panel' ? (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-lg font-semibold">{T.messages} ({state.messages.length})</h2>
+              <div className="flex items-center gap-4 text-sm">
+                <span style={{ color: 'var(--color-text-muted)' }}>{state.email}</span>
+                <button type="button" onClick={logout} className="px-3 py-1.5 border" style={border}>{T.logout}</button>
+              </div>
+            </div>
+            {state.error ? <p role="alert" className="text-sm">{state.error}</p> : null}
+            {state.messages.length === 0 && !state.error ? (
+              <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{T.empty}</p>
+            ) : (
+              <ul className="space-y-3">
+                {state.messages.map((m) => (
+                  <li key={m.id} className="p-4 border space-y-1" style={{ ...border, backgroundColor: 'var(--color-surface)' }}>
+                    <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
+                      <span><strong>{m.name}</strong> · <a href={'mailto:' + m.email}>{m.email}</a></span>
+                      <time dateTime={m.createdAt} style={{ color: 'var(--color-text-muted)' }}>{new Date(m.createdAt).toLocaleString('it')}</time>
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap break-words">{m.message || '—'}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ) : null}
+      </div>
+    </div>
+  );
+}

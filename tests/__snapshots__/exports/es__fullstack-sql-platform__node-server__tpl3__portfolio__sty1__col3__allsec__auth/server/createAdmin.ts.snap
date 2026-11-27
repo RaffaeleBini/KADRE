@@ -1,0 +1,54 @@
+/**
+ * Crea el administrador (o cambia su contraseña):
+ *
+ *   npm run admin:create -- tu@correo.com
+ *
+ * La contraseña se pide por terminal (no se ve ni queda en el historial). En automático se puede pasar con ADMIN_PASSWORD.
+ */
+import 'dotenv/config';
+import readline from 'node:readline';
+import { hashPassword } from './auth';
+import { closeDb, saveAdmin } from './db';
+
+function askPassword(question: string): Promise<string> {
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: Boolean(process.stdin.isTTY) });
+    // Oculta lo que se escribe (readline no tiene una opción pública para ello).
+    const muted = rl as unknown as { _writeToOutput: (text: string) => void };
+    const original = muted._writeToOutput.bind(rl);
+    muted._writeToOutput = (text) => {
+      if (text.startsWith(question)) original(text);
+    };
+    rl.question(question, (answer) => {
+      rl.close();
+      process.stdout.write('\n');
+      resolve(answer);
+    });
+  });
+}
+
+async function main() {
+  const email = (process.argv[2] ?? '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    console.error('Uso: npm run admin:create -- tu@correo.com');
+    process.exit(1);
+  }
+  const password = process.env.ADMIN_PASSWORD ?? (await askPassword('Contraseña (mín. 10 caracteres): '));
+  if (password.length < 10 || password.length > 200) {
+    console.error('La contraseña debe tener entre 10 y 200 caracteres.');
+    process.exit(1);
+  }
+  const result = await saveAdmin(process.env, email, await hashPassword(password));
+  await closeDb();
+  if (result === 'unconfigured') {
+    console.error('Falta DATABASE_URL: configúrala en .env y ejecuta antes npm run db:init.');
+    process.exit(1);
+  }
+  if (result === 'failed') {
+    console.error('No se pudo guardar el administrador (¿has ejecutado npm run db:init?).');
+    process.exit(1);
+  }
+  console.log('Administrador listo:', email);
+}
+
+main();

@@ -18,8 +18,87 @@ import { backendExpress } from './backendExpress';
 /** Il sito generato usa il database solo con lo stack Express (l'Astro ibrido con SQL non è offerto). */
 export const hasDatabase = (ctx: GenContext) => ctx.hasDatabase && ctx.skeleton === 'vite-react';
 
-function dbSource({ isIt }: GenContext): string {
+function dbSource({ isIt, auth }: GenContext): string {
   const t = (it: string, es: string) => (isIt ? it : es);
+  const authBlock = auth
+    ? `
+export interface UserRow {
+  id: number;
+  email: string;
+  passwordHash: string;
+  role: string;
+}
+
+export type UserResult = { ok: true; user: UserRow | null } | { ok: false; reason: 'unconfigured' | 'failed' };
+
+/** ${t('Cerca un utente per email o per id. Le query sono fisse: nessun dato dell’utente finisce nell’SQL.', 'Busca un usuario por correo o por id. Las consultas son fijas: ningún dato del usuario entra en el SQL.')} */
+export async function findUser(env: Env, by: { email: string } | { id: number }): Promise<UserResult> {
+  const db = getPool(env);
+  if (!db) return { ok: false, reason: 'unconfigured' };
+  const where = 'id' in by ? 'id = $1' : 'email = $1';
+  try {
+    const { rows } = await db.query<UserRow>(
+      'SELECT id, email, password_hash AS "passwordHash", role FROM users WHERE ' + where + ' LIMIT 1',
+      ['id' in by ? by.id : by.email]
+    );
+    return { ok: true, user: rows[0] ?? null };
+  } catch (err) {
+    console.error('[db] ${t('lettura utente non riuscita (hai eseguito npm run db:init?)', 'lectura de usuario fallida (¿has ejecutado npm run db:init?)')}:', (err as Error).message);
+    return { ok: false, reason: 'failed' };
+  }
+}
+
+/** ${t('Crea l’amministratore o ne aggiorna la password (npm run admin:create).', 'Crea el administrador o actualiza su contraseña (npm run admin:create).')} */
+export async function saveAdmin(env: Env, email: string, passwordHash: string): Promise<SaveResult> {
+  const db = getPool(env);
+  if (!db) return 'unconfigured';
+  try {
+    await db.query(
+      "INSERT INTO users (email, password_hash, role) VALUES ($1, $2, 'admin') ON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, role = 'admin'",
+      [email, passwordHash]
+    );
+    return 'saved';
+  } catch (err) {
+    console.error('[db] ${t('salvataggio amministratore non riuscito', 'no se pudo guardar el administrador')}:', (err as Error).message);
+    return 'failed';
+  }
+}
+
+export interface ContactRow {
+  id: number;
+  name: string;
+  email: string;
+  message: string | null;
+  createdAt: string;
+}
+
+export type ContactsResult =
+  | { ok: true; messages: ContactRow[] }
+  | { ok: false; reason: 'unconfigured' | 'failed' };
+
+/** ${t('Ultimi messaggi ricevuti dal modulo di contatto (i più recenti prima).', 'Últimos mensajes recibidos del formulario de contacto (los más recientes primero).')} */
+export async function listContacts(env: Env, limit = 200): Promise<ContactsResult> {
+  const db = getPool(env);
+  if (!db) return { ok: false, reason: 'unconfigured' };
+  try {
+    const { rows } = await db.query<ContactRow>(
+      'SELECT id, full_name AS name, email, message, created_at AS "createdAt" FROM contact_submissions ORDER BY created_at DESC, id DESC LIMIT $1',
+      [limit]
+    );
+    return { ok: true, messages: rows };
+  } catch (err) {
+    console.error('[db] ${t('lettura dei messaggi non riuscita', 'lectura de los mensajes fallida')}:', (err as Error).message);
+    return { ok: false, reason: 'failed' };
+  }
+}
+
+/** ${t('Chiude il pool (serve agli script che devono terminare).', 'Cierra el pool (lo necesitan los scripts que deben terminar).')} */
+export async function closeDb(): Promise<void> {
+  await pool?.end();
+  pool = undefined;
+}
+`
+    : '';
   return `import pg from 'pg';
 
 type Env = Record<string, string | undefined>;
@@ -89,7 +168,7 @@ export async function listCatalog(env: Env): Promise<CatalogResult> {
     return { ok: false, reason: 'failed' };
   }
 }
-`;
+${authBlock}`;
 }
 
 function dbInitSource({ isIt }: GenContext): string {

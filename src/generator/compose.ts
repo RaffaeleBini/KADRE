@@ -21,6 +21,7 @@ import { contentMarkdown } from './modules/contentMarkdown';
 import { contactEmailAstro, contactEmailExpress, contactWeb3forms } from './modules/contactForm';
 import { databasePostgres } from './modules/databasePostgres';
 import { i18n } from './modules/i18n';
+import { authAdmin } from './modules/authAdmin';
 import { deployWorkflowFile } from './project/deployWorkflow';
 import { envExampleFile } from './project/envExample';
 import { exportScriptFile } from './project/exportScript';
@@ -54,6 +55,8 @@ export const MODULES: GeneratorModule[] = [
   paymentsExpress,
   paymentsAstro,
   i18n,
+  // al final: sus scripts sustituyen a los anteriores y repiten los de Express y db:init
+  authAdmin,
 ];
 
 function assemblePackageJson(ctx: GenContext, skeleton: Skeleton, modules: GeneratorModule[]): string {

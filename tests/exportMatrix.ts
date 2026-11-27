@@ -54,6 +54,8 @@ export interface ExportCombo {
   payments?: boolean;
   /** sitio en dos idiomas (solo stacks Astro) */
   i18n?: boolean;
+  /** área /admin con inicio de sesión (solo el stack con PostgreSQL) */
+  auth?: boolean;
 }
 
 /** Coppie (stack, piattaforma) che il configuratore offre. */
@@ -78,6 +80,7 @@ function makeId(c: Omit<ExportCombo, 'id'>): string {
     ...(c.markdown ? ['markdown'] : []),
     ...(c.payments ? ['payments'] : []),
     ...(c.i18n ? ['i18n'] : []),
+    ...(c.auth ? ['auth'] : []),
   ].join('__');
 }
 
@@ -197,6 +200,22 @@ export function structuralCombos(): ExportCombo[] {
     };
     combos.push({ ...base, id: makeId(base) });
   });
+  // Área de administración: solo el stack React + Express + PostgreSQL. Una sola y otra con TODAS las integraciones.
+  (['es', 'it'] as const).forEach((locale, k) => {
+    const base = {
+      locale,
+      stackId: 'fullstack-sql-platform' as StackId,
+      platform: 'node-server' as DeployPlatform,
+      templateIndex: (i + k + 5) % nTemplates,
+      projectType: PROJECT_TYPES[(i + k + 5) % PROJECT_TYPES.length],
+      styleIndex: (i + k + 5) % nStyles,
+      colorIndex: (i + k + 5) % nColors,
+      allSections: true,
+      auth: true,
+      ...(k === 1 ? { analytics: true, contact: true, payments: true } : {}),
+    };
+    combos.push({ ...base, id: makeId(base) });
+  });
   return combos;
 }
 
@@ -236,7 +255,8 @@ export function snapshotCombos(): ExportCombo[] {
     .concat(all.filter((c) => c.contact && c.platform !== 'netlify' && c.platform !== 'cloudflare'))
     .concat(all.filter((c) => c.markdown && !c.payments && c.platform !== 'cloudflare'))
     .concat(all.filter((c) => c.payments && !c.i18n && ['static-vite-react', 'astro-hybrid', 'hybrid-node-api'].includes(c.stackId)))
-    .concat(all.filter((c) => c.i18n));
+    .concat(all.filter((c) => c.i18n))
+    .concat(all.filter((c) => c.auth && !c.contact));
 }
 
 /** Risposte del passo Discovery coerenti con lo stack (come le produrrebbe l'utente). */
@@ -266,6 +286,7 @@ export function buildInput(c: ExportCombo): CodeGenerationInput {
       ...(c.contact ? (['contact-form'] as const) : []),
       ...(c.payments ? (['payments'] as const) : []),
       ...(c.i18n ? (['i18n'] as const) : []),
+      ...(c.auth ? (['auth'] as const) : []),
     ], c.markdown),
     stack,
     template,

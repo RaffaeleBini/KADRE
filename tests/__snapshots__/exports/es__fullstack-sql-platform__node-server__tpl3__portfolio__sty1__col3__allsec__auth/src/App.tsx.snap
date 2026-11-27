@@ -1,0 +1,25 @@
+import { lazy, Suspense } from 'react';
+import config from './data/siteConfig.json';
+import content from './data/siteContent.json';
+import { Site } from './site/Site';
+import type { SiteConfig, SiteContent } from './site/types';
+
+// El compilador comprueba el contenido contra SiteContent.
+const siteContent: SiteContent = content;
+// En el JSON valores como "hero" son cadenas genéricas: el cast los restringe a los tipos del sitio.
+const siteConfig = config as SiteConfig;
+
+// El panel se carga solo en /admin: no pesa en el sitio público.
+const Admin = lazy(() => import('./admin/Admin'));
+const isAdminPage = window.location.pathname.replace(/\/+$/, '') === '/admin';
+
+export default function App() {
+  if (isAdminPage) {
+    return (
+      <Suspense fallback={null}>
+        <Admin />
+      </Suspense>
+    );
+  }
+  return <Site content={siteContent} config={siteConfig} />;
+}

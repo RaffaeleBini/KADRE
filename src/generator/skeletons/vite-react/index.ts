@@ -81,7 +81,25 @@ export default defineConfig({
     2
   );
 
-  const appTsx = `import config from './data/siteConfig.json';
+  // Con área de administración, /admin muestra el panel (cargado aparte) en lugar del sitio
+  const adminImport = ctx.auth ? "import { lazy, Suspense } from 'react';\n" : '';
+  const adminSetup = ctx.auth
+    ? `\n// ${isIt ? 'Il pannello si carica solo su /admin: non pesa sul sito pubblico.' : 'El panel se carga solo en /admin: no pesa en el sitio público.'}
+const Admin = lazy(() => import('./admin/Admin'));
+const isAdminPage = window.location.pathname.replace(/\\/+$/, '') === '/admin';\n`
+    : '';
+  const adminBranch = ctx.auth
+    ? `  if (isAdminPage) {
+    return (
+      <Suspense fallback={null}>
+        <Admin />
+      </Suspense>
+    );
+  }
+`
+    : '';
+
+  const appTsx = `${adminImport}import config from './data/siteConfig.json';
 import content from './data/siteContent.json';
 import { Site } from './site/Site';
 import type { SiteConfig, SiteContent } from './site/types';
@@ -90,9 +108,9 @@ import type { SiteConfig, SiteContent } from './site/types';
 const siteContent: SiteContent = content;
 // ${isIt ? 'Nel JSON i valori come "hero" sono stringhe generiche: il cast li restringe ai tipi del sito.' : 'En el JSON valores como "hero" son cadenas genéricas: el cast los restringe a los tipos del sitio.'}
 const siteConfig = config as SiteConfig;
-
+${adminSetup}
 export default function App() {
-  return <Site content={siteContent} config={siteConfig} />;
+${adminBranch}  return <Site content={siteContent} config={siteConfig} />;
 }
 `;
 

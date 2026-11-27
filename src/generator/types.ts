@@ -46,6 +46,8 @@ export interface GenContext extends CodeGenerationInput {
   i18n: boolean;
   /** el otro idioma: si el sitio está en español, italiano, y viceversa */
   altLocale: Locale;
+  /** área /admin con inicio de sesión para leer los mensajes (solo React + Express + PostgreSQL) */
+  auth: boolean;
 }
 
 /**
