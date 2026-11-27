@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
+import { listCatalog, saveContact } from './db';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -15,11 +16,29 @@ app.get('/api/health', (_req, res) => {
 
 app.post('/api/contact', async (req, res) => {
   const { name, email, message } = req.body ?? {};
-  if (!name || !email) {
+  if (typeof name !== 'string' || typeof email !== 'string' || !name.trim() || !email.trim()) {
     return res.status(400).json({ error: 'Nombre y correo son obligatorios.' });
   }
-  console.info('[Contacto recibido]', { name, email, length: String(message || '').length });
+  const saved = await saveContact(process.env, {
+    name: name.trim(),
+    email: email.trim(),
+    message: typeof message === 'string' ? message : '',
+  });
+  if (saved === 'unconfigured') {
+    return res.status(503).json({ error: 'Base de datos no configurada (ver README).' });
+  }
+  if (saved === 'failed') return res.status(502).json({ error: 'No se pudo guardar el mensaje.' });
   return res.status(201).json({ received: true });
+});
+
+// Endpoint de ejemplo: lee catalog_items (el sitio aún muestra el catálogo de siteContent.json).
+app.get('/api/catalog', async (_req, res) => {
+  const result = await listCatalog(process.env);
+  if (result.ok) return res.json({ items: result.items });
+  if (result.reason === 'unconfigured') {
+    return res.status(503).json({ error: 'Base de datos no configurada (ver README).' });
+  }
+  return res.status(502).json({ error: 'Lectura del catálogo fallida (¿has ejecutado npm run db:init?).' });
 });
 
 if (process.env.NODE_ENV === 'production') {

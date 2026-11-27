@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
+import { listCatalog, saveContact } from './db';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -15,11 +16,29 @@ app.get('/api/health', (_req, res) => {
 
 app.post('/api/contact', async (req, res) => {
   const { name, email, message } = req.body ?? {};
-  if (!name || !email) {
+  if (typeof name !== 'string' || typeof email !== 'string' || !name.trim() || !email.trim()) {
     return res.status(400).json({ error: 'Nome ed email sono obbligatori.' });
   }
-  console.info('[Contatto ricevuto]', { name, email, length: String(message || '').length });
+  const saved = await saveContact(process.env, {
+    name: name.trim(),
+    email: email.trim(),
+    message: typeof message === 'string' ? message : '',
+  });
+  if (saved === 'unconfigured') {
+    return res.status(503).json({ error: 'Database non configurato (vedi README).' });
+  }
+  if (saved === 'failed') return res.status(502).json({ error: 'Non è stato possibile salvare il messaggio.' });
   return res.status(201).json({ received: true });
+});
+
+// Endpoint d’esempio: legge catalog_items (il sito mostra ancora il catalogo di siteContent.json).
+app.get('/api/catalog', async (_req, res) => {
+  const result = await listCatalog(process.env);
+  if (result.ok) return res.json({ items: result.items });
+  if (result.reason === 'unconfigured') {
+    return res.status(503).json({ error: 'Database non configurato (vedi README).' });
+  }
+  return res.status(502).json({ error: 'Lettura del catalogo non riuscita (hai eseguito npm run db:init?).' });
 });
 
 if (process.env.NODE_ENV === 'production') {

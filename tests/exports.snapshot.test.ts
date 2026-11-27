@@ -57,8 +57,8 @@ describe('invarianti su tutte le combinazioni strutturali', () => {
 
       // nessun placeholder del template rimasto non sostituito
       for (const f of files) {
-        // contactEmail.ts y stripeCheckout.ts usan "string | undefined" como tipo legítimo: solo se busca [object Object]
-        const placeholder = /(contactEmail|stripeCheckout)\.ts$/.test(f.path) ? /\[object Object\]/ : /\bundefined\b|\[object Object\]/;
+        // contactEmail.ts, stripeCheckout.ts y db.ts usan "string | undefined" como tipo legítimo: solo se busca [object Object]
+        const placeholder = /(contactEmail|stripeCheckout|db)\.ts$/.test(f.path) ? /\[object Object\]/ : /\bundefined\b|\[object Object\]/;
         expect(f.content, f.path).not.toMatch(placeholder);
       }
 
@@ -84,6 +84,18 @@ describe('invarianti su tutte le combinazioni strutturali', () => {
       if (expectedPayments) {
         const plans = Object.keys(cfg.payments.links ?? cfg.payments.prices);
         expect(plans.length, 'un plan por cada plan del contenido').toBeGreaterThan(0);
+      }
+
+      // base de datos SQL: db.ts, db:init y esquema solo con el stack Express + PostgreSQL
+      const sql = STACK_PROFILES[combo.stackId].database;
+      for (const f of ['server/db.ts', 'server/dbInit.ts', 'db/schema.sql']) expect(byPath.has(f), f).toBe(sql);
+      expect(Boolean(JSON.parse(byPath.get('package.json')!).scripts['db:init']), 'script db:init').toBe(sql);
+      expect(byPath.get('.env.example')!.includes('DATABASE_URL='), 'DATABASE_URL en .env.example').toBe(sql);
+      if (sql) {
+        const server = byPath.get('server/index.ts')!;
+        expect(server).toContain("from './db'");
+        expect(server).toContain('/api/catalog');
+        expect(server).toContain('saveContact');
       }
 
       // coerenza backend: server presente se e solo se lo script dev lo avvia

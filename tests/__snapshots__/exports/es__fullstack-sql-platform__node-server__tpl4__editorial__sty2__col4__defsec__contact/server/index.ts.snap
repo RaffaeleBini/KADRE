@@ -3,6 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
 import { parseContact, sendContactEmail } from './contactEmail';
+import { listCatalog, saveContact } from './db';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -17,14 +18,28 @@ app.get('/api/health', (_req, res) => {
 app.post('/api/contact', async (req, res) => {
   const parsed = parseContact(req.body);
   if (!parsed.ok) return res.status(400).json({ error: parsed.error });
-  // Campo trampa relleno: se responde "ok" sin enviar nada.
+  // Campo trampa relleno: se responde "ok" sin guardar ni enviar nada.
   if (parsed.spam) return res.status(201).json({ received: true });
-  const result = await sendContactEmail(process.env, parsed.data);
-  if (result === 'unconfigured') {
-    return res.status(503).json({ error: 'Envío de correo no configurado (ver README).' });
+  // Se guarda en la base de datos y se envía el correo: basta con que una de las dos funcione.
+  const [saved, sent] = await Promise.all([saveContact(process.env, parsed.data), sendContactEmail(process.env, parsed.data)]);
+  if (saved === 'saved' || sent === 'sent') {
+    if (saved === 'failed' || sent === 'failed') console.warn('[Contacto] uno de los dos destinos falló', { saved, sent });
+    return res.status(201).json({ received: true });
   }
-  if (result === 'failed') return res.status(502).json({ error: 'El servicio de correo no aceptó el mensaje.' });
-  return res.status(201).json({ received: true });
+  if (saved === 'unconfigured' && sent === 'unconfigured') {
+    return res.status(503).json({ error: 'Ni la base de datos ni el correo están configurados (ver README).' });
+  }
+  return res.status(502).json({ error: 'No se pudo guardar ni enviar el mensaje.' });
+});
+
+// Endpoint de ejemplo: lee catalog_items (el sitio aún muestra el catálogo de siteContent.json).
+app.get('/api/catalog', async (_req, res) => {
+  const result = await listCatalog(process.env);
+  if (result.ok) return res.json({ items: result.items });
+  if (result.reason === 'unconfigured') {
+    return res.status(503).json({ error: 'Base de datos no configurada (ver README).' });
+  }
+  return res.status(502).json({ error: 'Lectura del catálogo fallida (¿has ejecutado npm run db:init?).' });
 });
 
 if (process.env.NODE_ENV === 'production') {

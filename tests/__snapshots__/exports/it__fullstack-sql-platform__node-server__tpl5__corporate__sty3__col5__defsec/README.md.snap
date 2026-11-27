@@ -6,8 +6,8 @@ Automazione e manifattura avanzata
 
 - **Stack**: React + Express + schema PostgreSQL
 - **Frontend**: React 19 + TypeScript + Vite
-- **Backend**: Node.js + Express: /api/contact e /api/health
-- **Database**: PostgreSQL: db/schema.sql + DATABASE_URL
+- **Backend**: Node.js + Express: /api/contact, /api/catalog e /api/health
+- **Database**: PostgreSQL (pg): db/schema.sql + npm run db:init + DATABASE_URL
 - **Modello**: Editoriale e Documentazione
 - **Stile grafico**: Architettonico Solido · Bianco Puro e Blu Ingegneria
 
@@ -44,4 +44,15 @@ chmod +x esporta-github.sh
 1. Su un hosting Node (Render, Railway…) crea un servizio web collegato a `kadre-test/italia-precisione-industriale`.
 2. Comando di build: `npm install && npm run build` · Comando di avvio: `npm start`.
 3. Il server ascolta sulla porta indicata dalla variabile `PORT` (la impostano i provider).
-4. Aggiungi la variabile `DATABASE_URL` con la stringa di connessione PostgreSQL (es. Neon) ed esegui `db/schema.sql` sul database.
+4. Aggiungi la variabile `DATABASE_URL` con la stringa di connessione PostgreSQL (es. Neon) ed esegui `npm run db:init` (vedi la sezione Database PostgreSQL).
+
+## Database PostgreSQL
+
+Il server salva i messaggi del modulo di contatto in `contact_submissions` ed espone `GET /api/catalog`, un endpoint d’esempio che legge `catalog_items`. Il sito non usa ancora `/api/catalog`: mostra il catalogo di `src/data/siteContent.json`; l’endpoint serve da modello per le tue query. Finché `DATABASE_URL` non è impostata le due rotte rispondono **503** e il modulo mostra un errore: non finge di aver salvato.
+
+1. Crea un database PostgreSQL. Per iniziare basta il piano gratuito di **Neon** (https://neon.com: 1 GB per progetto e 100 ore di calcolo al mese; i limiti possono cambiare). Copia la stringa di connessione, che termina con `?sslmode=require`.
+2. Copia `.env.example` in `.env` e incolla la stringa in `DATABASE_URL`. Sull’hosting aggiungila nelle variabili d’ambiente: è un segreto, non va nel codice né su GitHub.
+3. Esegui `npm run db:init`: applica `db/schema.sql` e carica il catalogo del sito. Si può ripetere senza duplicare nulla.
+4. Avvia il server e invia un messaggio dal modulo: lo trovi nella tabella `contact_submissions` (dal pannello SQL di Neon o con `psql`).
+
+Non inclusi: migrazioni versionate, accesso in lettura ai messaggi dal sito e limite di richieste sulle rotte.

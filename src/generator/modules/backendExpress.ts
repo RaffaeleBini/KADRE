@@ -25,7 +25,43 @@ export const backendExpress: GeneratorModule = {
     const { isIt } = ctx;
     const realEmail = hasContactForm(ctx);
     const checkout = ctx.payments;
-    const contactRoute = realEmail
+    // este módulo solo está activo con el esqueleto Vite, así que hasDatabase = stack Express + PostgreSQL
+    const db = ctx.hasDatabase;
+    const contactRoute = realEmail && db
+      ? `app.post('/api/contact', async (req, res) => {
+  const parsed = parseContact(req.body);
+  if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+  // ${isIt ? 'Campo trappola riempito: si risponde "ok" senza salvare né inviare nulla.' : 'Campo trampa relleno: se responde "ok" sin guardar ni enviar nada.'}
+  if (parsed.spam) return res.status(201).json({ received: true });
+  // ${isIt ? 'Si salva nel database e si invia l’email: basta che una delle due vada a buon fine.' : 'Se guarda en la base de datos y se envía el correo: basta con que una de las dos funcione.'}
+  const [saved, sent] = await Promise.all([saveContact(process.env, parsed.data), sendContactEmail(process.env, parsed.data)]);
+  if (saved === 'saved' || sent === 'sent') {
+    if (saved === 'failed' || sent === 'failed') console.warn('[${isIt ? 'Contatto' : 'Contacto'}] ${isIt ? 'una delle due destinazioni è fallita' : 'uno de los dos destinos falló'}', { saved, sent });
+    return res.status(201).json({ received: true });
+  }
+  if (saved === 'unconfigured' && sent === 'unconfigured') {
+    return res.status(503).json({ error: '${isIt ? 'Né database né email sono configurati (vedi README).' : 'Ni la base de datos ni el correo están configurados (ver README).'}' });
+  }
+  return res.status(502).json({ error: '${isIt ? 'Non è stato possibile salvare né inviare il messaggio.' : 'No se pudo guardar ni enviar el mensaje.'}' });
+});`
+      : db
+      ? `app.post('/api/contact', async (req, res) => {
+  const { name, email, message } = req.body ?? {};
+  if (typeof name !== 'string' || typeof email !== 'string' || !name.trim() || !email.trim()) {
+    return res.status(400).json({ error: '${isIt ? 'Nome ed email sono obbligatori.' : 'Nombre y correo son obligatorios.'}' });
+  }
+  const saved = await saveContact(process.env, {
+    name: name.trim(),
+    email: email.trim(),
+    message: typeof message === 'string' ? message : '',
+  });
+  if (saved === 'unconfigured') {
+    return res.status(503).json({ error: '${isIt ? 'Database non configurato (vedi README).' : 'Base de datos no configurada (ver README).'}' });
+  }
+  if (saved === 'failed') return res.status(502).json({ error: '${isIt ? 'Non è stato possibile salvare il messaggio.' : 'No se pudo guardar el mensaje.'}' });
+  return res.status(201).json({ received: true });
+});`
+      : realEmail
       ? `app.post('/api/contact', async (req, res) => {
   const parsed = parseContact(req.body);
   if (!parsed.ok) return res.status(400).json({ error: parsed.error });
@@ -46,6 +82,19 @@ export const backendExpress: GeneratorModule = {
   console.info('[${isIt ? 'Contatto ricevuto' : 'Contacto recibido'}]', { name, email, length: String(message || '').length });
   return res.status(201).json({ received: true });
 });`;
+    const catalogRoute = db
+      ? `
+
+// ${isIt ? 'Endpoint d’esempio: legge catalog_items (il sito mostra ancora il catalogo di siteContent.json).' : 'Endpoint de ejemplo: lee catalog_items (el sitio aún muestra el catálogo de siteContent.json).'}
+app.get('/api/catalog', async (_req, res) => {
+  const result = await listCatalog(process.env);
+  if (result.ok) return res.json({ items: result.items });
+  if (result.reason === 'unconfigured') {
+    return res.status(503).json({ error: '${isIt ? 'Database non configurato (vedi README).' : 'Base de datos no configurada (ver README).'}' });
+  }
+  return res.status(502).json({ error: '${isIt ? 'Lettura del catalogo non riuscita (hai eseguito npm run db:init?).' : 'Lectura del catálogo fallida (¿has ejecutado npm run db:init?).'}' });
+});`
+      : '';
     const checkoutRoute = checkout
       ? `
 
@@ -76,7 +125,7 @@ app.post('/api/checkout', async (req, res) => {
       content: `import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import 'dotenv/config';${checkout ? "\nimport config from '../src/data/siteConfig.json';\nimport { createCheckoutSession, type PlanPrices } from './stripeCheckout';" : ''}${realEmail ? "\nimport { parseContact, sendContactEmail } from './contactEmail';" : ''}
+import 'dotenv/config';${checkout ? "\nimport config from '../src/data/siteConfig.json';\nimport { createCheckoutSession, type PlanPrices } from './stripeCheckout';" : ''}${realEmail ? "\nimport { parseContact, sendContactEmail } from './contactEmail';" : ''}${db ? "\nimport { listCatalog, saveContact } from './db';" : ''}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -88,7 +137,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, timestamp: new Date().toISOString() });
 });
 
-${contactRoute}${checkoutRoute}
+${contactRoute}${catalogRoute}${checkoutRoute}
 
 if (process.env.NODE_ENV === 'production') {
   const distDir = path.resolve(__dirname, '../dist');

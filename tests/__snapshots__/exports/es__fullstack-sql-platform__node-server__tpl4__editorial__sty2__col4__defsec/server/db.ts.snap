@@ -1,0 +1,69 @@
+import pg from 'pg';
+
+type Env = Record<string, string | undefined>;
+
+let pool: pg.Pool | undefined;
+
+/** Pool compartido. null si DATABASE_URL no está definida. */
+function getPool(env: Env): pg.Pool | null {
+  const url = env.DATABASE_URL;
+  if (!url) return null;
+  if (!pool) {
+    // Timeout corto: con la base de datos apagada se responde 502 en lugar de quedar colgado.
+    pool = new pg.Pool({ connectionString: url, max: 5, connectionTimeoutMillis: 5000 });
+    pool.on('error', (err) => console.error('[db]', err.message));
+  }
+  return pool;
+}
+
+export interface ContactRecord {
+  name: string;
+  email: string;
+  message: string;
+}
+
+export type SaveResult = 'saved' | 'unconfigured' | 'failed';
+
+/** Guarda un mensaje en contact_submissions. Las longitudes respetan las columnas del esquema. */
+export async function saveContact(env: Env, data: ContactRecord): Promise<SaveResult> {
+  const db = getPool(env);
+  if (!db) return 'unconfigured';
+  try {
+    await db.query(
+      'INSERT INTO contact_submissions (full_name, email, message) VALUES ($1, $2, $3)',
+      [data.name.slice(0, 160), data.email.slice(0, 255), data.message.slice(0, 5000)]
+    );
+    return 'saved';
+  } catch (err) {
+    console.error('[db] no se pudo guardar el contacto:', (err as Error).message);
+    return 'failed';
+  }
+}
+
+export interface CatalogRow {
+  slug: string;
+  title: string;
+  category: string;
+  priceLabel: string | null;
+  description: string | null;
+  imagePath: string | null;
+}
+
+export type CatalogResult =
+  | { ok: true; items: CatalogRow[] }
+  | { ok: false; reason: 'unconfigured' | 'failed' };
+
+/** Lee las entradas publicadas del catálogo. */
+export async function listCatalog(env: Env): Promise<CatalogResult> {
+  const db = getPool(env);
+  if (!db) return { ok: false, reason: 'unconfigured' };
+  try {
+    const { rows } = await db.query<CatalogRow>(
+      'SELECT slug, title, category, price_label AS "priceLabel", description, image_path AS "imagePath" FROM catalog_items WHERE published ORDER BY id'
+    );
+    return { ok: true, items: rows };
+  } catch (err) {
+    console.error('[db] lectura del catálogo fallida (¿has ejecutado npm run db:init?):', (err as Error).message);
+    return { ok: false, reason: 'failed' };
+  }
+}

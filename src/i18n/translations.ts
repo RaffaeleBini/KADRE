@@ -347,7 +347,7 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
         {
           name: 'Full-Stack con Base de Datos',
           stack: 'React + Express + Esquema SQL',
-          detail: 'Estructura completa con tablas relacionales listas para PostgreSQL y autenticación.',
+          detail: 'Servidor Node.js con PostgreSQL: guarda los mensajes de contacto y expone un endpoint de ejemplo.',
         },
       ],
       githubCardTitle: 'Entrega lista para GitHub',
@@ -667,7 +667,7 @@ export const TRANSLATIONS: Record<Locale, AppTranslations> = {
         {
           name: 'Full-Stack con Database',
           stack: 'React + Express + Schema SQL',
-          detail: 'Struttura completa con tabelle relazionali pronte per PostgreSQL e autenticazione.',
+          detail: 'Server Node.js con PostgreSQL: salva i messaggi di contatto ed espone un endpoint d’esempio.',
         },
       ],
       githubCardTitle: 'Consegna pronta per GitHub',

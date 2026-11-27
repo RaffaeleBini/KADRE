@@ -1,0 +1,58 @@
+/**
+ * Prepara la base de datos: aplica db/schema.sql y carga el catálogo del sitio.
+ * Se puede repetir sin riesgo: las tablas usan IF NOT EXISTS y el catálogo no duplica entradas.
+ *
+ *   npm run db:init
+ */
+import 'dotenv/config';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import pg from 'pg';
+import content from '../src/data/siteContent.json';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+
+function slugify(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+async function main() {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    console.error('Falta DATABASE_URL: copia .env.example a .env e introduce la cadena de conexión.');
+    process.exit(1);
+  }
+
+  const client = new pg.Client({ connectionString: url });
+  await client.connect();
+  try {
+    await client.query(fs.readFileSync(path.resolve(here, '../db/schema.sql'), 'utf8'));
+
+    const used = new Set<string>();
+    let added = 0;
+    for (const [i, item] of content.catalogItems.entries()) {
+      let slug = slugify(item.title) || 'item-' + (i + 1);
+      if (used.has(slug)) slug += '-' + (i + 1);
+      used.add(slug);
+      const res = await client.query(
+        'INSERT INTO catalog_items (slug, title, category, price_label, description, image_path) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (slug) DO NOTHING',
+        [slug, item.title, item.category, item.priceOrTag, item.description, item.imageUrl]
+      );
+      added += res.rowCount ?? 0;
+    }
+    console.log('Esquema aplicado. Entradas de catálogo añadidas:', added);
+  } finally {
+    await client.end();
+  }
+}
+
+main().catch((err) => {
+  console.error('db:init fallido:', (err as Error).message);
+  process.exit(1);
+});

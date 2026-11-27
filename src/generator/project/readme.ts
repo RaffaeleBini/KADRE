@@ -58,7 +58,7 @@ chmod +x ${scriptFilename}
 
 ${
   github.deployPlatform === 'node-server'
-    ? `1. Su un hosting Node (Render, Railway…) crea un servizio web collegato a \`${ghUser}/${repoSlug}\`.\n2. Comando di build: \`npm install && npm run build\` · Comando di avvio: \`npm start\`.\n3. Il server ascolta sulla porta indicata dalla variabile \`PORT\` (la impostano i provider).${stack.includesDatabase ? '\n4. Aggiungi la variabile \`DATABASE_URL\` con la stringa di connessione PostgreSQL (es. Neon) ed esegui \`db/schema.sql\` sul database.' : ''}`
+    ? `1. Su un hosting Node (Render, Railway…) crea un servizio web collegato a \`${ghUser}/${repoSlug}\`.\n2. Comando di build: \`npm install && npm run build\` · Comando di avvio: \`npm start\`.\n3. Il server ascolta sulla porta indicata dalla variabile \`PORT\` (la impostano i provider).${stack.includesDatabase ? '\n4. Aggiungi la variabile \`DATABASE_URL\` con la stringa di connessione PostgreSQL (es. Neon) ed esegui \`npm run db:init\` (vedi la sezione Database PostgreSQL).' : ''}`
     : github.deployPlatform === 'github-pages'
     ? `1. Apri il repository su GitHub → **Settings** → **Pages**.\n2. In **Build and deployment / Source**, seleziona **GitHub Actions**.\n3. Il workflow \`.github/workflows/deploy.yml\` pubblicherà automaticamente il sito su \`https://${ghUser}.github.io/${repoSlug}/\`.`
     : astroServer && github.deployPlatform === 'cloudflare'
@@ -113,7 +113,7 @@ chmod +x ${scriptFilename}
 
 ${
   github.deployPlatform === 'node-server'
-    ? `1. En un hosting Node (Render, Railway…) crea un servicio web conectado a \`${ghUser}/${repoSlug}\`.\n2. Comando de compilación: \`npm install && npm run build\` · Comando de arranque: \`npm start\`.\n3. El servidor escucha en el puerto de la variable \`PORT\` (la definen los proveedores).${stack.includesDatabase ? '\n4. Añade la variable \`DATABASE_URL\` con la cadena de conexión PostgreSQL (p. ej. Neon) y ejecuta \`db/schema.sql\` en la base de datos.' : ''}`
+    ? `1. En un hosting Node (Render, Railway…) crea un servicio web conectado a \`${ghUser}/${repoSlug}\`.\n2. Comando de compilación: \`npm install && npm run build\` · Comando de arranque: \`npm start\`.\n3. El servidor escucha en el puerto de la variable \`PORT\` (la definen los proveedores).${stack.includesDatabase ? '\n4. Añade la variable \`DATABASE_URL\` con la cadena de conexión PostgreSQL (p. ej. Neon) y ejecuta \`npm run db:init\` (ver la sección Base de datos PostgreSQL).' : ''}`
     : github.deployPlatform === 'github-pages'
     ? `1. Abre tu repositorio en GitHub → **Settings** → **Pages**.\n2. En **Build and deployment / Source**, selecciona **GitHub Actions**.\n3. El flujo \`.github/workflows/deploy.yml\` publicará automáticamente tu web en \`https://${ghUser}.github.io/${repoSlug}/\`.`
     : astroServer && github.deployPlatform === 'cloudflare'

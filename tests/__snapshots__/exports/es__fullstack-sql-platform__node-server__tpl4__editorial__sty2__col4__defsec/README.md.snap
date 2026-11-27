@@ -6,8 +6,8 @@ Ensayos sobre diseño de sistemas y software
 
 - **Stack**: React + Express + esquema PostgreSQL
 - **Frontend**: React 19 + TypeScript + Vite
-- **Backend**: Node.js + Express: /api/contact y /api/health
-- **Base de datos**: PostgreSQL: db/schema.sql + DATABASE_URL
+- **Backend**: Node.js + Express: /api/contact, /api/catalog y /api/health
+- **Base de datos**: PostgreSQL (pg): db/schema.sql + npm run db:init + DATABASE_URL
 - **Plantilla**: Corporativa Industrial B2B
 - **Estilo gráfico**: Minimalista Moderno · Marfil Editorial y Borgoña
 
@@ -44,4 +44,15 @@ chmod +x exportar-github.sh
 1. En un hosting Node (Render, Railway…) crea un servicio web conectado a `kadre-test/cuaderno-tecnico`.
 2. Comando de compilación: `npm install && npm run build` · Comando de arranque: `npm start`.
 3. El servidor escucha en el puerto de la variable `PORT` (la definen los proveedores).
-4. Añade la variable `DATABASE_URL` con la cadena de conexión PostgreSQL (p. ej. Neon) y ejecuta `db/schema.sql` en la base de datos.
+4. Añade la variable `DATABASE_URL` con la cadena de conexión PostgreSQL (p. ej. Neon) y ejecuta `npm run db:init` (ver la sección Base de datos PostgreSQL).
+
+## Base de datos PostgreSQL
+
+El servidor guarda los mensajes del formulario de contacto en `contact_submissions` y expone `GET /api/catalog`, un endpoint de ejemplo que lee `catalog_items`. El sitio aún no usa `/api/catalog`: muestra el catálogo de `src/data/siteContent.json`; el endpoint sirve de modelo para tus consultas. Mientras `DATABASE_URL` no esté definida las dos rutas responden **503** y el formulario muestra un error: no finge haber guardado.
+
+1. Crea una base de datos PostgreSQL. Para empezar basta el plan gratuito de **Neon** (https://neon.com: 1 GB por proyecto y 100 horas de cómputo al mes; los límites pueden cambiar). Copia la cadena de conexión, que termina en `?sslmode=require`.
+2. Copia `.env.example` a `.env` y pega la cadena en `DATABASE_URL`. En el hosting añádela en las variables de entorno: es un secreto, no va en el código ni en GitHub.
+3. Ejecuta `npm run db:init`: aplica `db/schema.sql` y carga el catálogo del sitio. Se puede repetir sin duplicar nada.
+4. Arranca el servidor y envía un mensaje desde el formulario: lo verás en la tabla `contact_submissions` (desde el panel SQL de Neon o con `psql`).
+
+No incluidos: migraciones versionadas, lectura de los mensajes desde el sitio y límite de peticiones en las rutas.
