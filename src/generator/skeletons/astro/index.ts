@@ -55,11 +55,16 @@ function astroFiles(ctx: GenContext, assembled: AssembledProject): GeneratedFile
         .join('\n')}\n    },\n  },`
     : '';
 
+  // Sitio en dos idiomas: el enrutado nativo de Astro (/ para el principal, /<otro>/ para el segundo)
+  const i18nConfig = ctx.i18n
+    ? `\n  i18n: {\n    defaultLocale: '${locale}',\n    locales: ['${locale}', '${ctx.altLocale}'],\n    routing: { prefixDefaultLocale: false },\n  },`
+    : '';
+
   const astroConfig = `import { defineConfig${assembled.astroEnv.length ? ', envField' : ''} } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';${adapterImport}
 
-export default defineConfig({${siteAndBase}${adapterLine}${envSchema}
+export default defineConfig({${siteAndBase}${adapterLine}${envSchema}${i18nConfig}
   integrations: [react()],
   vite: { plugins: [tailwindcss()] },
 });
@@ -75,11 +80,6 @@ export default defineConfig({${siteAndBase}${adapterLine}${envSchema}
     null,
     2
   );
-
-  // Astro agrupa estos scripts como módulos del navegador (src/pages → ../)
-  const clientScripts = assembled.clientImports
-    .map((m) => `\n    <script>import '.${m}';</script>`)
-    .join('');
 
   // Con Markdown, las FAQ salen de src/content/faqs/*.md (Astro las convierte a HTML al compilar)
   const markdownImport = ctx.markdown ? "\nimport { getCollection } from 'astro:content';" : '';
@@ -97,28 +97,71 @@ const siteContent: SiteContent = {
 };`
     : 'const siteContent: SiteContent = content;';
 
-  const indexAstro = `---
-import '../index.css';
-import config from '../data/siteConfig.json';
-import content from '../data/siteContent.json';
-import { Site } from '../site/Site';
-import type { SiteConfig, SiteContent } from '../site/types';${markdownImport}
+  /**
+   * Página del sitio. Con dos idiomas se genera dos veces con el mismo modelo: la principal en
+   * src/pages/index.astro y la segunda en src/pages/<otro>/index.astro (una carpeta más abajo).
+   */
+  const pageSource = (variant: 'main' | 'alt'): string => {
+    const alt = variant === 'alt';
+    const up = alt ? '../../' : '../';
+    const pageLang = alt ? ctx.altLocale : locale;
+    const scripts = assembled.clientImports.map((m) => `\n    <script>import '${alt ? '../.' : '.'}${m}';</script>`).join('');
 
-// ${isIt ? 'Il contenuto viene verificato contro SiteContent dal compilatore (npm run check).' : 'El compilador comprueba el contenido contra SiteContent (npm run check).'}
+    let extraImports = markdownImport;
+    let body = `// ${isIt ? 'Il contenuto viene verificato contro SiteContent dal compilatore (npm run check).' : 'El compilador comprueba el contenido contra SiteContent (npm run check).'}
 ${siteContentDecl}
-const siteConfig = config as SiteConfig;
+const siteConfig = config as SiteConfig;`;
+    let contentFile = 'siteContent.json';
+    let titleTag = `<title>${head.title}</title>
+    <meta name="description" content="${head.description}" />`;
+
+    if (ctx.i18n) {
+      const alt2 = ctx.altLocale;
+      const languages = [locale, alt2]
+        .map((code) => `  { code: '${code}', label: '${code.toUpperCase()}', href: getRelativeLocaleUrl('${code}'), current: ${code === pageLang} },`)
+        .join('\n');
+      contentFile = alt ? `siteContent.${alt2}.json` : 'siteContent.json';
+      extraImports = `${alt ? `\nimport ui from '${up}data/siteUi.${alt2}.json';` : ''}\nimport { getRelativeLocaleUrl } from 'astro:i18n';`;
+      body = `// ${isIt ? 'Il compilatore verifica il contenuto contro SiteContent (npm run check).' : 'El compilador comprueba el contenido contra SiteContent (npm run check).'}
+// ${isIt ? 'Selettore di lingua: getRelativeLocaleUrl tiene conto di base (GitHub Pages).' : 'Selector de idioma: getRelativeLocaleUrl tiene en cuenta base (GitHub Pages).'}
+const languages = [
+${languages}
+];
+${
+  alt
+    ? `// ${isIt ? 'Le immagini stanno in public/assets/: da /' + alt2 + '/ il percorso relativo ./assets/ non funziona e si riscrive con la base del sito.' : 'Las imágenes están en public/assets/: desde /' + alt2 + '/ la ruta relativa ./assets/ no sirve y se reescribe con la base del sitio.'}
+const assets = import.meta.env.BASE_URL.replace(/\\/$/, '') + '/assets/';
+const siteContent = JSON.parse(JSON.stringify(content).replaceAll('./assets/', assets)) as SiteContent;
+const siteConfig: SiteConfig = { ...(config as SiteConfig), ui: ui as SiteUi, languages };`
+    : `const siteContent: SiteContent = content;
+const siteConfig: SiteConfig = { ...(config as SiteConfig), languages };`
+}
+// ${isIt ? 'Titolo e descrizione seguono il contenuto di ogni lingua.' : 'El título y la descripción siguen el contenido de cada idioma.'}
+const title = siteContent.brandName + ' — ' + siteContent.tagline;
+const description = siteContent.heroSubheadline;`;
+      titleTag = `<title>{title}</title>
+    <meta name="description" content={description} />`;
+    }
+
+    return `---
+import '${up}index.css';
+import config from '${up}data/siteConfig.json';
+import content from '${up}data/${contentFile}';
+import { Site } from '${up}site/Site';
+import type { SiteConfig, SiteContent${ctx.i18n && alt ? ', SiteUi' : ''} } from '${up}site/types';${extraImports}
+
+${body}
 ---
 
 <!doctype html>
-<html lang="${locale}">
+<html lang="${pageLang}">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${head.title}</title>
-    <meta name="description" content="${head.description}" />
+    ${titleTag}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="${head.fontsHref}" rel="stylesheet" />${clientScripts}
+    <link href="${head.fontsHref}" rel="stylesheet" />${scripts}
   </head>
   <body>
     <!-- ${isIt ? 'HTML generato in build; client:load rende interattivi FAQ e modulo.' : 'HTML generado al compilar; client:load hace interactivos las FAQ y el formulario.'} -->
@@ -126,6 +169,8 @@ const siteConfig = config as SiteConfig;
   </body>
 </html>
 `;
+  };
+  const indexAstro = pageSource('main');
 
   return [
     {
@@ -166,6 +211,18 @@ const siteConfig = config as SiteConfig;
         : 'Página única: metadatos, tipografías y componente del sitio prerenderizado.',
       content: indexAstro,
     },
+    ...(ctx.i18n
+      ? [
+          {
+            path: `src/pages/${ctx.altLocale}/index.astro`,
+            language: 'html' as const,
+            description: isIt
+              ? 'Pagina nella seconda lingua: stesso modello, contenuto e testi dell’altra lingua.'
+              : 'Página en el segundo idioma: mismo modelo, contenido y textos del otro idioma.',
+            content: pageSource('alt'),
+          },
+        ]
+      : []),
     indexCssFile(ctx),
     ...siteDataFiles(ctx),
     ...siteComponentFiles(ctx),

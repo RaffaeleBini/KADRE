@@ -92,6 +92,16 @@ export type PaymentsConfig =
   | { type: 'links'; links: Record<string, string> }
   | { type: 'checkout'; prices: Record<string, { priceId: string; mode: 'payment' | 'subscription' }> };
 
+/** Una versión del sitio en otro idioma (solo sitios en dos idiomas): enlace del selector de la cabecera. */
+export interface SiteLanguage {
+  /** código corto que se muestra, p. ej. "ES" */
+  label: string;
+  /** código BCP 47 para el atributo lang del enlace, p. ej. "es" */
+  code: string;
+  href: string;
+  current: boolean;
+}
+
 /** Struttura del sito: quali sezioni, in che ordine, con quale layout. */
 export interface SiteConfig {
   sectionOrder: SectionType[];
@@ -102,5 +112,7 @@ export interface SiteConfig {
   contactProvider?: ContactProvider;
   /** botones de pago de Stripe en la sección de planes */
   payments?: PaymentsConfig;
+  /** selector de idioma en la cabecera; ausente en sitios de un solo idioma */
+  languages?: SiteLanguage[];
   ui: SiteUi;
 }

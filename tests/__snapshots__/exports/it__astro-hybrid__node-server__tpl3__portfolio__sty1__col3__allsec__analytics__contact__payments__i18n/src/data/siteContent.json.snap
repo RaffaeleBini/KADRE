@@ -1,0 +1,177 @@
+{
+  "brandName": "Studio Bini & Associati",
+  "tagline": "Architettura contemporanea e spazi culturali",
+  "logoDataUrl": null,
+  "heroEyebrow": "Milano · Madrid",
+  "heroHeadline": "Architettura in cemento a vista, luce naturale e proporzione serena",
+  "heroSubheadline": "Progettiamo padiglioni culturali, studi creativi e residenze sostenibili con approccio costruttivo onesto e rigore strutturale.",
+  "heroCtaPrimary": "Avvia progetto",
+  "heroCtaSecondary": "Opere selezionate",
+  "heroImageUrl": "./assets/architettura-studio.jpg",
+  "heroImageName": "architettura-studio.jpg",
+  "metrics": [
+    {
+      "id": "m1",
+      "value": "99,98%",
+      "label": "Disponibilità verificata",
+      "context": "Ultimi 12 mesi in produzione"
+    },
+    {
+      "id": "m2",
+      "value": "< 0,6 s",
+      "label": "Tempo di caricamento",
+      "context": "Misurato su rete mobile 4G"
+    },
+    {
+      "id": "m3",
+      "value": "+140",
+      "label": "Progetti pubblicati",
+      "context": "Team in Europa e America Latina"
+    },
+    {
+      "id": "m4",
+      "value": "5 anni",
+      "label": "Garanzia e supporto diretto",
+      "context": "Manutenzione evolutiva inclusa"
+    }
+  ],
+  "featuresHeading": "Progettato con rigore tecnico dall’inizio alla fine",
+  "featuresSubheading": "Ogni scelta strutturale riduce l’attrito, accelera la consegna e garantisce un’esperienza impeccabile su ogni schermo.",
+  "features": [
+    {
+      "id": "f1",
+      "title": "Architettura modulare senza debito tecnico",
+      "description": "Componenti puliti e tipizzati che permettono di aggiungere pagine o servizi esterni senza riscrivere la base.",
+      "metric": "100% TypeScript"
+    },
+    {
+      "id": "f2",
+      "title": "Prestazioni ottimizzate per i motori di ricerca",
+      "description": "HTML5 semantico, caricamento efficiente delle risorse e gerarchia visiva calibrata per la massima leggibilità.",
+      "metric": "Core Web Vitals A+"
+    },
+    {
+      "id": "f3",
+      "title": "Deploy continuo automatizzato",
+      "description": "Flusso connesso a GitHub per pubblicare modifiche con tracciabilità completa e ripristino in pochi secondi.",
+      "metric": "CI/CD integrato"
+    }
+  ],
+  "catalogHeading": "Selezione in evidenza",
+  "catalogSubheading": "Progetti e referenze recenti con specifiche complete e risultati documentati.",
+  "catalogItems": [
+    {
+      "id": "c1",
+      "title": "Modulo Serie K-01",
+      "category": "Hardware / Precisione",
+      "priceOrTag": "490 €",
+      "description": "Telaio fresato CNC in alluminio anodizzato con interfaccia tattile a risposta istantanea.",
+      "imageUrl": "./assets/catalogo-1.jpg"
+    },
+    {
+      "id": "c2",
+      "title": "Padiglione Nord",
+      "category": "Spazio / Architettura",
+      "priceOrTag": "2026",
+      "description": "Riqualificazione integrale di 680 m² con facciata vetrata a controllo termico e corte d’acqua.",
+      "imageUrl": "./assets/catalogo-2.jpg"
+    },
+    {
+      "id": "c3",
+      "title": "Sistema Ingegneria v3",
+      "category": "Piattaforma / Digitale",
+      "priceOrTag": "Su misura",
+      "description": "Ambiente unificato di pianificazione, gestione documentale e rilascio automatizzato per team.",
+      "imageUrl": "./assets/catalogo-3.jpg"
+    }
+  ],
+  "pricingHeading": "Piani trasparenti senza costi nascosti",
+  "pricingSubheading": "Scegli il livello di copertura più adatto alla fase attuale del tuo team.",
+  "pricingPlans": [
+    {
+      "id": "p1",
+      "name": "Essenziale",
+      "audience": "Per team in fase iniziale",
+      "price": "29 €",
+      "cadence": "/ mese",
+      "featured": false,
+      "features": [
+        "Fino a 3 progetti attivi",
+        "Deploy automatico su GitHub",
+        "Certificato SSL e dominio proprio",
+        "Supporto via email entro 24 h"
+      ],
+      "ctaLabel": "Scegli Essenziale"
+    },
+    {
+      "id": "p2",
+      "name": "Professionale",
+      "audience": "Per realtà in crescita",
+      "price": "79 €",
+      "cadence": "/ mese",
+      "featured": true,
+      "features": [
+        "Progetti illimitati e ambienti preview",
+        "Integrazione API e database",
+        "Analitica avanzata ed export CSV",
+        "Supporto tecnico prioritario"
+      ],
+      "ctaLabel": "Scegli Professionale"
+    },
+    {
+      "id": "p3",
+      "name": "Aziendale",
+      "audience": "Per organizzazioni con SLA dedicato",
+      "price": "Su misura",
+      "cadence": "annuale",
+      "featured": false,
+      "features": [
+        "Architettura dedicata e audit",
+        "Ruoli personalizzati e SSO",
+        "Accordo di livello servizio 99,99%",
+        "Affiancamento ingegneristico dedicato"
+      ],
+      "ctaLabel": "Contatta vendite"
+    }
+  ],
+  "testimonialsHeading": "Cosa racconta chi lavora già con noi",
+  "testimonials": [
+    {
+      "id": "t1",
+      "quote": "Siamo passati da tre settimane per pubblicare una nuova pagina a meno di un pomeriggio, con un codice pulito che il team comprende subito.",
+      "author": "Chiara Bellini",
+      "role": "Direttrice di Prodotto",
+      "organization": "Nord Sistemi"
+    },
+    {
+      "id": "t2",
+      "quote": "La chiarezza visiva e la velocità di caricamento hanno aumentato le richieste di preventivo del 38% nel primo trimestre dal rilascio.",
+      "author": "Marco Ferri",
+      "role": "Socio Fondatore",
+      "organization": "Ferri Ingegneria Industriale"
+    }
+  ],
+  "faqHeading": "Domande frequenti",
+  "faqs": [
+    {
+      "id": "q1",
+      "question": "Quanto tempo serve per andare online?",
+      "answer": "La prima versione funzionante è pronta e pubblicata in meno di 48 ore dopo la conferma dei contenuti e del dominio."
+    },
+    {
+      "id": "q2",
+      "question": "Posso aggiornare testi e immagini in autonomia?",
+      "answer": "Sì. Tutti i testi e i riferimenti alle immagini sono raccolti in un unico file strutturato modificabile senza toccare la logica del sito."
+    },
+    {
+      "id": "q3",
+      "question": "Il codice resta al 100% di nostra proprietà?",
+      "answer": "Assolutamente sì. L’intero progetto vive nel tuo repository GitHub senza vincoli o licenze proprietarie."
+    }
+  ],
+  "contactHeading": "Parliamo del tuo prossimo lancio",
+  "contactSubheading": "Raccontaci brevemente il tuo obiettivo e ti risponderemo con una proposta tecnica chiara entro un giorno lavorativo.",
+  "contactEmail": "contatti@progetto-esempio.it",
+  "contactLocation": "Milano · Lavoro remoto internazionale",
+  "footerNote": "Tutti i diritti riservati."
+}

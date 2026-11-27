@@ -1,0 +1,40 @@
+---
+import '../../index.css';
+import config from '../../data/siteConfig.json';
+import content from '../../data/siteContent.it.json';
+import { Site } from '../../site/Site';
+import type { SiteConfig, SiteContent, SiteUi } from '../../site/types';
+import ui from '../../data/siteUi.it.json';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+
+// El compilador comprueba el contenido contra SiteContent (npm run check).
+// Selector de idioma: getRelativeLocaleUrl tiene en cuenta base (GitHub Pages).
+const languages = [
+  { code: 'es', label: 'ES', href: getRelativeLocaleUrl('es'), current: false },
+  { code: 'it', label: 'IT', href: getRelativeLocaleUrl('it'), current: true },
+];
+// Las imágenes están en public/assets/: desde /it/ la ruta relativa ./assets/ no sirve y se reescribe con la base del sitio.
+const assets = import.meta.env.BASE_URL.replace(/\/$/, '') + '/assets/';
+const siteContent = JSON.parse(JSON.stringify(content).replaceAll('./assets/', assets)) as SiteContent;
+const siteConfig: SiteConfig = { ...(config as SiteConfig), ui: ui as SiteUi, languages };
+// El título y la descripción siguen el contenido de cada idioma.
+const title = siteContent.brandName + ' — ' + siteContent.tagline;
+const description = siteContent.heroSubheadline;
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <!-- HTML generado al compilar; client:load hace interactivos las FAQ y el formulario. -->
+    <Site client:load content={siteContent} config={siteConfig} />
+  </body>
+</html>

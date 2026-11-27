@@ -127,6 +127,38 @@ const SPA_NO_MARKDOWN: Availability = {
   },
 };
 
+const I18N_NEEDS_ASTRO: Availability = {
+  status: 'incompatible',
+  reason: {
+    es: 'El sitio en dos idiomas usa Astro: elige antes «Estático SSG» o «Híbrida» en el renderizado.',
+    it: 'Il sito in due lingue usa Astro: scegli prima «Statico SSG» o «Ibrida» nel rendering.',
+  },
+};
+
+const I18N_NO_MARKDOWN: Availability = {
+  status: 'incompatible',
+  reason: {
+    es: 'Hoy el sitio en dos idiomas no se combina con contenidos en Markdown: quita uno de los dos.',
+    it: 'Oggi il sito in due lingue non si combina con i contenuti in Markdown: togline uno dei due.',
+  },
+};
+
+const I18N_NO_SQL: Availability = {
+  status: 'incompatible',
+  reason: {
+    es: 'Con base de datos SQL, KADRE genera una SPA con Express, y el sitio en dos idiomas usa Astro.',
+    it: 'Con database SQL, KADRE genera una SPA con Express, e il sito in due lingue usa Astro.',
+  },
+};
+
+const SPA_NO_I18N: Availability = {
+  status: 'incompatible',
+  reason: {
+    es: 'Con el sitio en dos idiomas se genera con Astro, no como SPA.',
+    it: 'Con il sito in due lingue viene generato con Astro, non come SPA.',
+  },
+};
+
 const RENDERING: Record<RenderingStrategy, Availability> = {
   'spa-dynamic': AVAILABLE,
   'static-ssg': AVAILABLE,
@@ -168,7 +200,7 @@ const INTEGRATIONS: Record<IntegrationOption, Availability> = {
   'contact-form': AVAILABLE,
   payments: AVAILABLE,
   analytics: AVAILABLE,
-  i18n: { status: 'planned', reason: INTEGRATION_SOON },
+  i18n: AVAILABLE,
   auth: { status: 'planned', reason: INTEGRATION_SOON },
 };
 
@@ -178,7 +210,9 @@ export const discoveryAvailability = {
   databaseNeed: (v: DatabaseNeed, answers?: DiscoveryAnswers) => {
     if (DATABASE[v].status !== 'available') return DATABASE[v];
     if (v === 'sql-relational' && answers?.architectureMode === 'frontend-only') return SQL_NEEDS_SERVER;
+    if (v === 'sql-relational' && answers?.integrations.includes('i18n')) return I18N_NO_SQL;
     if (v === 'markdown-cms' && answers?.renderingStrategy === 'spa-dynamic') return MARKDOWN_NEEDS_ASTRO;
+    if (v === 'markdown-cms' && answers?.integrations.includes('i18n')) return I18N_NO_MARKDOWN;
     return AVAILABLE;
   },
   renderingStrategy: (v: RenderingStrategy, answers?: DiscoveryAnswers) => {
@@ -186,12 +220,20 @@ export const discoveryAvailability = {
     if (!answers) return AVAILABLE;
     const server = answers.architectureMode !== 'frontend-only';
     if (v === 'spa-dynamic' && answers.databaseNeed === 'markdown-cms') return SPA_NO_MARKDOWN;
+    if (v === 'spa-dynamic' && answers.integrations.includes('i18n')) return SPA_NO_I18N;
     if (v === 'static-ssg' && server) return SSG_NEEDS_STATIC;
     if (v === 'hybrid-ssr' && !server) return HYBRID_NEEDS_SERVER;
     if (v === 'hybrid-ssr' && answers.databaseNeed === 'sql-relational') return HYBRID_NO_SQL;
     return AVAILABLE;
   },
-  integration: (v: IntegrationOption, _answers?: DiscoveryAnswers) => INTEGRATIONS[v],
+  integration: (v: IntegrationOption, answers?: DiscoveryAnswers) => {
+    if (v === 'i18n' && INTEGRATIONS[v].status === 'available' && answers) {
+      if (answers.databaseNeed === 'markdown-cms') return I18N_NO_MARKDOWN;
+      if (answers.databaseNeed === 'sql-relational') return I18N_NO_SQL;
+      if (answers.renderingStrategy === 'spa-dynamic') return I18N_NEEDS_ASTRO;
+    }
+    return INTEGRATIONS[v];
+  },
 };
 
 // ── Piattaforme di deploy ───────────────────────────────────────────────────
@@ -268,6 +310,14 @@ export function normalizeAnswers(answers: DiscoveryAnswers): DiscoveryAnswers {
     renderingStrategy,
     // Markdown necesita Astro: si el renderizado quedó en SPA, se vuelve a «ninguna»
     databaseNeed: databaseNeed === 'markdown-cms' && renderingStrategy === 'spa-dynamic' ? 'none' : databaseNeed,
-    integrations: answers.integrations.filter((i) => ok(INTEGRATIONS[i])),
+    // el sitio en dos idiomas necesita Astro y no se combina con Markdown ni SQL
+    integrations: answers.integrations.filter(
+      (i) =>
+        ok(INTEGRATIONS[i]) &&
+        !(
+          i === 'i18n' &&
+          (renderingStrategy === 'spa-dynamic' || databaseNeed === 'markdown-cms' || databaseNeed === 'sql-relational')
+        )
+    ),
   };
 }

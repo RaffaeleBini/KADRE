@@ -58,6 +58,11 @@ const PAYMENT_UI: Record<Locale, NonNullable<SiteUi['payment']>> = {
   it: { redirecting: 'Reindirizzamento al pagamento...', error: 'Impossibile avviare il pagamento. Riprova.' },
 };
 
+/** Textos fijos de la interfaz en un idioma; el de pago solo con checkout. */
+export function buildSiteUi(locale: Locale, checkout: boolean): SiteUi {
+  return checkout ? { ...SITE_UI[locale], payment: PAYMENT_UI[locale] } : SITE_UI[locale];
+}
+
 export function buildSiteConfig(params: {
   locale: Locale;
   template: TemplateDefinition;
@@ -72,10 +77,7 @@ export function buildSiteConfig(params: {
     hasBackendApi: params.hasBackendApi,
     ...(params.contactProvider ? { contactProvider: params.contactProvider } : {}),
     ...(params.payments ? { payments: params.payments } : {}),
-    ui:
-      params.payments?.type === 'checkout'
-        ? { ...SITE_UI[params.locale], payment: PAYMENT_UI[params.locale] }
-        : SITE_UI[params.locale],
+    ui: buildSiteUi(params.locale, params.payments?.type === 'checkout'),
   };
 }
 

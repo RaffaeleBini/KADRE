@@ -57,5 +57,11 @@ export function buildContext(input: CodeGenerationInput): GenContext {
       input.answers.integrations.includes('payments') &&
       input.sections.some((s) => s.type === 'pricing' && s.enabled),
     markdown: skeleton === 'astro' && input.answers.databaseNeed === 'markdown-cms',
+    // dos idiomas solo con Astro y sin Markdown (la matriz ya lo impide en el configurador)
+    i18n:
+      skeleton === 'astro' &&
+      input.answers.databaseNeed !== 'markdown-cms' &&
+      input.answers.integrations.includes('i18n'),
+    altLocale: isIt ? 'es' : 'it',
   };
 }

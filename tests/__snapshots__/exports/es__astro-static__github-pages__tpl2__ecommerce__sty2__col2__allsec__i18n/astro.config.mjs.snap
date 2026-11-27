@@ -1,0 +1,15 @@
+import { defineConfig } from 'astro/config';
+import react from '@astrojs/react';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+  site: 'https://kadre-test.github.io',
+  base: '/taller-nord',
+  i18n: {
+    defaultLocale: 'es',
+    locales: ['es', 'it'],
+    routing: { prefixDefaultLocale: false },
+  },
+  integrations: [react()],
+  vite: { plugins: [tailwindcss()] },
+});

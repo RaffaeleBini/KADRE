@@ -98,6 +98,27 @@ describe('invarianti su tutte le combinazioni strutturali', () => {
         expect(server).toContain('saveContact');
       }
 
+      // dos idiomas: segunda página, contenido y textos del otro idioma solo con i18n
+      const alt = combo.locale === 'es' ? 'it' : 'es';
+      const i18nFiles = [`src/pages/${alt}/index.astro`, `src/data/siteContent.${alt}.json`, `src/data/siteUi.${alt}.json`];
+      for (const f of i18nFiles) expect(byPath.has(f), f).toBe(!!combo.i18n);
+      expect(byPath.get('astro.config.mjs')?.includes('i18n:') ?? false, 'i18n en astro.config').toBe(!!combo.i18n);
+      if (combo.i18n) {
+        const main = byPath.get('src/pages/index.astro')!;
+        const second = byPath.get(`src/pages/${alt}/index.astro`)!;
+        expect(main).toContain(`<html lang="${combo.locale}">`);
+        expect(second).toContain(`<html lang="${alt}">`);
+        expect(second).toContain("'../../index.css'");
+        expect(second).toContain("replaceAll('./assets/'"); // desde /<otro>/ las rutas relativas se romperían
+        // los textos fijos del segundo idioma están realmente traducidos, no copiados
+        const navMain = JSON.parse(byPath.get('src/data/siteConfig.json')!).ui.nav;
+        const navAlt = JSON.parse(byPath.get(`src/data/siteUi.${alt}.json`)!).nav;
+        expect(navAlt.contact).not.toBe(navMain.contact);
+        // los planes conservan sus id: los pagos se enlazan por id
+        const idsOf = (file: string) => JSON.parse(byPath.get(file)!).pricingPlans.map((p: { id: string }) => p.id);
+        expect(idsOf(`src/data/siteContent.${alt}.json`)).toEqual(idsOf('src/data/siteContent.json'));
+      }
+
       // coerenza backend: server presente se e solo se lo script dev lo avvia
       const pkg = JSON.parse(byPath.get('package.json')!);
       const hasServer = byPath.has('server/index.ts');

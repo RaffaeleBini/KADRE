@@ -240,9 +240,10 @@ export function getDiscoveryOptions(locale: Locale): {
         },
         {
           value: 'i18n',
-          title: 'Struttura multilingua',
-          description: 'Dizionario separato dei testi pronto per aggiungere altre lingue.',
-          technicalHint: 'Contenuti disaccoppiati in JSON',
+          title: 'Sito in due lingue',
+          description:
+            'Il sito esce in italiano e spagnolo, con un URL per lingua e un selettore nell’intestazione. I testi fissi sono già tradotti; il contenuto della seconda lingua parte come copia e lo traduci tu.',
+          technicalHint: 'Routing i18n di Astro · Richiede Astro, senza Markdown né SQL',
         },
       ],
     };
@@ -389,9 +390,10 @@ export function getDiscoveryOptions(locale: Locale): {
       },
       {
         value: 'i18n',
-        title: 'Estructura multi-idioma',
-        description: 'Diccionario separado de textos listo para añadir inglés u otros idiomas.',
-        technicalHint: 'Contenido desacoplado en JSON',
+        title: 'Sitio en dos idiomas',
+        description:
+          'El sitio sale en español e italiano, con una URL por idioma y un selector en la cabecera. Los textos fijos ya están traducidos; el contenido del segundo idioma empieza como copia y lo traduces tú.',
+        technicalHint: 'Enrutado i18n de Astro · Requiere Astro, sin Markdown ni SQL',
       },
     ],
   };
@@ -623,7 +625,17 @@ export function computeStackRecommendation(
   locale: Locale = 'es'
 ): StackRecommendation {
   const id = recommendStackId(answers);
-  const stack = getAllStacks(locale).find((s) => s.id === id)!;
+  let stack = getAllStacks(locale).find((s) => s.id === id)!;
+  // dos idiomas: la ficha del stack lo dice (el segundo idioma es el otro de ES/IT)
+  if (answers.integrations.includes('i18n') && stack.id.startsWith('astro-')) {
+    stack = {
+      ...stack,
+      frontend:
+        locale === 'it'
+          ? `${stack.frontend} · due lingue (/ e /es/)`
+          : `${stack.frontend} · dos idiomas (/ y /it/)`,
+    };
+  }
   // con Markdown el contenido ya no vive solo en el JSON: la ficha del stack debe decirlo
   if (answers.databaseNeed === 'markdown-cms' && stack.id.startsWith('astro-')) {
     return {

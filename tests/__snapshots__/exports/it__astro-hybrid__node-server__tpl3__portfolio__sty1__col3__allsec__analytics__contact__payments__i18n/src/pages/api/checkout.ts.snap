@@ -1,0 +1,23 @@
+import type { APIRoute } from 'astro';
+import { SITE_URL, STRIPE_SECRET_KEY } from 'astro:env/server';
+import config from '../../data/siteConfig.json';
+import { createCheckoutSession, type PlanPrices } from '../../lib/stripeCheckout';
+
+// Eseguito sul server a ogni richiesta (non generato in build).
+export const prerender = false;
+
+const prices = ((config as { payments?: { prices?: PlanPrices } }).payments?.prices ?? {}) as PlanPrices;
+
+export const POST: APIRoute = async ({ request }) => {
+  const body = (await request.json().catch(() => null)) as { planId?: unknown } | null;
+  const siteUrl = (SITE_URL || new URL(request.url).origin).replace(/\/$/, '');
+  const result = await createCheckoutSession(STRIPE_SECRET_KEY, prices, body?.planId, siteUrl);
+  if (result.ok) return Response.json({ url: result.url });
+  if (result.reason === 'unconfigured') {
+    return Response.json({ error: 'Pagamenti non configurati (vedi README).' }, { status: 503 });
+  }
+  if (result.reason === 'unknown-plan') {
+    return Response.json({ error: 'Piano non acquistabile.' }, { status: 400 });
+  }
+  return Response.json({ error: 'Stripe non ha creato la sessione di pagamento.' }, { status: 502 });
+};

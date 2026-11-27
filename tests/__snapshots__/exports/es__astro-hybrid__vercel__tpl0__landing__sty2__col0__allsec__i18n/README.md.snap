@@ -1,0 +1,56 @@
+# Vektor Audio
+
+Ingeniería acústica de escritorio
+
+## Arquitectura técnica seleccionada
+
+- **Stack**: Astro híbrido (página estática + endpoint de servidor)
+- **Frontend**: Astro 7 + React 19 (componentes hidratados)
+- **Backend**: Endpoints de Astro: /api/contact y /api/health
+- **Base de datos**: Ninguna
+- **Plantilla**: Lanzamiento de Producto
+- **Estilo gráfico**: Minimalista Moderno · Obsidiana y Amarillo Industrial
+
+## Ejecución local
+
+```bash
+npm install
+npm run dev
+```
+
+## Exportar a GitHub paso a paso
+
+1. Crea un repositorio vacío llamado `vektor-audio` en https://github.com/new (sin README ni .gitignore).
+2. Ejecuta los siguientes comandos dentro de esta carpeta:
+
+```bash
+git init
+git add .
+git commit -m "Versión inicial de Vektor Audio"
+git branch -M main
+git remote add origin https://github.com/kadre-test/vektor-audio.git
+git push -u origin main
+```
+
+También puedes ejecutar el script automatizado incluido:
+
+```bash
+chmod +x exportar-github.sh
+./exportar-github.sh
+```
+
+## Despliegue (vercel)
+
+1. Accede a tu cuenta de **VERCEL** y elige **Import Git Repository**.
+2. Selecciona `kadre-test/vektor-audio`: Astro se detecta automáticamente (compilación `npm run build`) y el adaptador publica la página y el endpoint `/api/contact`.
+
+## Sitio en dos idiomas (ES · IT)
+
+El sitio sale en dos idiomas con el enrutado nativo de Astro: `/` para ES y `/it/` para IT, con un selector de idioma en la cabecera.
+
+- **Textos fijos** (menú, formulario de contacto, botón de pago): ya traducidos en `src/data/siteConfig.json` (ES) y `src/data/siteUi.it.json` (IT).
+- **Contenido** del segundo idioma: `src/data/siteContent.it.json`. **Empieza como copia del contenido principal y lo tienes que traducir tú**: mientras no lo hagas, `/it/` muestra los mismos textos con el menú y el formulario ya en IT. No cambies los `id` de los planes.
+- El título y la descripción de la página siguen el contenido de cada idioma.
+- Estructura, colores, pagos, claves y analítica se comparten: se configuran una sola vez.
+
+No incluidos: traducción automática, detección del idioma del navegador, etiquetas `hreflang`/sitemap y más de dos idiomas.

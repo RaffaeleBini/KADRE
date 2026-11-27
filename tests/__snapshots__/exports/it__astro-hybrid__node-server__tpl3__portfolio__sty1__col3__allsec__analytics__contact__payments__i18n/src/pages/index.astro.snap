@@ -1,0 +1,38 @@
+---
+import '../index.css';
+import config from '../data/siteConfig.json';
+import content from '../data/siteContent.json';
+import { Site } from '../site/Site';
+import type { SiteConfig, SiteContent } from '../site/types';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+
+// Il compilatore verifica il contenuto contro SiteContent (npm run check).
+// Selettore di lingua: getRelativeLocaleUrl tiene conto di base (GitHub Pages).
+const languages = [
+  { code: 'it', label: 'IT', href: getRelativeLocaleUrl('it'), current: true },
+  { code: 'es', label: 'ES', href: getRelativeLocaleUrl('es'), current: false },
+];
+const siteContent: SiteContent = content;
+const siteConfig: SiteConfig = { ...(config as SiteConfig), languages };
+// Titolo e descrizione seguono il contenuto di ogni lingua.
+const title = siteContent.brandName + ' — ' + siteContent.tagline;
+const description = siteContent.heroSubheadline;
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script>import '../analytics';</script>
+  </head>
+  <body>
+    <!-- HTML generato in build; client:load rende interattivi FAQ e modulo. -->
+    <Site client:load content={siteContent} config={siteConfig} />
+  </body>
+</html>

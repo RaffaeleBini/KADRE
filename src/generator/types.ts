@@ -42,6 +42,10 @@ export interface GenContext extends CodeGenerationInput {
   markdown: boolean;
   /** botones de pago de Stripe en la sección de planes (necesita la sección activa) */
   payments: boolean;
+  /** sitio en dos idiomas (solo Astro): páginas / y /<altLocale>/ con selector de idioma */
+  i18n: boolean;
+  /** el otro idioma: si el sitio está en español, italiano, y viceversa */
+  altLocale: Locale;
 }
 
 /**

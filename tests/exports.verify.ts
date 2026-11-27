@@ -88,7 +88,9 @@ async function smokeServer(
   port: number,
   realEmail: boolean,
   payments: boolean,
-  database: boolean
+  database: boolean,
+  /** idioma principal si el sitio es en dos idiomas */
+  i18n: 'es' | 'it' | null
 ): Promise<string | null> {
   const child = spawn('npm', ['start'], {
     cwd: dir,
@@ -109,6 +111,12 @@ async function smokeServer(
     }
     if (!up) return `il server non risponde su /api/health\n${firstLines(log)}`;
 
+    if (i18n) {
+      const alt = i18n === 'es' ? 'it' : 'es';
+      const second = await fetch(`${base}/${alt}/`);
+      const secondHtml = await second.text();
+      if (!second.ok || !secondHtml.includes(`<html lang="${alt}"`)) return `GET /${alt}/ → ${second.status}, no es la página en ${alt}`;
+    }
     const home = await fetch(`${base}/`);
     const html = await home.text();
     // SPA: <div id="root"> vuoto; Astro: HTML prerenderizzato con <main id="top">
@@ -262,6 +270,41 @@ async function smokeDatabase(
   }
 }
 
+/** Busca `<alt>/index.html` en la salida de la compilación (dist/, dist/client/, .vercel/output/static/…). */
+function findBuiltPage(dir: string, alt: string): string | null {
+  const roots = ['dist', '.vercel/output/static'].map((r) => path.join(dir, r));
+  const stack = roots.filter((r) => fs.existsSync(r));
+  while (stack.length) {
+    const current = stack.pop()!;
+    for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
+      const full = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules') stack.push(full);
+      } else if (entry.name === 'index.html' && path.basename(current) === alt) {
+        return full;
+      }
+    }
+  }
+  return null;
+}
+
+/** Sitio en dos idiomas: la segunda página existe, está en su idioma y las imágenes no se rompen. */
+function checkI18nBuild(dir: string, combo: ExportCombo): string | null {
+  const alt = combo.locale === 'es' ? 'it' : 'es';
+  const file = findBuiltPage(dir, alt);
+  if (!file) return `la compilación no genera la página /${alt}/`;
+  const html = fs.readFileSync(file, 'utf8');
+  if (!html.includes(`<html lang="${alt}"`)) return `/${alt}/index.html no tiene lang="${alt}"`;
+  // selector de idioma: enlace con hreflang a cada versión
+  // (React escribe hrefLang en camelCase; en HTML los nombres de atributo no distinguen mayúsculas)
+  if (!html.toLowerCase().includes(`hreflang="${combo.locale}"`) || !html.toLowerCase().includes(`hreflang="${alt}"`))
+    return `/${alt}/index.html no tiene el selector de idioma`;
+  // desde /<otro>/ una ruta ./assets/ apuntaría a /<otro>/assets/ (404): deben ser rutas desde la raíz
+  if (html.includes('src="./assets/')) return `/${alt}/index.html conserva rutas relativas ./assets/ (se romperían)`;
+  if (!html.includes('/assets/')) return `/${alt}/index.html no referencia /assets/`;
+  return null;
+}
+
 let nextPort = 4600;
 
 async function verify(combo: ExportCombo, testPg: TestPostgres | null): Promise<Result> {
@@ -307,6 +350,11 @@ async function verify(combo: ExportCombo, testPg: TestPostgres | null): Promise<
   const build = run('npm', ['run', 'build'], dir);
   if (!build.ok) failures.push({ step: 'build', error: firstLines(build.out) });
 
+  if (combo.i18n && build.ok) {
+    const error = checkI18nBuild(dir, combo);
+    if (error) failures.push({ step: 'build', error });
+  }
+
   const script = files.find((f) => f.path.endsWith('.sh'));
   if (script) {
     const sh = run('bash', ['-n', script.path], dir);
@@ -316,7 +364,14 @@ async function verify(combo: ExportCombo, testPg: TestPostgres | null): Promise<
   // prova di avvio per ogni progetto avviabile con `npm start` (Express o Astro + adapter Node)
   if (scripts.start && build.ok) {
     const database = STACK_PROFILES[combo.stackId].database;
-    const error = await smokeServer(dir, nextPort++, !!combo.contact, !!combo.payments, database);
+    const error = await smokeServer(
+      dir,
+      nextPort++,
+      !!combo.contact,
+      !!combo.payments,
+      database,
+      combo.i18n ? combo.locale : null
+    );
     if (error) failures.push({ step: 'server', error });
 
     if (database && testPg) {

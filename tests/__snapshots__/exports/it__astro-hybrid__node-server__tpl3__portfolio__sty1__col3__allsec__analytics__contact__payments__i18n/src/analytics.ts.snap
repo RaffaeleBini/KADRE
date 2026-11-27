@@ -1,0 +1,12 @@
+import analytics from './data/analytics.json';
+
+// Senza token non si carica nulla: il sito resta identico e senza tracciamento.
+const token = analytics.cloudflareToken.trim();
+
+if (token) {
+  const script = document.createElement('script');
+  script.defer = true;
+  script.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+  script.setAttribute('data-cf-beacon', JSON.stringify({ token }));
+  document.head.appendChild(script);
+}

@@ -98,3 +98,34 @@ describe('matrice di compatibilità', () => {
     }
   });
 });
+
+describe('sitio en dos idiomas (i18n)', () => {
+  const base: DiscoveryAnswers = {
+    projectType: 'landing',
+    architectureMode: 'frontend-only',
+    databaseNeed: 'none',
+    renderingStrategy: 'static-ssg',
+    integrations: [],
+  };
+
+  it('está disponible con Astro y se desactiva, con motivo, con SPA, Markdown o SQL', () => {
+    expect(discoveryAvailability.integration('i18n', base).status).toBe('available');
+    expect(discoveryAvailability.integration('i18n', { ...base, renderingStrategy: 'spa-dynamic' }).status).toBe('incompatible');
+    expect(discoveryAvailability.integration('i18n', { ...base, databaseNeed: 'markdown-cms' }).status).toBe('incompatible');
+    expect(discoveryAvailability.integration('i18n', { ...base, architectureMode: 'light-api', databaseNeed: 'sql-relational' }).status).toBe('incompatible');
+  });
+
+  it('la exclusión es simétrica: i18n también desactiva SPA, Markdown y SQL', () => {
+    const withI18n = { ...base, architectureMode: 'light-api' as const, renderingStrategy: 'hybrid-ssr' as const, integrations: ['i18n' as const] };
+    expect(discoveryAvailability.renderingStrategy('spa-dynamic', withI18n).status).toBe('incompatible');
+    expect(discoveryAvailability.databaseNeed('markdown-cms', withI18n).status).toBe('incompatible');
+    expect(discoveryAvailability.databaseNeed('sql-relational', withI18n).status).toBe('incompatible');
+    expect(discoveryAvailability.renderingStrategy('hybrid-ssr', withI18n).status).toBe('available');
+  });
+
+  it('una borrador con i18n y SPA se normaliza sin i18n; con Astro se conserva', () => {
+    expect(normalizeAnswers({ ...base, renderingStrategy: 'spa-dynamic', integrations: ['i18n'] }).integrations).toEqual([]);
+    expect(normalizeAnswers({ ...base, integrations: ['i18n'] }).integrations).toEqual(['i18n']);
+    expect(recommendStackId({ ...base, integrations: ['i18n'] })).toBe('astro-static');
+  });
+});

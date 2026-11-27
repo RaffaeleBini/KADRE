@@ -66,6 +66,27 @@ export function Site({ content, config }: { content: SiteContent; config: SiteCo
             ))}
           </nav>
 
+          {config.languages && config.languages.length > 1 ? (
+            <nav aria-label="Language" className="flex items-center gap-2 text-xs font-semibold shrink-0">
+              {config.languages.map((language) => (
+                <a
+                  key={language.code}
+                  href={language.href}
+                  lang={language.code}
+                  hrefLang={language.code}
+                  {...(language.current ? { 'aria-current': 'true' as const } : {})}
+                  className="px-1.5 py-1 transition-opacity hover:opacity-100"
+                  style={{
+                    color: language.current ? 'var(--color-text)' : 'var(--color-text-muted)',
+                    borderBottom: language.current ? '2px solid var(--color-accent)' : '2px solid transparent',
+                  }}
+                >
+                  {language.label}
+                </a>
+              ))}
+            </nav>
+          ) : null}
+
           <a
             href="#contact"
             className="px-4 py-2 text-sm font-semibold whitespace-nowrap shrink-0 transition-opacity hover:opacity-90"
