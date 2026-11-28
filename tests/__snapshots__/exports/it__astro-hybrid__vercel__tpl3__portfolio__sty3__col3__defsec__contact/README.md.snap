@@ -44,6 +44,11 @@ chmod +x esporta-github.sh
 1. Accedi al tuo account **VERCEL** e scegli **Import Git Repository**.
 2. Seleziona `kadre-test/studio-bini-associati`: Astro viene riconosciuto in automatico (build `npm run build`), e l’adapter pubblica la pagina e l’endpoint `/api/contact`.
 
+
+> Se il repository non compare nell’elenco di **Import Git Repository**, l’app di Vercel ha l’accesso limitato ai repository scelti: su GitHub apri **Settings → Applications → Vercel → Configure** e aggiungilo in **Repository access**.
+>
+> Su Vercel le variabili d’ambiente si applicano **solo ai nuovi deploy**: dopo averne aggiunta o cambiata una, rifai il deploy (Deployments → ⋯ → Redeploy).
+
 ## Invio del modulo di contatto (Resend)
 
 `/api/contact` invia un’email a ogni messaggio ricevuto. Finché non è configurato risponde **503** e il sito mostra un errore: non finge di aver inviato.

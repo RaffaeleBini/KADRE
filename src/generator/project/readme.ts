@@ -6,6 +6,15 @@ export function readmeFile(ctx: GenContext, modules: GeneratorModule[] = []): Ge
   // Astro con server: l'adapter decide il formato; Vercel/Netlify riconoscono Astro, Cloudflare usa un Worker
   const moduleSections = modules.map((m) => m.readme?.(ctx) ?? '').join('');
   const astroServer = ctx.skeleton === 'astro' && ctx.hasBackend;
+  // Cosas que se descubrieron desplegando de verdad: el repositorio nuevo no aparece si la app de GitHub
+  // del hosting tiene el acceso limitado, y en Vercel las variables solo se aplican a los despliegues nuevos
+  const hostName = github.deployPlatform === 'vercel' ? 'Vercel' : github.deployPlatform === 'netlify' ? 'Netlify' : github.deployPlatform === 'cloudflare' ? 'Cloudflare' : '';
+  const hostNoteIt = hostName
+    ? `\n\n> Se il repository non compare nell’elenco di **Import Git Repository**, l’app di ${hostName} ha l’accesso limitato ai repository scelti: su GitHub apri **Settings → Applications → ${hostName} → Configure** e aggiungilo in **Repository access**.${github.deployPlatform === 'vercel' ? '\n>\n> Su Vercel le variabili d’ambiente si applicano **solo ai nuovi deploy**: dopo averne aggiunta o cambiata una, rifai il deploy (Deployments → ⋯ → Redeploy).' : ''}`
+    : '';
+  const hostNoteEs = hostName
+    ? `\n\n> Si el repositorio no aparece en la lista de **Import Git Repository**, la app de ${hostName} tiene el acceso limitado a los repositorios elegidos: en GitHub abre **Settings → Applications → ${hostName} → Configure** y añádelo en **Repository access**.${github.deployPlatform === 'vercel' ? '\n>\n> En Vercel las variables de entorno se aplican **solo a los despliegues nuevos**: tras añadir o cambiar una, vuelve a desplegar (Deployments → ⋯ → Redeploy).' : ''}`
+    : '';
   return {
       path: 'README.md',
       language: 'markdown',
@@ -67,6 +76,7 @@ ${
     ? `1. Accedi al tuo account **${github.deployPlatform.toUpperCase()}** e scegli **Import Git Repository**.\n2. Seleziona \`${ghUser}/${repoSlug}\`: Astro viene riconosciuto in automatico (build \`npm run build\`), e l’adapter pubblica la pagina e l’endpoint \`/api/contact\`.`
     : `1. Accedi al tuo account **${github.deployPlatform.toUpperCase()}** e scegli **Import Git Repository**.\n2. Seleziona \`${ghUser}/${repoSlug}\`.\n3. Comando di build: \`npm run build\` · Cartella di output: \`dist\`.`
 }
+${hostNoteIt}
 ${moduleSections}`
         : `# ${content.brandName}
 
@@ -122,6 +132,7 @@ ${
     ? `1. Accede a tu cuenta de **${github.deployPlatform.toUpperCase()}** y elige **Import Git Repository**.\n2. Selecciona \`${ghUser}/${repoSlug}\`: Astro se detecta automáticamente (compilación \`npm run build\`) y el adaptador publica la página y el endpoint \`/api/contact\`.`
     : `1. Accede a tu cuenta de **${github.deployPlatform.toUpperCase()}** y elige **Import Git Repository**.\n2. Selecciona \`${ghUser}/${repoSlug}\`.\n3. Comando de compilación: \`npm run build\` · Directorio de salida: \`dist\`.`
 }
+${hostNoteEs}
 ${moduleSections}`,
   };
 }

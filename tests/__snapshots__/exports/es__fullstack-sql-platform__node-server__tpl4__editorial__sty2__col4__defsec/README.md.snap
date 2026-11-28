@@ -46,6 +46,7 @@ chmod +x exportar-github.sh
 3. El servidor escucha en el puerto de la variable `PORT` (la definen los proveedores).
 4. Añade la variable `DATABASE_URL` con la cadena de conexión PostgreSQL (p. ej. Neon) y ejecuta `npm run db:init` (ver la sección Base de datos PostgreSQL).
 
+
 ## Base de datos PostgreSQL
 
 El servidor guarda los mensajes del formulario de contacto en `contact_submissions` y expone `GET /api/catalog`, un endpoint de ejemplo que lee `catalog_items`. El sitio aún no usa `/api/catalog`: muestra el catálogo de `src/data/siteContent.json`; el endpoint sirve de modelo para tus consultas. Mientras `DATABASE_URL` no esté definida las dos rutas responden **503** y el formulario muestra un error: no finge haber guardado.

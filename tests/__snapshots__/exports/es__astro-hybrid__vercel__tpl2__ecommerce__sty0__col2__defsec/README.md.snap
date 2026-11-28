@@ -43,3 +43,8 @@ chmod +x exportar-github.sh
 
 1. Accede a tu cuenta de **VERCEL** y elige **Import Git Repository**.
 2. Selecciona `kadre-test/taller-nord`: Astro se detecta automáticamente (compilación `npm run build`) y el adaptador publica la página y el endpoint `/api/contact`.
+
+
+> Si el repositorio no aparece en la lista de **Import Git Repository**, la app de Vercel tiene el acceso limitado a los repositorios elegidos: en GitHub abre **Settings → Applications → Vercel → Configure** y añádelo en **Repository access**.
+>
+> En Vercel las variables de entorno se aplican **solo a los despliegues nuevos**: tras añadir o cambiar una, vuelve a desplegar (Deployments → ⋯ → Redeploy).

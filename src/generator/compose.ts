@@ -77,6 +77,9 @@ function assemblePackageJson(ctx: GenContext, skeleton: Skeleton, modules: Gener
       scripts,
       dependencies,
       devDependencies,
+      // Vercel no lee .nvmrc: su un sitio Astro compila con su Node por defecto (hoy 26, que sus funciones no
+      // admiten) y avisa. engines.node lo respetan Vercel, Netlify y Cloudflare, y coincide con el workflow de Pages.
+      ...(ctx.skeleton === 'astro' ? { engines: { node: '24.x' } } : {}),
     },
     null,
     2

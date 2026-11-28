@@ -45,6 +45,7 @@ chmod +x esporta-github.sh
 2. In **Build and deployment / Source**, seleziona **GitHub Actions**.
 3. Il workflow `.github/workflows/deploy.yml` pubblicherà automaticamente il sito su `https://kadre-test.github.io/italia-precisione-industriale/`.
 
+
 ## Invio del modulo di contatto (Web3Forms)
 
 Il sito è statico e non ha un server: il modulo invia a **Web3Forms**, un servizio gratuito (250 messaggi al mese) che ti inoltra ogni messaggio per email. Finché la chiave è vuota il modulo mostra un errore invece di fingere di inviare.

@@ -44,3 +44,6 @@ chmod +x esporta-github.sh
 1. Accedi al tuo account **CLOUDFLARE** e scegli **Import Git Repository**.
 2. Seleziona `kadre-test/metrika-ops`.
 3. Comando di build: `npm run build` · Cartella di output: `dist`.
+
+
+> Se il repository non compare nell’elenco di **Import Git Repository**, l’app di Cloudflare ha l’accesso limitato ai repository scelti: su GitHub apri **Settings → Applications → Cloudflare → Configure** e aggiungilo in **Repository access**.

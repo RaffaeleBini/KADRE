@@ -45,6 +45,7 @@ chmod +x exportar-github.sh
 2. En **Build and deployment / Source**, selecciona **GitHub Actions**.
 3. El flujo `.github/workflows/deploy.yml` publicará automáticamente tu web en `https://kadre-test.github.io/cuaderno-tecnico/`.
 
+
 ## Estadísticas de visitas (Cloudflare Web Analytics)
 
 El sitio está preparado para Cloudflare Web Analytics: gratuito, sin cookies y válido en cualquier hosting.

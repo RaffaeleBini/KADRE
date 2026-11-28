@@ -45,6 +45,7 @@ chmod +x exportar-github.sh
 2. Comando de compilación: `npm install && npm run build` · Comando de arranque: `npm start`.
 3. El servidor escucha en el puerto de la variable `PORT` (la definen los proveedores).
 
+
 ## Envío del formulario de contacto (Resend)
 
 `/api/contact` envía un correo por cada mensaje recibido. Mientras no esté configurado responde **503** y el sitio muestra un error: no finge haber enviado.

@@ -46,6 +46,7 @@ chmod +x esporta-github.sh
 3. Il server ascolta sulla porta indicata dalla variabile `PORT` (la impostano i provider).
 4. Aggiungi la variabile `DATABASE_URL` con la stringa di connessione PostgreSQL (es. Neon) ed esegui `npm run db:init` (vedi la sezione Database PostgreSQL).
 
+
 ## Database PostgreSQL
 
 Il server salva i messaggi del modulo di contatto in `contact_submissions` ed espone `GET /api/catalog`, un endpoint d’esempio che legge `catalog_items`. Il sito non usa ancora `/api/catalog`: mostra il catalogo di `src/data/siteContent.json`; l’endpoint serve da modello per le tue query. Finché `DATABASE_URL` non è impostata le due rotte rispondono **503** e il modulo mostra un errore: non finge di aver salvato.

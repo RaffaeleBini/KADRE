@@ -44,6 +44,11 @@ chmod +x esporta-github.sh
 1. Accedi al tuo account **VERCEL** e scegli **Import Git Repository**.
 2. Seleziona `kadre-test/italia-precisione-industriale`: Astro viene riconosciuto in automatico (build `npm run build`), e l’adapter pubblica la pagina e l’endpoint `/api/contact`.
 
+
+> Se il repository non compare nell’elenco di **Import Git Repository**, l’app di Vercel ha l’accesso limitato ai repository scelti: su GitHub apri **Settings → Applications → Vercel → Configure** e aggiungilo in **Repository access**.
+>
+> Su Vercel le variabili d’ambiente si applicano **solo ai nuovi deploy**: dopo averne aggiunta o cambiata una, rifai il deploy (Deployments → ⋯ → Redeploy).
+
 ## Pagamenti (Stripe Checkout)
 
 Il pulsante di ogni piano chiama `POST /api/checkout`, che crea una sessione di Stripe Checkout e porta il cliente alla pagina di pagamento di Stripe. Stripe non ha canone ma trattiene una **commissione su ogni transazione** (vedi https://stripe.com/pricing).

@@ -45,6 +45,7 @@ chmod +x esporta-github.sh
 2. In **Build and deployment / Source**, seleziona **GitHub Actions**.
 3. Il workflow `.github/workflows/deploy.yml` pubblicherà automaticamente il sito su `https://kadre-test.github.io/metrika-ops/`.
 
+
 ## Pagamenti (Stripe Payment Links)
 
 I piani possono avere un pulsante di pagamento senza server né codice. Stripe non ha canone ma trattiene una **commissione su ogni transazione** (vedi https://stripe.com/pricing).
