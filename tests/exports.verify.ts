@@ -371,8 +371,10 @@ async function checkAuth(dir: string, base: string, databaseUrl: string, client:
     return `/api/admin/messages con cookie → ${list.status}, mensajes: ${JSON.stringify(data)}`;
   if (list.headers.get('cache-control') !== 'no-store') return '/api/admin/messages debería enviar Cache-Control: no-store';
 
-  // cookie manipulada: se cambia un carácter de la firma
-  const tampered = cookie.slice(0, -2) + (cookie.endsWith('A') ? 'B' : 'A') + cookie.slice(-1);
+  // cookie manipulada: se cambia un carácter de la firma por otro DISTINTO (si fuera el mismo no habría manipulación)
+  const target = cookie.length - 2;
+  const tampered = cookie.slice(0, target) + (cookie[target] === 'A' ? 'B' : 'A') + cookie.slice(target + 1);
+  if (tampered === cookie) return 'el test no logró manipular la cookie';
   if ((await fetch(`${base}/api/admin/messages`, { headers: { Cookie: tampered } })).status !== 401) return 'una cookie manipulada debería dar 401';
 
   // al quitar el rol, la sesión ya emitida deja de valer (el servidor revalida en cada petición)
